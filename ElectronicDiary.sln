@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectronicDiaryApi", "ElectronicDiaryApi\ElectronicDiaryApi.csproj", "{6381FF03-69FF-4DFE-9141-0155641F3EC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectronicDiaryWeb", "ElectronicDiaryWeb\ElectronicDiaryWeb.csproj", "{9E57EE92-8FA9-40B9-B413-B56C772FE00F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6381FF03-69FF-4DFE-9141-0155641F3EC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6381FF03-69FF-4DFE-9141-0155641F3EC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6381FF03-69FF-4DFE-9141-0155641F3EC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6381FF03-69FF-4DFE-9141-0155641F3EC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E57EE92-8FA9-40B9-B413-B56C772FE00F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E57EE92-8FA9-40B9-B413-B56C772FE00F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E57EE92-8FA9-40B9-B413-B56C772FE00F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E57EE92-8FA9-40B9-B413-B56C772FE00F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24F054B0-4DC7-4E02-AD79-FC1690E7C38A}
+	EndGlobalSection
+EndGlobal

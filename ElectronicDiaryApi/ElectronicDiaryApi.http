@@ -1,0 +1,6 @@
+@ElectronicDiaryApi_HostAddress = http://localhost:5033
+
+GET {{ElectronicDiaryApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
