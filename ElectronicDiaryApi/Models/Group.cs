@@ -13,7 +13,7 @@ public partial class Group
 
     public string Classroom { get; set; } = null!;
 
-    public int IdUsers { get; set; }
+    public int IdEmployee { get; set; }
 
     public int IdSubject { get; set; }
 
@@ -21,11 +21,11 @@ public partial class Group
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();
 
+    public virtual Employee IdEmployeeNavigation { get; set; } = null!;
+
     public virtual Location IdLocationNavigation { get; set; } = null!;
 
     public virtual Subject IdSubjectNavigation { get; set; } = null!;
-
-    public virtual User IdUsersNavigation { get; set; } = null!;
 
     public virtual ICollection<Journal> Journals { get; set; } = new List<Journal>();
 

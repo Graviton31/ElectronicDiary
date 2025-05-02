@@ -23,5 +23,5 @@ public partial class Subject
 
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
 
-    public virtual ICollection<User> IdUsers { get; set; } = new List<User>();
+    public virtual ICollection<Employee> IdEmployees { get; set; } = new List<Employee>();
 }

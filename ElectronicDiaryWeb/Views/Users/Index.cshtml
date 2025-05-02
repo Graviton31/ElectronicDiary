@@ -1,0 +1,307 @@
+﻿@{
+    ViewData["Title"] = "Пользователи";
+}
+<style>
+    .employee-only {
+        display: table-cell;
+    }
+
+    .disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    .btn-group-toggle .btn {
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group-toggle .btn-primary {
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+
+    .error-message {
+        color: #dc3545;
+        padding: 15px;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+</style>
+
+<div class="container">
+    <!-- Кнопка возврата -->
+    <div class="mb-4">
+        <a href="#" class="btn btn-outline-secondary" onclick="window.history.back(); return false;">
+            ← Назад к списку
+        </a>
+    </div>
+
+    <!-- Группа кнопок -->
+    <div class="btn-group mb-4" role="group" id="userTypeButtons">
+        <button type="button"
+                class="btn btn-outline-primary user-type-btn"
+                data-user-type="Employees">
+            <i class="bi bi-person-badge me-2"></i>Сотрудники
+        </button>
+        <button type="button"
+                class="btn btn-outline-primary user-type-btn"
+                data-user-type="Parents">
+            <i class="bi bi-people me-2"></i>Родители
+        </button>
+        <button type="button"
+                class="btn btn-outline-primary user-type-btn"
+                data-user-type="Students">
+            <i class="bi bi-mortarboard me-2"></i>Ученики
+        </button>
+    </div>
+
+    <!-- Таблица -->
+    <table class="table mt-3" id="usersTable">
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Логин</th>
+                <th>Телефон</th>
+                <th class="employee-only">Должность</th>
+                <th class="employee-only">Роль</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Данные будут загружены через JS -->
+        </tbody>
+    </table>
+
+    <!-- Блок ошибок -->
+    <div id="errorContainer" class="error-message" style="display: none;"></div>
+
+    <!-- Пагинация -->
+    <div class="d-flex justify-content-center mt-3">
+        <nav>
+            <ul class="pagination">
+                <li class="page-item" id="prevPage">
+                    <a class="page-link" href="#" tabindex="-1">Назад</a>
+                </li>
+                <li class="page-item">
+                    <span class="page-link" id="pageInfo">Страница 1 из 1</span>
+                </li>
+                <li class="page-item" id="nextPage">
+                    <a class="page-link" href="#">Вперед</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Конфигурация
+            const config = {
+                apiBaseUrl: 'https://localhost:7123',
+                elements: {
+                    tableBody: document.querySelector('#usersTable tbody'),
+                    employeeColumns: document.querySelectorAll('.employee-only'),
+                    pageInfo: document.getElementById('pageInfo'),
+                    prevPage: document.getElementById('prevPage'),
+                    nextPage: document.getElementById('nextPage'),
+                    errorContainer: document.getElementById('errorContainer')
+                },
+                state: {
+                    page: 1,
+                    pageSize: 5,
+                    type: 'Employees',
+                    totalPages: 1
+                }
+            };
+
+            // Проверка элементов
+            function checkElements() {
+                let allElementsExist = true;
+                Object.entries(config.elements).forEach(([name, element]) => {
+                    if (!element) {
+                        console.error(`Элемент ${name} не найден!`);
+                        allElementsExist = false;
+                    }
+                });
+                return allElementsExist;
+            }
+
+            // Инициализация
+            function initialize() {
+                if (!checkElements()) {
+                    showError('Критическая ошибка: отсутствуют необходимые элементы DOM');
+                    return;
+                }
+
+                loadStateFromURL();
+                setupEventListeners();
+                loadUsers();
+            }
+
+            // Загрузка состояния из URL
+            function loadStateFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                config.state.type = urlParams.get('type') || 'Employees';
+                config.state.page = parseInt(urlParams.get('page')) || 1;
+            }
+
+            // Обновление URL
+            function updateURL() {
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('type', config.state.type);
+                newUrl.searchParams.set('page', config.state.page);
+                window.history.replaceState({}, '', newUrl);
+            }
+
+            // Обновление UI
+            function updateUI() {
+                // Обновление кнопок типа
+                document.querySelectorAll('.user-type-btn').forEach(btn => {
+                    const isActive = btn.dataset.userType === config.state.type;
+                    btn.classList.toggle('btn-primary', isActive);
+                    btn.classList.toggle('btn-outline-primary', !isActive);
+                });
+
+                // Колонки для сотрудников
+                config.elements.employeeColumns.forEach(col => {
+                    col.style.display = config.state.type === 'Employees'
+                        ? 'table-cell'
+                        : 'none';
+                });
+
+                // Пагинация
+                config.elements.pageInfo.textContent =
+                    `Страница ${config.state.page} из ${config.state.totalPages}`;
+
+                config.elements.prevPage.classList.toggle(
+                    'disabled',
+                    config.state.page === 1
+                );
+
+                config.elements.nextPage.classList.toggle(
+                    'disabled',
+                    config.state.page >= config.state.totalPages
+                );
+            }
+
+            // Загрузка данных
+            async function loadUsers() {
+                try {
+                    const url = new URL(
+                        `${config.apiBaseUrl}/api/${config.state.type}`
+                    );
+
+                    url.searchParams.set('page', config.state.page);
+                    url.searchParams.set('pageSize', config.state.pageSize);
+
+                    const response = await fetch(url, {
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (!result.data || result.data.length === 0) {
+                        config.elements.tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    Нет данных для отображения
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    config.state.totalPages = Math.ceil(
+                        result.totalCount / config.state.pageSize
+                    );
+
+                    renderTable(result.data);
+                    updateURL();
+                    updateUI();
+                    hideError();
+
+                } catch (error) {
+                    console.error('Ошибка загрузки:', error);
+                    showError(`Ошибка загрузки данных: ${error.message}`);
+                }
+            }
+
+            // Отрисовка таблицы
+            function renderTable(data) {
+                config.elements.tableBody.innerHTML = data.map(user => `
+                    <tr data-user-id="${user.idEmployee || user.idParent || user.idStudent}"
+                        style="cursor: pointer">
+                        <td>${user.fullName || ''}</td>
+                        <td>${user.login || ''}</td>
+                        <td>${user.phone || ''}</td>
+                        ${config.state.type === 'Employees'
+                            ? `<td>${user.post || ''}</td>
+                               <td>${user.role || ''}</td>`
+                            : '<td style="display:none"></td><td style="display:none"></td>'}
+                    </tr>
+                `).join('');
+            }
+
+            // Обработчики событий
+            function setupEventListeners() {
+                // Кнопки типа пользователя
+                document.querySelectorAll('.user-type-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const newType = btn.dataset.userType;
+                        if (newType !== config.state.type) {
+                            config.state.type = newType;
+                            config.state.page = 1;
+                            loadUsers();
+                        }
+                    });
+                });
+
+                // Пагинация
+                config.elements.prevPage.addEventListener('click', () => {
+                    if (config.state.page > 1) {
+                        config.state.page--;
+                        loadUsers();
+                    }
+                });
+
+                config.elements.nextPage.addEventListener('click', () => {
+                    if (config.state.page < config.state.totalPages) {
+                        config.state.page++;
+                        loadUsers();
+                    }
+                });
+
+                // Клик по строке
+                config.elements.tableBody.addEventListener('click', (e) => {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+
+                    const userId = row.dataset.userId;
+                    const returnUrl = encodeURIComponent(
+                        window.location.pathname + window.location.search
+                    );
+
+                    window.location.href = `/${config.state.type}/Details/${userId}?returnUrl=${returnUrl}`;
+                });
+            }
+
+            // Обработка ошибок
+            function showError(message) {
+                config.elements.errorContainer.style.display = 'block';
+                config.elements.errorContainer.textContent = message;
+            }
+
+            function hideError() {
+                config.elements.errorContainer.style.display = 'none';
+            }
+
+            // Запуск приложения
+            initialize();
+        });
+    </script>
+}
