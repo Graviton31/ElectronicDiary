@@ -1,5 +1,6 @@
-﻿using ElectronicDiaryApi.ModelsDto;
+﻿using ElectronicDiaryApi.ModelsDto.UsersView;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace ElectronicDiaryWeb.Controllers
 {
@@ -10,7 +11,7 @@ namespace ElectronicDiaryWeb.Controllers
         public EmployeesController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7123"); // Адрес вашего API
+            _httpClient.BaseAddress = new Uri("https://localhost:7123");
         }
 
         // GET: Employees/Details/5
@@ -18,8 +19,20 @@ namespace ElectronicDiaryWeb.Controllers
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/api/Employees/Details/{id}");
+                // Восстановление состояния
+                var savedState = HttpContext.Session.GetString("UserListState");
+                if (!string.IsNullOrEmpty(savedState))
+                {
+                    ViewBag.ReturnUrl = Url.Action("Index", "Users") +
+                                      JsonConvert.DeserializeObject<Dictionary<string, string>>(savedState)["query"];
+                }
+                else
+                {
+                    ViewBag.ReturnUrl = Url.Action("Index", "Users");
+                }
 
+                // Остальная логика
+                var response = await _httpClient.GetAsync($"/api/Employees/Details/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
                     return NotFound();

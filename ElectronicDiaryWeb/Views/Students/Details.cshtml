@@ -1,5 +1,6 @@
-﻿<!-- Views/Students/Details.cshtml -->
-@model ElectronicDiaryApi.ModelsDto.StudentDto
+﻿@using ElectronicDiaryApi.ModelsDto.UsersView
+<!-- Views/Students/Details.cshtml -->
+@model StudentDto
 @{
     ViewData["Title"] = "Профиль студента";
 }
@@ -99,6 +100,8 @@
                                     <dl class="row">
                                         <dt class="col-sm-5">Телефон:</dt>
                                         <dd class="col-sm-7">@parent.Phone</dd>
+                                        <dt class="col-sm-5">Кем приходится:</dt>
+                                        <dd class="col-sm-7">@parent.ParentRole</dd>
                                     </dl>
                                 </div>
                             </div>
@@ -139,7 +142,7 @@
                             {
                                 <tr>
                                     <td>@req.IdRequest</td>
-                                    <td>@req.RequestDate.ToString("dd.MM.yyyy")</td>
+                                    <td>@req.RequestDate?.ToString("dd.MM.yyyy") ?? "Дата не указана"</td>
                                     <td>
                                         <span class="badge @(req.Status == "Approved" ? "bg-success" :
                                              req.Status == "Pending" ? "bg-warning" :
@@ -159,8 +162,8 @@
     }
 
     <div class="mb-4">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-            ← Назад к списку сотрудников
+        <a href="@ViewBag.ReturnUrl" class="btn btn-outline-secondary">
+            ← Назад
         </a>
     </div>
 </div>

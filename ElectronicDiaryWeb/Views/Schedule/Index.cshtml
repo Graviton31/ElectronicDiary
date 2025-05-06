@@ -1,0 +1,132 @@
+﻿<!-- Views/Schedule/Index.cshtml -->
+@model UnifiedScheduleViewModel
+@using System.Globalization
+
+<div class="container">
+    <h2 class="mb-4">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>
+
+    <div class="week-navigation mb-4">
+        <a href="@Url.Action("Index", new { date = Model.PreviousWeekStart })"
+           class="btn btn-outline-primary">← Предыдущая неделя</a>
+        <a href="@Url.Action("Index", new { date = DateTime.Today })"
+           class="btn btn-outline-secondary mx-2">Текущая неделя</a>
+        <a href="@Url.Action("Index", new { date = Model.NextWeekStart })"
+           class="btn btn-outline-primary">Следующая неделя →</a>
+    </div>
+
+    @if (Model.Schedule?.Days == null || !Model.Schedule.Days.Any())
+    {
+        <div class="alert alert-info">Нет данных о расписании</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var day in Model.Schedule.Days)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4>@day.Date.ToString("dddd", new CultureInfo("ru-RU"))</h4>
+                            <h5>@day.Date.ToString("dd.MM.yyyy")</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (!day.Lessons.Any())
+                            {
+                                <div class="text-muted">Нет занятий</div>
+                            }
+                            else
+                            {
+                                foreach (var lesson in day.Lessons.OrderBy(l => l.StartTime))
+                                {
+                                    <div class="lesson-card mb-3 p-3 @(lesson.IsCancelled ? "cancelled" : "")">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <div class="time-block">
+                                                    <strong>@lesson.StartTime.ToString("HH\\:mm") - @lesson.EndTime.ToString("HH\\:mm")</strong>
+                                                    @if (lesson.IsCancelled)
+                                                    {
+                                                        <div class="badge bg-danger mt-1">Отменено</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="col-9">
+                                                <div class="lesson-details">
+                                                    <div class="subject-group">
+                                                        <span class="badge bg-info">@lesson.SubjectName</span>
+                                                        <span class="badge bg-secondary">@lesson.GroupName</span>
+                                                    </div>
+                                                    <div class="classroom-teachers">
+                                                        <small class="text-muted">@lesson.Classroom</small>
+                                                        <div class="teachers">
+                                                            @string.Join(", ", lesson.Teachers)
+                                                        </div>
+                                                    </div>
+                                                    @if (lesson.ChangeType == "перенос")
+                                                    {
+                                                        <div class="changes mt-2">
+                                                            <span class="badge bg-warning">
+                                                                Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
+                                                                @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                    @if (lesson.IsAdditional)
+                                                    {
+                                                        <span class="badge bg-success">Дополнительное</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .lesson-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+    }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+    .time-block {
+        padding: 8px;
+        background-color: #e9ecef;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .subject-group .badge {
+        margin-right: 6px;
+        margin-bottom: 4px;
+        font-size: 0.9em;
+    }
+
+    .teachers {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .cancelled {
+        opacity: 0.6;
+        background-color: #ffeef0;
+        text-decoration: line-through;
+    }
+
+    .badge.bg-warning {
+        color: #000;
+    }
+</style>

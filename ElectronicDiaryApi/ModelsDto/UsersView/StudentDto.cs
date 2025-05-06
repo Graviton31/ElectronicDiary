@@ -1,6 +1,6 @@
 ﻿using ElectronicDiaryApi.Models;
 
-namespace ElectronicDiaryApi.ModelsDto
+namespace ElectronicDiaryApi.ModelsDto.UsersView
 {
     public class StudentDto
     {

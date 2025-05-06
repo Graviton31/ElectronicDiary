@@ -13,11 +13,15 @@ public partial class Parent
 
     public string? Patronymic { get; set; }
 
+    public DateOnly BirthDate { get; set; }
+
     public string? Phone { get; set; }
 
     public string Login { get; set; } = null!;
 
     public string Password { get; set; } = null!;
+
+    public string ParentRole { get; set; } = null!;
 
     public bool? IsDelete { get; set; }
 

@@ -30,13 +30,6 @@
 </style>
 
 <div class="container">
-    <!-- Кнопка возврата -->
-    <div class="mb-4">
-        <a href="#" class="btn btn-outline-secondary" onclick="window.history.back(); return false;">
-            ← Назад к списку
-        </a>
-    </div>
-
     <!-- Группа кнопок -->
     <div class="btn-group mb-4" role="group" id="userTypeButtons">
         <button type="button"
@@ -129,6 +122,12 @@
 
             // Инициализация
             function initialize() {
+                const savedReturnUrl = sessionStorage.getItem('userListReturnUrl');
+                if (savedReturnUrl) {
+                    window.history.replaceState({}, '', savedReturnUrl);
+                    sessionStorage.removeItem('userListReturnUrl');
+                }
+
                 if (!checkElements()) {
                     showError('Критическая ошибка: отсутствуют необходимые элементы DOM');
                     return;
@@ -137,6 +136,19 @@
                 loadStateFromURL();
                 setupEventListeners();
                 loadUsers();
+            }
+
+            const savedState = JSON.parse(sessionStorage.getItem('userListState'));
+            if (savedState) {
+                config.state.page = savedState.page;
+                config.state.type = savedState.type;
+                sessionStorage.removeItem('userListState');
+
+                // Обновляем URL
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('type', config.state.type);
+                newUrl.searchParams.set('page', config.state.page);
+                window.history.replaceState({}, '', newUrl);
             }
 
             // Загрузка состояния из URL
@@ -282,11 +294,10 @@
                     if (!row) return;
 
                     const userId = row.dataset.userId;
-                    const returnUrl = encodeURIComponent(
-                        window.location.pathname + window.location.search
-                    );
+                    const returnUrl = `${window.location.pathname}${window.location.search}`;
 
-                    window.location.href = `/${config.state.type}/Details/${userId}?returnUrl=${returnUrl}`;
+                    sessionStorage.setItem('userListReturnUrl', returnUrl);
+                    window.location.href = `/${config.state.type}/Details/${userId}`;
                 });
             }
 

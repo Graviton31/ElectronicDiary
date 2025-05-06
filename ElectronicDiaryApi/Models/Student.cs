@@ -13,6 +13,8 @@ public partial class Student
 
     public string? Patronymic { get; set; }
 
+    public DateOnly BirthDate { get; set; }
+
     public string? Phone { get; set; }
 
     public string Login { get; set; } = null!;

@@ -10,6 +10,7 @@ using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Responses;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -69,7 +70,7 @@ namespace ElectronicDiaryApi.Controllers
             var employee = await _context.Employees
                 .Include(e => e.IdPostNavigation) // Должность
                 .Include(e => e.IdSubjects)       // Предметы сотрудника
-                .Include(e => e.Groups)           // Группы сотрудника
+                .Include(e => e.IdGroups)         // Группы сотрудника (исправлено с Groups на IdGroups)
                 .FirstOrDefaultAsync(e => e.IdEmployee == id);
 
             if (employee == null)
@@ -97,8 +98,8 @@ namespace ElectronicDiaryApi.Controllers
                     {
                         IdSubject = subject.IdSubject,
                         Name = subject.Name,
-                        Groups = employee.Groups
-                            .Where(g => g.IdSubject == subject.IdSubject) // Группы по предмету
+                        Groups = employee.IdGroups 
+                            .Where(g => g.IdSubject == subject.IdSubject) // Группы сотрудника по предмету
                             .Select(g => new GroupDto
                             {
                                 IdGroup = g.IdGroup,
@@ -110,7 +111,7 @@ namespace ElectronicDiaryApi.Controllers
 
             return Ok(result);
         }
-
+         
         // GET: api/Employees/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)

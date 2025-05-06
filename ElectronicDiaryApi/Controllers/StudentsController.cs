@@ -9,6 +9,7 @@ using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Responses;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -92,7 +93,9 @@ namespace ElectronicDiaryApi.Controllers
                         FullName = string.Join(" ",
                             new[] { p.Surname, p.Name, p.Patronymic }
                                 .Where(n => !string.IsNullOrEmpty(n))),
-                        Phone = p.Phone ?? "Не указан"
+                        Phone = p.Phone ?? "Не указан",
+                        BirthDate = p.BirthDate,
+                        ParentRole =p.ParentRole,
                     }).ToList(),
                     EnrollmentRequests = student.EnrollmentRequests.Select(er => new EnrollmentRequestDto
                     {

@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
-using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Responses;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -80,27 +80,30 @@ namespace ElectronicDiaryApi.Controllers
             {
                 IdParent = parent.IdParent,
                 FullName = fullName,
+                BirthDate = parent.BirthDate,
                 Phone = parent.Phone,
                 Login = parent.Login,
-                Students = parent.IdStudents.Select(s => new StudentDto
+                ParentRole = parent.ParentRole,
+                Students = parent.IdStudents?.Select(s => new StudentDto
                 {
                     IdStudent = s.IdStudent,
                     FullName = string.Join(" ",
                         new[] { s.Surname, s.Name, s.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p))),
                     Phone = s.Phone
-                }).ToList(),
-                EnrollmentRequests = parent.EnrollmentRequests.Select(er => new EnrollmentRequestDto
+                }).ToList() ?? new List<StudentDto>(), // Обработка null
+
+                EnrollmentRequests = parent.EnrollmentRequests?.Select(er => new EnrollmentRequestDto
                 {
                     IdRequest = er.IdRequests,
                     RequestDate = er.RequestDate,
                     Status = er.Status,
                     StudentFullName = string.Join(" ",
-                        new[] { er.IdStudentNavigation.Surname,
-                          er.IdStudentNavigation.Name,
-                          er.IdStudentNavigation.Patronymic }
+                        new[] { er.IdStudentNavigation?.Surname,
+                                 er.IdStudentNavigation?.Name,
+                                 er.IdStudentNavigation?.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p)))
-                }).ToList()
+                }).ToList() ?? new List<EnrollmentRequestDto>() // Обработка null
             };
 
             return Ok(result);

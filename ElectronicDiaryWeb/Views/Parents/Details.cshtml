@@ -1,4 +1,5 @@
-﻿@model ElectronicDiaryApi.ModelsDto.ParentDto
+﻿@using ElectronicDiaryApi.ModelsDto.UsersView
+@model ParentDto
 @{
     ViewData["Title"] = "Профиль родителя";
 }
@@ -15,6 +16,12 @@
             <dl class="row">
                 <dt class="col-sm-3">Телефон:</dt>
                 <dd class="col-sm-9">@(Model.Phone ?? "не указан")</dd>
+
+                <dt class="col-sm-3">Дата рождения:</dt>
+                <dd class="col-sm-9">@(Model.BirthDate)</dd>
+
+                <dt class="col-sm-3">Кем приходится:</dt>
+                <dd class="col-sm-9">@(Model.ParentRole)</dd>
 
                 <dt class="col-sm-3">Логин:</dt>
                 <dd class="col-sm-9">@Model.Login</dd>
@@ -75,20 +82,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var request in Model.EnrollmentRequests)
+                            @foreach (var req in Model.EnrollmentRequests)
                             {
                                 <tr>
-                                    <td>@request.IdRequest</td>
-                                    <td>@request.RequestDate.ToString("dd.MM.yyyy")</td>
+                                    <td>@req.IdRequest</td>
+                                    <td>@req.RequestDate?.ToString("dd.MM.yyyy")</td>
                                     <td>
                                         <span class="badge
-                                            @(request.Status == "Approved" ? "bg-success" :
-                                             request.Status == "Pending" ? "bg-warning" :
+                                            @(req.Status == "Approved" ? "bg-success" :
+                                             req.Status == "Pending" ? "bg-warning" :
                                              "bg-danger")">
-                                            @request.Status
+                                            @req.Status
                                         </span>
                                     </td>
-                                    <td>@request.StudentFullName</td>
+                                    <td>@req.StudentFullName</td>
                                 </tr>
                             }
                         </tbody>
@@ -99,8 +106,8 @@
     }
 
     <div class="mb-4">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-            ← Назад к списку сотрудников
+        <a href="@ViewBag.ReturnUrl" class="btn btn-outline-secondary">
+            ← Назад
         </a>
     </div>
 </div>

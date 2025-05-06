@@ -37,17 +37,15 @@ public partial class ElectronicDiaryContext : DbContext
 
     public virtual DbSet<Post> Posts { get; set; }
 
-    public virtual DbSet<ScheduleEvent> ScheduleEvents { get; set; }
+    public virtual DbSet<ScheduleChange> ScheduleChanges { get; set; }
+
+    public virtual DbSet<StandardSchedule> StandardSchedules { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
 
     public virtual DbSet<Subject> Subjects { get; set; }
 
     public virtual DbSet<Visit> Visits { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=localhost;database=electronic_diary;uid=root;pwd=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.19-mysql"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,13 +108,13 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasIndex(e => e.IdStudent, "fk_enrollment_requests_students1_idx");
 
             entity.Property(e => e.IdRequests).HasColumnName("id_requests");
+            entity.Property(e => e.IdGroup).HasColumnName("id_group");
+            entity.Property(e => e.IdParent).HasColumnName("id_parent");
+            entity.Property(e => e.IdStudent).HasColumnName("id_student");
             entity.Property(e => e.RequestDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime")
                 .HasColumnName("request_date");
-            entity.Property(e => e.IdGroup).HasColumnName("id_group");
-            entity.Property(e => e.IdParent).HasColumnName("id_parent");
-            entity.Property(e => e.IdStudent).HasColumnName("id_student");
             entity.Property(e => e.Status)
                 .HasDefaultValueSql("'ожидает'")
                 .HasColumnType("enum('ожидает','одобрено','отклонено')")
@@ -148,24 +146,16 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.HasIndex(e => e.IdSubject, "fk_groups_subjects1_idx");
 
-            entity.HasIndex(e => e.IdEmployee, "fk_groups_users_idx");
-
             entity.Property(e => e.IdGroup).HasColumnName("id_group");
             entity.Property(e => e.Classroom)
-                .HasMaxLength(15)
+                .HasMaxLength(20)
                 .HasColumnName("classroom");
-            entity.Property(e => e.IdEmployee).HasColumnName("id_employee");
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
                 .HasColumnName("name");
             entity.Property(e => e.StudentCount).HasColumnName("student_count");
-
-            entity.HasOne(d => d.IdEmployeeNavigation).WithMany(p => p.Groups)
-                .HasForeignKey(d => d.IdEmployee)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_groups_users");
 
             entity.HasOne(d => d.IdLocationNavigation).WithMany(p => p.Groups)
                 .HasForeignKey(d => d.IdLocation)
@@ -176,6 +166,29 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasForeignKey(d => d.IdSubject)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_groups_subjects1");
+
+            entity.HasMany(d => d.IdEmployees).WithMany(p => p.IdGroups)
+                .UsingEntity<Dictionary<string, object>>(
+                    "GroupsHasEmployee",
+                    r => r.HasOne<Employee>().WithMany()
+                        .HasForeignKey("IdEmployee")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("fk_groups_has_employees_employees1"),
+                    l => l.HasOne<Group>().WithMany()
+                        .HasForeignKey("IdGroup")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("fk_groups_has_employees_groups1"),
+                    j =>
+                    {
+                        j.HasKey("IdGroup", "IdEmployee")
+                            .HasName("PRIMARY")
+                            .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+                        j.ToTable("groups_has_employees");
+                        j.HasIndex(new[] { "IdEmployee" }, "fk_groups_has_employees_employees1_idx");
+                        j.HasIndex(new[] { "IdGroup" }, "fk_groups_has_employees_groups1_idx");
+                        j.IndexerProperty<int>("IdGroup").HasColumnName("id_group");
+                        j.IndexerProperty<int>("IdEmployee").HasColumnName("id_employee");
+                    });
 
             entity.HasMany(d => d.IdStudents).WithMany(p => p.IdGroups)
                 .UsingEntity<Dictionary<string, object>>(
@@ -304,6 +317,7 @@ public partial class ElectronicDiaryContext : DbContext
             entity.ToTable("parents");
 
             entity.Property(e => e.IdParent).HasColumnName("id_parent");
+            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
             entity.Property(e => e.IsDelete)
                 .HasDefaultValueSql("'0'")
                 .HasColumnName("is_delete");
@@ -313,6 +327,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(45)
                 .HasColumnName("name");
+            entity.Property(e => e.ParentRole)
+                .HasColumnType("enum('отец','мать','отчим','мачеха','опекун','другое')")
+                .HasColumnName("parent_role");
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
                 .HasColumnName("password");
@@ -344,40 +361,63 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasColumnName("post_name");
         });
 
-        modelBuilder.Entity<ScheduleEvent>(entity =>
+        modelBuilder.Entity<ScheduleChange>(entity =>
         {
-            entity.HasKey(e => e.IdEvent).HasName("PRIMARY");
+            entity.HasKey(e => e.IdScheduleChange).HasName("PRIMARY");
 
-            entity.ToTable("schedule_event");
+            entity.ToTable("schedule_changes");
 
-            entity.HasIndex(e => e.IdGroup, "fk_schedule_event_groups1_idx");
+            entity.HasIndex(e => e.IdGroup, "fk_schedule_changes_groups1_idx");
 
-            entity.HasIndex(e => e.IdOriginalEvent, "fk_schedule_event_schedule_event1_idx");
+            entity.HasIndex(e => e.IdSchedule, "fk_schedule_changes_standard_schedule1_idx");
 
-            entity.Property(e => e.IdEvent).HasColumnName("id_event");
-            entity.Property(e => e.ActualDate).HasColumnName("actual_date");
+            entity.Property(e => e.IdScheduleChange).HasColumnName("id_schedule_change");
+            entity.Property(e => e.ChangeType)
+                .HasColumnType("enum('перенос','отмена','дополнительное')")
+                .HasColumnName("change_type");
+            entity.Property(e => e.IdGroup).HasColumnName("id_group");
+            entity.Property(e => e.IdSchedule).HasColumnName("id_schedule");
+            entity.Property(e => e.NewDate).HasColumnName("new_date");
+            entity.Property(e => e.NewEndTime)
+                .HasColumnType("time")
+                .HasColumnName("new_end_time");
+            entity.Property(e => e.NewStartTime)
+                .HasColumnType("time")
+                .HasColumnName("new_start_time");
+            entity.Property(e => e.OldDate).HasColumnName("old_date");
+
+            entity.HasOne(d => d.IdGroupNavigation).WithMany(p => p.ScheduleChanges)
+                .HasForeignKey(d => d.IdGroup)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_schedule_changes_groups1");
+
+            entity.HasOne(d => d.IdScheduleNavigation).WithMany(p => p.ScheduleChanges)
+                .HasForeignKey(d => d.IdSchedule)
+                .HasConstraintName("fk_schedule_changes_standard_schedule1");
+        });
+
+        modelBuilder.Entity<StandardSchedule>(entity =>
+        {
+            entity.HasKey(e => e.IdStandardSchedule).HasName("PRIMARY");
+
+            entity.ToTable("standard_schedule");
+
+            entity.HasIndex(e => e.IdGroup, "fk_standard_schedule_groups1_idx");
+
+            entity.Property(e => e.IdStandardSchedule).HasColumnName("id_standard_schedule");
             entity.Property(e => e.EndTime)
                 .HasColumnType("time")
                 .HasColumnName("end_time");
-            entity.Property(e => e.EventType)
-                .HasColumnType("enum('Обычное','Отмена','Перенос')")
-                .HasColumnName("event_type");
             entity.Property(e => e.IdGroup).HasColumnName("id_group");
-            entity.Property(e => e.IdOriginalEvent).HasColumnName("id_original_event");
-            entity.Property(e => e.PlannedDate).HasColumnName("planned_date");
             entity.Property(e => e.StartTime)
                 .HasColumnType("time")
                 .HasColumnName("start_time");
-            entity.Property(e => e.WeelDay).HasColumnName("weel_day");
+            entity.Property(e => e.WeekDay).HasColumnName("week_day");
 
-            entity.HasOne(d => d.IdGroupNavigation).WithMany(p => p.ScheduleEvents)
+            entity.HasOne(d => d.IdGroupNavigation).WithMany(p => p.StandardSchedules)
                 .HasForeignKey(d => d.IdGroup)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_schedule_event_groups1");
-
-            entity.HasOne(d => d.IdOriginalEventNavigation).WithMany(p => p.InverseIdOriginalEventNavigation)
-                .HasForeignKey(d => d.IdOriginalEvent)
-                .HasConstraintName("fk_schedule_event_schedule_event1");
+                .HasConstraintName("fk_standard_schedule_groups1");
         });
 
         modelBuilder.Entity<Student>(entity =>
@@ -387,6 +427,7 @@ public partial class ElectronicDiaryContext : DbContext
             entity.ToTable("students");
 
             entity.Property(e => e.IdStudent).HasColumnName("id_student");
+            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
             entity.Property(e => e.IsDelete)
                 .HasMaxLength(45)
                 .HasDefaultValueSql("'0'")

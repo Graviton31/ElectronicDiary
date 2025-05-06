@@ -9,7 +9,7 @@ public partial class EnrollmentRequest
 
     public string? Status { get; set; }
 
-    public DateTime RequestDate { get; set; }
+    public DateTime? RequestDate { get; set; }
 
     public int IdParent { get; set; }
 

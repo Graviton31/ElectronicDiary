@@ -13,15 +13,11 @@ public partial class Group
 
     public string Classroom { get; set; } = null!;
 
-    public int IdEmployee { get; set; }
-
     public int IdSubject { get; set; }
 
     public int IdLocation { get; set; }
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();
-
-    public virtual Employee IdEmployeeNavigation { get; set; } = null!;
 
     public virtual Location IdLocationNavigation { get; set; } = null!;
 
@@ -29,7 +25,11 @@ public partial class Group
 
     public virtual ICollection<Journal> Journals { get; set; } = new List<Journal>();
 
-    public virtual ICollection<ScheduleEvent> ScheduleEvents { get; set; } = new List<ScheduleEvent>();
+    public virtual ICollection<ScheduleChange> ScheduleChanges { get; set; } = new List<ScheduleChange>();
+
+    public virtual ICollection<StandardSchedule> StandardSchedules { get; set; } = new List<StandardSchedule>();
+
+    public virtual ICollection<Employee> IdEmployees { get; set; } = new List<Employee>();
 
     public virtual ICollection<Student> IdStudents { get; set; } = new List<Student>();
 }
