@@ -1,4 +1,5 @@
 ﻿using ElectronicDiaryWeb.Models;
+using ElectronicDiaryWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;

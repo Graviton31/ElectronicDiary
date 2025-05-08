@@ -17,8 +17,6 @@ public partial class Subject
 
     public sbyte LessonLength { get; set; }
 
-    public sbyte LessonsCount { get; set; }
-
     public bool IsDelete { get; set; }
 
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();

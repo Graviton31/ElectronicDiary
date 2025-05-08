@@ -42,7 +42,48 @@ namespace ElectronicDiaryApi.Controllers
 
             return Ok(subjects);
         }
-      
+
+        [HttpPost("create")]
+        public async Task<ActionResult<Subject>> CreateSubject(CreateSubjectDto createDto)
+        {
+            // Проверка существования предмета
+            var existingSubject = await _context.Subjects
+                .FirstOrDefaultAsync(s => s.Name == createDto.Name);
+
+            if (existingSubject != null)
+            {
+                return Conflict(new { message = "Предмет с таким названием уже существует" });
+            }
+
+            var subject = new Subject
+            {
+                Name = createDto.Name,
+                FullName = createDto.FullName,
+                Description = createDto.Description,
+                Duration = createDto.Duration,
+                LessonLength = createDto.LessonLength,
+                IsDelete = false // По умолчанию не удален
+            };
+
+            _context.Subjects.Add(subject);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetSubject), new { id = subject.IdSubject }, subject);
+        }
+
+        [HttpPost("{subjectId}/teachers/{teacherId}")]
+        public async Task<IActionResult> AddTeacherToSubject(int subjectId, int teacherId)
+        {
+            var subject = await _context.Subjects.FindAsync(subjectId);
+            var teacher = await _context.Employees.FindAsync(teacherId);
+
+            if (subject == null || teacher == null) return NotFound();
+
+            subject.IdEmployees.Add(teacher);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
 
         // GET: api/Subjects/5
         [HttpGet("{id}")]

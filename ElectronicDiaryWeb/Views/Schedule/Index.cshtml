@@ -1,6 +1,7 @@
 ﻿<!-- Views/Schedule/Index.cshtml -->
 @model UnifiedScheduleViewModel
 @using System.Globalization
+@using ElectronicDiaryWeb.ViewModel
 
 <div class="container">
     <h2 class="mb-4">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>

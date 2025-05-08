@@ -1,7 +1,7 @@
 ﻿using ElectronicDiaryApi.Controllers;
 using static ElectronicDiaryApi.Controllers.ScheduleController;
 
-namespace ElectronicDiaryWeb.Models
+namespace ElectronicDiaryWeb.ViewModel
 {
     public class UnifiedScheduleViewModel
     {

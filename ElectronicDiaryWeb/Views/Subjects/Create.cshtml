@@ -1,0 +1,680 @@
+﻿@using ElectronicDiaryWeb.ViewModel
+@model SubjectWithGroupViewModel
+
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --success-color: #16a34a;
+        --danger-color: #dc2626;
+        --border-color: #e5e7eb;
+        --radius: 0.5rem;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .container.mb-5 {
+        padding-bottom: 100px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        padding: 1.5rem 0;
+        border-bottom: 3px solid #bfdbfe;
+        margin-bottom: 2rem;
+    }
+
+    .header-title {
+        background: linear-gradient(45deg, #2563eb, #1d4ed8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .card {
+        border: none;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        transition: transform 0.2s ease;
+    }
+
+    .card-header {
+        border-radius: var(--radius) var(--radius) 0 0;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .form-control:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+    }
+
+    .teacher-search-input {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239CA3AF'%3E%3Cpath d='M18.031 16.617l4.283 4.282-1.415 1.415-4.282-4.283A8.96 8.96 0 0 1 11 20c-4.968 0-9-4.032-9-9s4.032-9 9-9 9 4.032 9 9a8.96 8.96 0 0 1-1.969 5.617zm-2.006-.742A6.977 6.977 0 0 0 18 11c0-3.868-3.133-7-7-7-3.868 0-7 3.132-7 7 0 3.867 3.132 7 7 7a6.977 6.977 0 0 0 4.875-1.975l.15-.15z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1.25rem;
+        padding-right: 2.5rem;
+    }
+
+    .teacher-tag {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 1rem;
+        padding: 0.375rem 1rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+        .teacher-tag:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
+        }
+
+    .remove-teacher-btn {
+        color: #dc2626;
+        margin-left: 0.75rem;
+        font-weight: 700;
+        opacity: 0.7;
+    }
+
+        .remove-teacher-btn:hover {
+            opacity: 1;
+        }
+
+    .search-result-item {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: #f8fafc;
+        }
+
+    #add-group-btn {
+        background: var(--success-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+        #add-group-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+    .group-card {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        opacity: 0.9;
+    }
+
+    @@media (max-width: 768px) {
+        .teacher-tag-content {
+            max-width: 150px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-title {
+            font-size: 1.75rem;
+        }
+
+        .header-actions .btn {
+            width: 100%;
+        }
+    }
+
+    .teacher-search-results {
+        position: absolute;
+        width: 100%;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .selected-teachers-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        min-height: 46px;
+        align-items: flex-start;
+    }
+
+        .selected-teachers-list:empty {
+            display: none;
+        }
+
+    .teacher-tag {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 1rem;
+        padding: 0.375rem 1rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        max-width: 100%;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .teacher-tag-content {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+    }
+
+    @@media (max-width: 576px) {
+        .teacher-tag {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+        }
+    }
+
+    .teacher-input-wrapper {
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .teacher-search-results::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 15px;
+        width: 12px;
+        height: 12px;
+        background: white;
+        transform: rotate(45deg);
+        border-top: 1px solid var(--border-color);
+        border-left: 1px solid var(--border-color);
+        z-index: -1;
+    }
+
+    .teacher-search-container {
+        position: relative;
+    }
+</style>
+
+
+<div class="container mb-5">
+    <header class="page-header">
+        <div>
+            <h2 class="header-title">
+                <i class="bi bi-journal-plus me-2"></i>
+                Создание учебного предмета
+            </h2>
+        </div>
+
+        <div class="header-actions">
+            <button type="submit" form="main-form" class="btn btn-primary shadow-sm px-4 py-2">
+                <i class="bi bi-save me-2"></i>Сохранить
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary shadow-sm px-4 py-2">
+                <i class="bi bi-x-lg me-2"></i>Отмена
+            </a>
+        </div>
+    </header>
+
+    <form asp-action="Create" method="post" id="main-form">
+        <div class="row g-4">
+            <!-- Секция данных предмета -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-clipboard-data me-2"></i>
+                            Основные параметры
+                        </h4>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="form-floating mb-3">
+                            <input asp-for="SubjectName" class="form-control" placeholder=" " />
+                            <label asp-for="SubjectName">Краткое название</label>
+                            <span asp-validation-for="SubjectName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="SubjectFullName" class="form-control" placeholder=" " />
+                            <label asp-for="SubjectFullName">Полное название</label>
+                            <span asp-validation-for="SubjectFullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <textarea asp-for="SubjectDescription" class="form-control"
+                                      style="height: 100px" placeholder=" "></textarea>
+                            <label asp-for="SubjectDescription">Описание предмета</label>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Duration" type="number" class="form-control"
+                                           min="1" max="10" placeholder=" " />
+                                    <label asp-for="Duration">Длительность (год)</label>
+                                    <small class="form-text text-muted mt-1 d-block">Количество лет обучения</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="LessonLength" type="number" class="form-control"
+                                           min="1" max="5" placeholder=" " />
+                                    <label asp-for="LessonLength">Продолжительность урока</label>
+                                    <small class="form-text text-muted mt-1 d-block">В академических часах</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="teacher-input-wrapper">
+                            <label class="form-label">Преподаватели</label>
+                            <div class="teacher-search-container"> <!-- Новый контейнер -->
+                                <input type="text" 
+                                       class="form-control teacher-search-input"
+                                       placeholder="Начните вводить ФИО..."
+                                       data-target="SelectedSubjectTeacherIds" />
+        
+                                <div class="teacher-search-results"></div>
+                            </div>
+    
+                            <div class="selected-teachers-list">
+                                @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
+                                {
+                                    <div class="teacher-tag" data-teacher-id="@teacherId">
+                                        <span class="teacher-tag-content">@teacherId</span>
+                                        <span class="remove-teacher-btn">×</span>
+                                    </div>
+                                }
+                            </div>
+    
+                            <div class="hidden-teacher-ids">
+                                @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
+                                {
+                                    <input type="hidden" 
+                                           name="SelectedSubjectTeacherIds" 
+                                           value="@teacherId" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Секция групп -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">
+                                <i class="bi bi-people-fill me-2"></i>
+                                Учебные группы
+                            </h4>
+                            <button type="button"
+                                    class="btn btn-light btn-sm"
+                                    id="add-group-btn">
+                                <i class="bi bi-plus-circle me-2"></i>Добавить группу
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-body" id="groups-container">
+                        @for (var i = 0; i < Model.Groups.Count; i++)
+                        {
+                            <div class="group-card card mb-3">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center bg-light">
+                                    <span class="badge bg-primary">Группа @(i + 1)</span>
+                                    <button type="button" class="btn btn-sm btn-danger remove-group">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="Groups[i].Name" class="form-control" placeholder=" " />
+                                                <label asp-for="Groups[i].Name">Название группы</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="Groups[i].Classroom" class="form-control" placeholder=" " />
+                                                <label asp-for="Groups[i].Classroom">Кабинет</label>
+                                            </div>
+                                        </div>
+                                        <!-- Аналогично для других полей группы -->
+
+                                        <div class="col-md-12 location-select-wrapper">
+                                            <div class="form-floating">
+                                                <select asp-for="Groups[i].SelectedLocationId"
+                                                        class="form-select"
+                                                        asp-items="Model.Locations">
+                                                    <option value="">Выберите локацию</option>
+                                                </select>
+                                                <label asp-for="Groups[i].SelectedLocationId">Локация</label>
+                                                <span asp-validation-for="Groups[i].SelectedLocationId"
+                                                      class="text-danger small"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 teacher-input-wrapper">
+                                            <label class="form-label">Преподаватели группы</label>
+                                            <div class="teacher-search-container">
+                                                <input type="text"
+                                                       class="form-control teacher-search-input"
+                                                       placeholder="Поиск преподавателей..."
+                                                       data-target="Groups[@i].SelectedTeacherIds" />
+                                                <div class="teacher-search-results"></div>
+                                            </div>
+
+                                            <div class="selected-teachers-list">
+                                                @foreach (var teacherId in Model.Groups[i].SelectedTeacherIds)
+                                                {
+                                                    <div class="teacher-tag" data-teacher-id="@teacherId">
+                                                        <span class="teacher-tag-content">@teacherId</span>
+                                                        <span class="remove-teacher-btn">×</span>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="hidden-teacher-ids">
+                                                @foreach (var teacherId in Model.Groups[i].SelectedTeacherIds)
+                                                {
+                                                    <input type="hidden"
+                                                           name="Groups[@i].SelectedTeacherIds"
+                                                           value="@teacherId" />
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Фиксированный футер -->
+        @* <div class="fixed-footer">
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <button type="submit" class="btn btn-primary shadow-sm px-4 py-2">
+                    <i class="bi bi-save me-2"></i>Сохранить предмет
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary shadow-sm px-4 py-2">
+                    <i class="bi bi-x-circle me-2"></i>Отменить создание
+                </a>
+            </div>
+        </div> *@
+    </form>
+</div>
+
+<!-- Шаблон для новых групп -->
+<template id="group-template">
+    <div class="group-card card mb-3">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center bg-light">
+            <span class="badge bg-primary">Новая группа</span>
+            <button type="button" class="btn btn-sm btn-danger remove-group">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input name="Groups[__INDEX__].Name" class="form-control" placeholder=" " />
+                        <label>Название группы</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input name="Groups[__INDEX__].Classroom" class="form-control" placeholder=" " />
+                        <label>Кабинет</label>
+                    </div>
+                </div>
+
+                <!-- Остальные поля группы -->
+                <div class="col-md-12 location-select-wrapper">
+                    <div class="form-floating">
+                        <select name="Groups[__INDEX__].SelectedLocationId"
+                                class="form-select">
+                            <option value="">Выберите локацию</option>
+                            @foreach (var location in Model.Locations)
+                            {
+                                <option value="@location.Value">@location.Text</option>
+                            }
+                        </select>
+                        <label>Локация</label>
+                    </div>
+                </div>
+
+                <div class="col-12 teacher-input-wrapper">
+                    <label class="form-label">Преподаватели группы</label>
+                    <div class="teacher-search-container">
+                        <input type="text"
+                               class="form-control teacher-search-input"
+                               placeholder="Поиск преподавателей..."
+                               data-target="Groups[__INDEX__].SelectedTeacherIds" />
+                        <div class="teacher-search-results"></div>
+                    </div>
+
+                    <div class="selected-teachers-list"></div>
+                    <div class="hidden-teacher-ids"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <script>
+        const apiBaseUrl = 'https://localhost:7123';
+
+        // Модуль управления преподавателями
+        const TeacherManager = (() => {
+            const debounce = (func, delay) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func(...args), delay);
+                };
+            };
+
+            const fetchTeachers = async (term) => {
+                try {
+                    const response = await fetch(`${apiBaseUrl}/api/Employees/search?term=${encodeURIComponent(term)}`);
+                    if (!response.ok) throw new Error('Ошибка сети');
+                    return await response.json();
+                } catch (error) {
+                    console.error('Ошибка поиска:', error);
+                    return [];
+                }
+            };
+
+            const updateSelectedList = (container) => {
+                const selectedList = container.querySelector('.selected-teachers-list');
+                const hasTeachers = selectedList.children.length > 0;
+
+                selectedList.style.display = hasTeachers ? 'flex' : 'none';
+                selectedList.style.border = hasTeachers ? '1px solid var(--border-color)' : 'none';
+            };
+
+            return {
+                init: (input) => {
+                    const container = input.closest('.teacher-input-wrapper');
+                    const results = container.querySelector('.teacher-search-results');
+                    const hiddenInputs = container.querySelector('.hidden-teacher-ids');
+
+                    const showResults = (items) => {
+                        results.innerHTML = items.map(teacher => `
+                            <div class="search-result-item"
+                                 data-id="${teacher.idEmployee}"
+                                 data-name="${teacher.fullName}">
+                                ${teacher.fullName}
+                            </div>
+                        `).join('');
+                        results.style.display = items.length ? 'block' : 'none';
+                    };
+
+                    const addTeacher = (id, name) => {
+                        if (hiddenInputs.querySelector(`input[value="${id}"]`)) return;
+
+                        // Добавляем hidden input
+                        const newInput = document.createElement('input');
+                        newInput.type = 'hidden';
+                        newInput.name = input.dataset.target;
+                        newInput.value = id;
+                        hiddenInputs.appendChild(newInput);
+
+                        // Добавляем визуальный элемент
+                        const tag = document.createElement('div');
+                        tag.className = 'teacher-tag';
+                        tag.dataset.teacherId = id;
+                        tag.innerHTML = `
+                            <span class="teacher-name">${name}</span>
+                            <span class="remove-teacher-btn">×</span>
+                        `;
+                        container.querySelector('.selected-teachers-list').appendChild(tag);
+                        updateSelectedList(container);
+                    };
+
+                    // Обработчики событий
+                    input.addEventListener('input', debounce(async (e) => {
+                        const term = e.target.value.trim();
+                        if (term.length < 2) {
+                            results.style.display = 'none';
+                            return;
+                        }
+                        showResults(await fetchTeachers(term));
+                    }, 300));
+
+                    container.addEventListener('click', (e) => {
+                        if (e.target.closest('.search-result-item')) {
+                            const item = e.target.closest('.search-result-item');
+                            addTeacher(item.dataset.id, item.dataset.name);
+                            input.value = '';
+                            results.style.display = 'none';
+                        }
+
+                        if (e.target.closest('.remove-teacher-btn')) {
+                            const tag = e.target.closest('.teacher-tag');
+                            const id = tag.dataset.teacherId;
+                            hiddenInputs.querySelector(`input[value="${id}"]`).remove();
+                            tag.remove();
+                            updateSelectedList(container);
+                        }
+                    });
+
+                    // Инициализация при первом запуске
+                    updateSelectedList(container);
+                },
+
+                updateSelectedList
+            };
+        })();
+
+        // Модуль управления группами
+        const GroupManager = (() => {
+            let groupIndex = @Model.Groups.Count;
+
+            const createLocationOptions = (selectElement) => {
+                selectElement.innerHTML = `
+                    <option value="">Выберите локацию</option>
+        @foreach (var location in Model.Locations)
+        {
+                            <option value="@location.Value">@location.Text</option>
+        }
+                `;
+            };
+
+            return {
+                addGroup: () => {
+                    const template = document.getElementById('group-template').content.cloneNode(true);
+                    const newGroup = template.firstElementChild;
+                    const index = groupIndex++;
+
+                    // Обновляем индексы в имени полей
+                    const regex = /__INDEX__/g;
+                    newGroup.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(regex, index);
+                    });
+
+                    // Инициализация компонентов
+                    newGroup.querySelectorAll('.teacher-search-input').forEach(TeacherManager.init);
+                    createLocationOptions(newGroup.querySelector('select[name*="SelectedLocationId"]'));
+                    document.getElementById('groups-container').appendChild(newGroup);
+                },
+
+                initRemoveHandlers: () => {
+                    document.addEventListener('click', (e) => {
+                        if (e.target.closest('.remove-group')) {
+                            e.target.closest('.group-card').remove();
+                        }
+                    });
+                }
+            };
+        })();
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация полей поиска преподавателей
+            document.querySelectorAll('.teacher-search-input').forEach(TeacherManager.init);
+
+            // Инициализация групп
+            GroupManager.initRemoveHandlers();
+            document.getElementById('add-group-btn').addEventListener('click', GroupManager.addGroup);
+
+            // Загрузка имен существующих преподавателей
+            document.querySelectorAll('.teacher-tag').forEach(async tag => {
+                const id = tag.dataset.teacherId;
+                try {
+                    const response = await fetch(`${apiBaseUrl}/api/Employees/${id}`);
+                    const teacher = await response.json();
+                    tag.querySelector('.teacher-name').textContent = teacher.fullName;
+                    TeacherManager.updateSelectedList(tag.closest('.teacher-input-wrapper'));
+                } catch {
+                    tag.querySelector('.teacher-name').textContent = 'Неизвестный';
+                }
+            });
+
+            // Принудительное обновление списков преподавателей
+            document.querySelectorAll('.teacher-input-wrapper').forEach(container => {
+                TeacherManager.updateSelectedList(container);
+            });
+        });
+    </script>
+}

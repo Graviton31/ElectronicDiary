@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ElectronicDiaryApi.Data;
+﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Responses;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using ElectronicDiaryApi.ModelsDto.UsersView;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -19,10 +13,14 @@ namespace ElectronicDiaryApi.Controllers
     public class EmployeesController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<EmployeesController> _logger; // Исправлен тип логгера
 
-        public EmployeesController(ElectronicDiaryContext context)
+        public EmployeesController(
+            ElectronicDiaryContext context,
+            ILogger<EmployeesController> logger) // Исправлен тип параметра
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Employees
@@ -64,42 +62,85 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        // EmployeesController.cs
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<EmployeeSearchResultDto>>> SearchEmployees(string term)
+        {
+            try
+            {
+                var searchTerm = term?.Trim();
+                if (string.IsNullOrEmpty(searchTerm))
+                    return Ok(new List<EmployeeSearchResultDto>());
+
+                var query = _context.Employees
+                    .Where(e => !e.IsDelete)
+                    .AsQueryable();
+
+                // Оптимизированный запрос с обработкой null
+                var employees = await query
+                    .Where(e =>
+                        EF.Functions.Like(
+                            (e.Surname ?? "") + " " + (e.Name ?? "") + " " + (e.Patronymic ?? ""),
+                            $"%{searchTerm}%") ||
+                        EF.Functions.Like(
+                            (e.Name ?? "") + " " + (e.Surname ?? "") + " " + (e.Patronymic ?? ""),
+                            $"%{searchTerm}%")
+                    )
+                    .OrderBy(e => e.Surname)
+                    .Take(10)
+                    .Select(e => new EmployeeSearchResultDto
+                    {
+                        IdEmployee = e.IdEmployee,
+                        FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()
+                    })
+                    .AsSplitQuery()
+                    .ToListAsync();
+
+                return Ok(employees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка поиска преподавателей. Term: {Term}", term);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
+            }
+        }
+
         [HttpGet("Details/{id}")]
         public async Task<ActionResult<EmployeeDto>> GetEmployeeDetails(int id)
         {
-            var employee = await _context.Employees
-                .Include(e => e.IdPostNavigation) // Должность
-                .Include(e => e.IdSubjects)       // Предметы сотрудника
-                .Include(e => e.IdGroups)         // Группы сотрудника (исправлено с Groups на IdGroups)
-                .FirstOrDefaultAsync(e => e.IdEmployee == id);
-
-            if (employee == null)
+            try
             {
-                return NotFound();
-            }
+                var employee = await _context.Employees
+                    .AsSplitQuery() // Добавлено для оптимизации
+                    .Include(e => e.IdPostNavigation)
+                    .Include(e => e.IdSubjects)
+                    .Include(e => e.IdGroups)
+                    .FirstOrDefaultAsync(e => e.IdEmployee == id);
 
-            // Формируем полное имя
-            var fullName = string.Join(" ",
-                new[] { employee.Surname, employee.Name, employee.Patronymic }
-                    .Where(p => !string.IsNullOrEmpty(p)));
+                if (employee == null) return NotFound();
 
-            // Создаем DTO
-            var result = new EmployeeDto
-            {
-                IdEmployee = employee.IdEmployee,
-                FullName = fullName,
-                BirthDate = employee.BirthDate,
-                Login = employee.Login,
-                Role = employee.Role,
-                Phone = employee.Phone,
-                Post = employee.IdPostNavigation.PostName,
-                Subjects = employee.IdSubjects
-                    .Select(subject => new SubjectWithGroupsDto
+                var fullName = string.Join(" ", new[]
+                {
+            employee.Surname,
+            employee.Name,
+            employee.Patronymic
+        }.Where(s => !string.IsNullOrEmpty(s)));
+
+                return new EmployeeDto
+                {
+                    IdEmployee = employee.IdEmployee,
+                    FullName = fullName,
+                    BirthDate = employee.BirthDate,
+                    Login = employee.Login,
+                    Role = employee.Role,
+                    Phone = employee.Phone,
+                    Post = employee.IdPostNavigation?.PostName ?? "Не указано",
+                    Subjects = employee.IdSubjects.Select(subject => new SubjectWithGroupsDto
                     {
                         IdSubject = subject.IdSubject,
                         Name = subject.Name,
-                        Groups = employee.IdGroups 
-                            .Where(g => g.IdSubject == subject.IdSubject) // Группы сотрудника по предмету
+                        Groups = employee.IdGroups
+                            .Where(g => g.IdSubject == subject.IdSubject)
                             .Select(g => new GroupDto
                             {
                                 IdGroup = g.IdGroup,
@@ -107,23 +148,29 @@ namespace ElectronicDiaryApi.Controllers
                                 Classroom = g.Classroom,
                             }).ToList()
                     }).ToList()
-            };
-
-            return Ok(result);
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employee details for ID: {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
         }
-         
+
         // GET: api/Employees/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
-
-            if (employee == null)
+            try
             {
-                return NotFound();
+                var employee = await _context.Employees.FindAsync(id);
+                return employee != null ? employee : NotFound();
             }
-
-            return employee;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employee with ID: {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         // PUT: api/Employees/5
