@@ -9,7 +9,7 @@ public partial class Group
 
     public string Name { get; set; } = null!;
 
-    public sbyte? StudentCount { get; set; }
+    public sbyte? MaxStudentCount { get; set; }
 
     public string Classroom { get; set; } = null!;
 

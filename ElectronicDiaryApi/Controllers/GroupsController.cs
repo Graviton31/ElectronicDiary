@@ -30,7 +30,7 @@ namespace ElectronicDiaryApi.Controllers
             var group = new Group
             {
                 Name = createDto.Name,
-                StudentCount = createDto.StudentCount,
+                MaxStudentCount = createDto.MaxStudentCount,
                 Classroom = createDto.Classroom,
                 IdSubject = createDto.IdSubject,
                 IdLocation = createDto.IdLocation

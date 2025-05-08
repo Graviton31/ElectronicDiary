@@ -95,7 +95,7 @@ namespace ElectronicDiaryApi.Controllers
                         IdEmployee = t.IdEmployee,
                         FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
                     }).ToList(),
-                    MaxStudents = g.StudentCount ?? 0,
+                    MaxStudentCount = g.MaxStudentCount ?? 0,
                     CurrentStudents = g.IdStudents.Count,
                     IdSubject = g.IdSubject,
                     SubjectName = g.IdSubjectNavigation.Name

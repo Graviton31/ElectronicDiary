@@ -156,10 +156,10 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasColumnName("classroom");
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
+            entity.Property(e => e.MaxStudentCount).HasColumnName("max_student_count");
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
                 .HasColumnName("name");
-            entity.Property(e => e.StudentCount).HasColumnName("student_count");
 
             entity.HasOne(d => d.IdLocationNavigation).WithMany(p => p.Groups)
                 .HasForeignKey(d => d.IdLocation)
@@ -487,16 +487,16 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
             entity.Property(e => e.Description)
-                .HasMaxLength(200)
+                .HasMaxLength(500)
                 .HasColumnName("description");
             entity.Property(e => e.Duration).HasColumnName("duration");
             entity.Property(e => e.FullName)
-                .HasMaxLength(40)
+                .HasMaxLength(80)
                 .HasColumnName("full_name");
             entity.Property(e => e.IsDelete).HasColumnName("is_delete");
             entity.Property(e => e.LessonLength).HasColumnName("lesson_length");
             entity.Property(e => e.Name)
-                .HasMaxLength(20)
+                .HasMaxLength(30)
                 .HasColumnName("name");
 
             entity.HasMany(d => d.IdEmployees).WithMany(p => p.IdSubjects)

@@ -18,5 +18,9 @@ namespace ElectronicDiaryWeb.ViewModel
         [Required(ErrorMessage = "Выберите хотя бы одного преподавателя")]
         [Display(Name = "Преподаватели группы")]
         public List<int> SelectedTeacherIds { get; set; } = new();
+
+        [Display(Name = "Макс. студентов")]
+        [Range(1, 30, ErrorMessage = "Допустимо от 1 до 30")]
+        public sbyte? StudentCount { get; set; }
     }
 }
