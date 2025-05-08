@@ -1,5 +1,6 @@
 ﻿using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -125,6 +126,31 @@ namespace ElectronicDiaryWeb.Controllers
             // Загрузка только локаций
             var locations = await _apiClient.GetFromJsonAsync<List<LocationDto>>("/api/Locations");
             vm.Locations = locations?.Select(l => new SelectListItem(l.Name, l.IdLocation.ToString())).ToList();
+        }
+
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var subjectTask = _apiClient.GetFromJsonAsync<SubjectDto>($"/api/Subjects/{id}");
+                var groupsTask = _apiClient.GetFromJsonAsync<List<GroupDto>>($"/api/Subjects/{id}/groups");
+
+                await Task.WhenAll(subjectTask, groupsTask);
+
+                if (subjectTask.Result == null) return NotFound();
+
+                var model = new SubjectDetailsViewModel
+                {
+                    Subject = subjectTask.Result,
+                    Groups = groupsTask.Result ?? new List<GroupDto>()
+                };
+
+                return View(model);
+            }
+            catch
+            {
+                return View("Error");
+            }
         }
     }
 }

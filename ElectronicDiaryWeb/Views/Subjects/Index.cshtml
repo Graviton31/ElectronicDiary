@@ -39,7 +39,7 @@
                     <td>@subject.GroupsCount</td>
                     <td>@subject.TeachersCount</td>
                     <td>
-                        <a href="#" class="btn btn-info btn-sm">Подробнее</a>
+                        <a asp-controller="Subjects" asp-action="Details" asp-route-id="@subject.IdSubject" class="btn btn-info btn-sm"> Подробнее </a>
                     </td>
                 </tr>
             }

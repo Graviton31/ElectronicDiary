@@ -1,0 +1,228 @@
+﻿@model ElectronicDiaryWeb.ViewModel.SubjectDetailsViewModel
+
+<div class="container py-4">
+    <!-- Заголовок с кнопками управления -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">@Model.Subject.FullName</h1>
+        <div class="btn-group">
+            <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
+               class="btn btn-primary px-4">
+                <i class="bi bi-pencil-square me-2"></i>Редактировать
+            </a>
+            <a asp-controller="Schedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+               class="btn btn-secondary px-4">
+                <i class="bi bi-calendar-week me-2"></i>Расписание
+            </a>
+            <a asp-controller="Enrollment" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+               class="btn btn-warning px-4">
+                <i class="bi bi-list-task me-2"></i>Заявки
+            </a>
+            <a asp-action="Delete" asp-route-id="@Model.Subject.IdSubject"
+               class="btn btn-danger px-4">
+                <i class="bi bi-trash me-2"></i>Удалить
+            </a>
+        </div>
+    </div>
+
+    <!-- Основная информация о предмете -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h2 class="h4 mb-0">
+                <i class="bi bi-info-circle me-2"></i>Основные характеристики
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-5">Краткое название:</dt>
+                        <dd class="col-sm-7">@Model.Subject.Name</dd>
+
+                        <dt class="col-sm-5">Длительность курса:</dt>
+                        <dd class="col-sm-7">@Model.Subject.Duration месяцев</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-5">Длительность урока:</dt>
+                        <dd class="col-sm-7">@Model.Subject.LessonLength минут</dd>
+
+                        <dt class="col-sm-5">Кол-во групп:</dt>
+                        <dd class="col-sm-7">@Model.Groups.Count</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h5 class="text-muted">Описание</h5>
+                <p class="lead">@(Model.Subject.Description ?? "Описание отсутствует")</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Секция с группами -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header bg-success text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-people-fill me-2"></i>Учебные группы
+                </h2>
+                <span class="badge bg-light text-dark fs-6">@Model.Groups.Count групп(а)</span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Groups.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var group in Model.Groups)
+                    {
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="card h-100 border-start-4 border-primary">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h3 class="h5 mb-0">@group.Name</h3>
+                                    <div class="d-flex flex-column align-items-end">
+                                        <span class="badge bg-secondary mb-1">@group.Classroom</span>
+                                        <span class="badge bg-info">
+                                            Студентов: @group.CurrentStudents/@group.MaxStudents
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h5 class="text-muted mb-3">
+                                            <i class="bi bi-geo-alt me-2"></i>Локация
+                                        </h5>
+                                        <div class="ps-3">
+                                            <div class="fw-bold">@group.Location.Name</div>
+                                            <div class="text-muted small">@group.Location.Address</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h5 class="text-muted mb-3">
+                                            <i class="bi bi-person-badge me-2"></i>Преподаватели
+                                        </h5>
+                                        <div class="d-flex flex-wrap gap-2 ps-3">
+                                            @foreach (var teacher in group.Teachers)
+                                            {
+                                                <div class="badge bg-light text-dark p-2 d-flex align-items-center">
+                                                    <i class="bi bi-person-circle me-2"></i>
+                                                    @teacher.FullName
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Нет активных групп
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Секция с преподавателями -->
+    <div class="card shadow-lg">
+        <div class="card-header bg-info text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-mortarboard me-2"></i>Преподаватели предмета
+                </h2>
+                <span class="badge bg-light text-dark fs-6">@Model.Teachers.Count человек</span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Teachers.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var teacher in Model.Teachers)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 border-start-4 border-info">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="flex-shrink-0">
+                                            <i class="bi bi-person-circle fs-1 text-info"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h3 class="h5 mb-1">@teacher.FullName</h3>
+                                            <div class="text-muted small">@teacher.Post</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item d-flex align-items-center">
+                                            <i class="bi bi-telephone me-2 text-muted"></i>
+                                            @if (!string.IsNullOrEmpty(teacher.Phone))
+                                            {
+                                                <a href="tel:@teacher.Phone">@teacher.Phone</a>
+                                            }
+                                            else
+                                            {
+                                                <span>Не указан</span>
+                                            }
+                                        </div>
+                                        <div class="list-group-item d-flex align-items-center">
+                                            <i class="bi bi-envelope me-2 text-muted"></i>
+                                            @teacher.Login
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a asp-controller="Employees"
+                                       asp-action="Details"
+                                       asp-route-id="@teacher.IdEmployee"
+                                       class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-file-person me-2"></i>Профиль
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Нет прикрепленных преподавателей
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+
+    .border-start-4 {
+        border-left-width: 4px !important;
+    }
+
+    .list-group-item {
+        border: none;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.6em 1em;
+    }
+</style>

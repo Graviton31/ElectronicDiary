@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -32,7 +33,7 @@ namespace ElectronicDiaryApi.Controllers
                 .Where(s => !s.IsDelete)
                 .Select(s => new SubjectListItemDto
                 {
-                    Id = s.IdSubject,
+                    IdSubject = s.IdSubject,
                     Name = s.Name,
                     FullName = s.FullName,
                     GroupsCount = s.Groups.Count,
@@ -41,6 +42,65 @@ namespace ElectronicDiaryApi.Controllers
                 .ToListAsync();
 
             return Ok(subjects);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SubjectDto>> GetSubject(int id)
+        {
+            var subject = await _context.Subjects
+                .Include(s => s.IdEmployees)
+                .FirstOrDefaultAsync(s => s.IdSubject == id);
+
+            if (subject == null) return NotFound();
+
+            return new SubjectDto
+            {
+                IdSubject = subject.IdSubject,
+                Name = subject.Name,
+                FullName = subject.FullName,
+                Description = subject.Description,
+                Duration = subject.Duration,
+                LessonLength = subject.LessonLength,
+                Teachers = subject.IdEmployees.Select(t => new EmployeeDto
+                {
+                    IdEmployee = t.IdEmployee,
+                    FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
+                    Phone = t.Phone, 
+                    Login = t.Login
+                }).ToList()
+            };
+        }
+
+        [HttpGet("{id}/groups")]
+        public async Task<ActionResult<List<GroupDto>>> GetSubjectGroups(int id)
+        {
+            return await _context.Groups
+                .Where(g => g.IdSubject == id)
+                .Include(g => g.IdLocationNavigation)
+                .Include(g => g.IdEmployees)
+                .Include(g => g.IdStudents)
+                .Select(g => new GroupDto
+                {
+                    IdGroup = g.IdGroup,
+                    Name = g.Name,
+                    Classroom = g.Classroom,
+                    Location = new LocationDto
+                    {
+                        IdLocation = g.IdLocationNavigation.IdLocation,
+                        Name = g.IdLocationNavigation.Name,
+                        Address = g.IdLocationNavigation.Addres
+                    },
+                    Teachers = g.IdEmployees.Select(t => new EmployeeDto
+                    {
+                        IdEmployee = t.IdEmployee,
+                        FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
+                    }).ToList(),
+                    MaxStudents = g.StudentCount ?? 0,
+                    CurrentStudents = g.IdStudents.Count,
+                    IdSubject = g.IdSubject,
+                    SubjectName = g.IdSubjectNavigation.Name
+                })
+                .ToListAsync();
         }
 
         [HttpPost("create")]
@@ -83,20 +143,6 @@ namespace ElectronicDiaryApi.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-        // GET: api/Subjects/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Subject>> GetSubject(int id)
-        {
-            var subject = await _context.Subjects.FindAsync(id);
-
-            if (subject == null)
-            {
-                return NotFound();
-            }
-
-            return subject;
         }
 
         // PUT: api/Subjects/5
