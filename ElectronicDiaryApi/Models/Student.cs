@@ -21,6 +21,8 @@ public partial class Student
 
     public string Password { get; set; } = null!;
 
+    public string? EducationName { get; set; }
+
     public string? IsDelete { get; set; }
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();

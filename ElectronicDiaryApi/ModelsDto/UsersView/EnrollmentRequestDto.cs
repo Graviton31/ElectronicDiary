@@ -8,5 +8,6 @@
         public string StudentFullName { get; set; }
         public string GroupName { get; set; }
         public string SubjectName { get; set; }
+        public string? Comment { get; set; }
     }
 }

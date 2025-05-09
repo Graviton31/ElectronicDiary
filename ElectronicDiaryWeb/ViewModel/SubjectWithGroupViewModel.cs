@@ -28,13 +28,18 @@ namespace ElectronicDiaryWeb.ViewModel
         [Display(Name = "Продолжительность урока (часов)")]
         public sbyte LessonLength { get; set; }
 
+        [Display(Name = "Программа предмета")]
+        public string? Syllabus { get; set; }
+
+        [Display(Name = "Преподаватели предмета")]
+        public List<int> SelectedSubjectTeacherIds { get; set; } = new();
+
         // Список групп
         public List<GroupViewModel> Groups { get; set; } = new() { new GroupViewModel() };
 
         // Списки для выбора
         public List<SelectListItem> Locations { get; set; } = new();
 
-        [Display(Name = "Преподаватели предмета")]
-        public List<int> SelectedSubjectTeacherIds { get; set; } = new();
+        
     }
 }

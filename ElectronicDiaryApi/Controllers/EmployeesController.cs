@@ -73,7 +73,7 @@ namespace ElectronicDiaryApi.Controllers
                     return Ok(new List<EmployeeSearchResultDto>());
 
                 var query = _context.Employees
-                    .Where(e => !e.IsDelete)
+                    .Where(e => e.IsDelete != true)
                     .AsQueryable();
 
                 // Оптимизированный запрос с обработкой null

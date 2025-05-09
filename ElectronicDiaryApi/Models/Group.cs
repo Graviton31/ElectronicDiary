@@ -13,6 +13,10 @@ public partial class Group
 
     public string Classroom { get; set; } = null!;
 
+    public string MinAge { get; set; } = null!;
+
+    public string MaxAge { get; set; } = null!;
+
     public int IdSubject { get; set; }
 
     public int IdLocation { get; set; }

@@ -3,6 +3,7 @@ using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.UsersView;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.ViewModel;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text.Json;
@@ -82,7 +83,8 @@ namespace ElectronicDiaryWeb.Controllers
                     FullName = vm.SubjectFullName,
                     Description = vm.SubjectDescription,
                     Duration = vm.Duration,
-                    LessonLength = vm.LessonLength
+                    LessonLength = vm.LessonLength,
+                    Syllabus = vm.Syllabus
                 };
 
                 var subjectResponse = await _apiClient.PostAsJsonAsync("/api/Subjects/create", subjectDto);
@@ -104,7 +106,9 @@ namespace ElectronicDiaryWeb.Controllers
                         Classroom = group.Classroom,
                         IdSubject = createdSubject.IdSubject,
                         IdLocation = group.SelectedLocationId,
-                        TeacherIds = group.SelectedTeacherIds
+                        TeacherIds = group.SelectedTeacherIds,
+                        MinAge = group.MinAge,
+                        MaxAge = group.MaxAge,
                     };
 
                     var groupResponse = await _apiClient.PostAsJsonAsync("/api/Groups", groupDto);

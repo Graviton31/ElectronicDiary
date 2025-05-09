@@ -10,6 +10,7 @@ namespace ElectronicDiaryApi.ModelsDto
         public string Description { get; set; }
         public sbyte Duration { get; set; }
         public sbyte LessonLength { get; set; }
+        public string? Syllabus { get; set; }
         public List<EmployeeDto> Teachers { get; set; } = new();
     }
 }

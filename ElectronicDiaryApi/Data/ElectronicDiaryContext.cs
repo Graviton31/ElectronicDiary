@@ -112,6 +112,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasIndex(e => e.IdStudent, "fk_enrollment_requests_students1_idx");
 
             entity.Property(e => e.IdRequests).HasColumnName("id_requests");
+            entity.Property(e => e.Comment)
+                .HasMaxLength(300)
+                .HasColumnName("comment");
             entity.Property(e => e.IdGroup).HasColumnName("id_group");
             entity.Property(e => e.IdParent).HasColumnName("id_parent");
             entity.Property(e => e.IdStudent).HasColumnName("id_student");
@@ -156,7 +159,13 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasColumnName("classroom");
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
+            entity.Property(e => e.MaxAge)
+                .HasMaxLength(2)
+                .HasColumnName("max_age");
             entity.Property(e => e.MaxStudentCount).HasColumnName("max_student_count");
+            entity.Property(e => e.MinAge)
+                .HasMaxLength(2)
+                .HasColumnName("min_age");
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
                 .HasColumnName("name");
@@ -432,6 +441,9 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.Property(e => e.IdStudent).HasColumnName("id_student");
             entity.Property(e => e.BirthDate).HasColumnName("birth_date");
+            entity.Property(e => e.EducationName)
+                .HasMaxLength(100)
+                .HasColumnName("education_name");
             entity.Property(e => e.IsDelete)
                 .HasMaxLength(45)
                 .HasDefaultValueSql("'0'")
@@ -498,6 +510,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(30)
                 .HasColumnName("name");
+            entity.Property(e => e.Syllabus)
+                .HasMaxLength(3000)
+                .HasColumnName("syllabus");
 
             entity.HasMany(d => d.IdEmployees).WithMany(p => p.IdSubjects)
                 .UsingEntity<Dictionary<string, object>>(

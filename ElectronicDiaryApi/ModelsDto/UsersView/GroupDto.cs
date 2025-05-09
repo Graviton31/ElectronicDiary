@@ -11,5 +11,7 @@
         public int CurrentStudents { get; set; } // Количество IdStudents
         public int IdSubject { get; set; }
         public string SubjectName { get; set; }
+        public string MinAge { get; set; } = null!;
+        public string MaxAge { get; set; } = null!;
     }
 }

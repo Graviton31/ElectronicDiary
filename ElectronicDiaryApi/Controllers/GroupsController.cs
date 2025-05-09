@@ -4,6 +4,7 @@ using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.UsersView;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -33,7 +34,9 @@ namespace ElectronicDiaryApi.Controllers
                 MaxStudentCount = createDto.MaxStudentCount,
                 Classroom = createDto.Classroom,
                 IdSubject = createDto.IdSubject,
-                IdLocation = createDto.IdLocation
+                IdLocation = createDto.IdLocation,
+                MinAge = createDto.MinAge,
+                MaxAge = createDto.MaxAge,
             };
 
             // Добавляем учителей к группе
@@ -58,6 +61,8 @@ namespace ElectronicDiaryApi.Controllers
                     Name = group.Name,
                     Classroom = group.Classroom,
                     IdSubject = group.IdSubject,
+                    MinAge = createDto.MinAge,
+                    MaxAge = createDto.MaxAge,
                     Location = new LocationDto
                     {
                         IdLocation = group.IdLocationNavigation.IdLocation,
@@ -82,6 +87,8 @@ namespace ElectronicDiaryApi.Controllers
                 Name = group.Name,
                 Classroom = group.Classroom,
                 IdSubject = group.IdSubject,
+                MinAge = group.MinAge,
+                MaxAge = group.MaxAge,
                 Location = new LocationDto
                 {
                     IdLocation = group.IdLocationNavigation.IdLocation,

@@ -23,7 +23,7 @@ public partial class Employee
 
     public string Role { get; set; } = null!;
 
-    public bool IsDelete { get; set; }
+    public bool? IsDelete { get; set; }
 
     public int IdPost { get; set; }
 

@@ -19,6 +19,8 @@ public partial class Subject
 
     public bool IsDelete { get; set; }
 
+    public string? Syllabus { get; set; }
+
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
 
     public virtual ICollection<Employee> IdEmployees { get; set; } = new List<Employee>();

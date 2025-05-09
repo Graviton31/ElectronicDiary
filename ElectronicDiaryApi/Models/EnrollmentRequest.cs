@@ -11,6 +11,8 @@ public partial class EnrollmentRequest
 
     public DateTime? RequestDate { get; set; }
 
+    public string? Comment { get; set; }
+
     public int IdParent { get; set; }
 
     public int IdStudent { get; set; }

@@ -272,17 +272,10 @@
                             <span asp-validation-for="SubjectFullName" class="text-danger small"></span>
                         </div>
 
-                        <div class="form-floating mb-4">
-                            <textarea asp-for="SubjectDescription" class="form-control"
-                                      style="height: 100px" placeholder=" "></textarea>
-                            <label asp-for="SubjectDescription">Описание предмета</label>
-                        </div>
-
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input asp-for="Duration" type="number" class="form-control"
-                                           min="1" max="10" placeholder=" " />
+                                    <input asp-for="Duration" type="number" class="form-control" min="1" max="10" placeholder=" " />
                                     <label asp-for="Duration">Длительность (год)</label>
                                     <small class="form-text text-muted mt-1 d-block">Количество лет обучения</small>
                                 </div>
@@ -290,12 +283,23 @@
 
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input asp-for="LessonLength" type="number" class="form-control"
-                                           min="1" max="5" placeholder=" " />
+                                    <input asp-for="LessonLength" type="number" class="form-control" min="1" max="5" placeholder=" " />
                                     <label asp-for="LessonLength">Продолжительность урока</label>
                                     <small class="form-text text-muted mt-1 d-block">В академических часах</small>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <textarea asp-for="SubjectDescription" class="form-control"
+                                      style="height: 100px" placeholder=" "></textarea>
+                            <label asp-for="SubjectDescription">Описание предмета</label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <textarea asp-for="Syllabus" class="form-control"
+                                      style="height: 100px" placeholder=" "></textarea>
+                            <label asp-for="Syllabus">Программа предмета</label>
                         </div>
 
                         <div class="teacher-input-wrapper">
@@ -377,13 +381,23 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating">
-                                                <input asp-for="Groups[i].StudentCount"
-                                                       type="number"
-                                                       class="form-control"
-                                                       min="1"
-                                                       max="30"
-                                                       placeholder=" " />
+                                                <input asp-for="Groups[i].StudentCount" type="number" class="form-control" min="1" max="30" placeholder=" " />
                                                 <label asp-for="Groups[i].StudentCount">Макс. студентов</label>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Groups[i].MinAge" type="number" class="form-control" min="1" max="18" placeholder=" " />
+                                                    <label asp-for="Groups[i].MinAge">Возраст с</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Groups[i].MaxAge" type="number" class="form-control" min="1" max="19" placeholder=" " />
+                                                    <label asp-for="Groups[i].MaxAge">Возраст до</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-12 location-select-wrapper">
@@ -436,18 +450,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Фиксированный футер -->
-        @* <div class="fixed-footer">
-            <div class="d-flex gap-3 justify-content-center flex-wrap">
-                <button type="submit" class="btn btn-primary shadow-sm px-4 py-2">
-                    <i class="bi bi-save me-2"></i>Сохранить предмет
-                </button>
-                <a asp-action="Index" class="btn btn-outline-secondary shadow-sm px-4 py-2">
-                    <i class="bi bi-x-circle me-2"></i>Отменить создание
-                </a>
-            </div>
-        </div> *@
     </form>
 </div>
 
@@ -477,13 +479,23 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input name="Groups[__INDEX__].StudentCount"
-                               type="number"
-                               class="form-control"
-                               min="1"
-                               max="30"
-                               placeholder=" " />
+                        <input name="Groups[__INDEX__].StudentCount" type="number" class="form-control" min="1" max="30" placeholder=" " />
                         <label>Макс. студентов</label>
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input name="Groups[__INDEX__].MinAge" type="number" class="form-control" min="1" max="18" placeholder=" " />
+                            <label>Возраст с</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input name="Groups[__INDEX__].MaxAge" type="number" class="form-control" min="1" max="19" placeholder=" " />
+                            <label>Возраст до</label>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-12 location-select-wrapper">

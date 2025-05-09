@@ -41,6 +41,7 @@ namespace ElectronicDiaryApi.Controllers
                         FullName = s.Surname + " " + s.Name + " " + s.Patronymic,
                         Login = s.Login,
                         Phone = s.Phone,
+                        EducationName = s.EducationName
                     })
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -88,6 +89,7 @@ namespace ElectronicDiaryApi.Controllers
                             .Where(p => !string.IsNullOrEmpty(p))),
                     Phone = student.Phone ?? "Не указан",
                     Login = student.Login,
+                    EducationName = student.EducationName,
                     Parents = student.IdParents.Select(p => new ParentDto
                     {
                         FullName = string.Join(" ",
@@ -103,7 +105,8 @@ namespace ElectronicDiaryApi.Controllers
                         RequestDate = er.RequestDate,
                         Status = er.Status ?? "Нет статуса",
                         GroupName = er.IdGroupNavigation?.Name ?? "Неизвестная группа",
-                        SubjectName = er.IdGroupNavigation?.IdSubjectNavigation?.Name ?? "Без предмета"
+                        SubjectName = er.IdGroupNavigation?.IdSubjectNavigation?.Name ?? "Без предмета",
+                        Comment = er.Comment
                     }).ToList(),
                     Subjects = student.IdGroups
                         .GroupBy(g => g.IdSubjectNavigation)

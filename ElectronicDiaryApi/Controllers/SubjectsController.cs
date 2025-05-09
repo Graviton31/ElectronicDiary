@@ -9,6 +9,7 @@ using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.UsersView;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -61,6 +62,7 @@ namespace ElectronicDiaryApi.Controllers
                 Description = subject.Description,
                 Duration = subject.Duration,
                 LessonLength = subject.LessonLength,
+                Syllabus = subject.Syllabus,
                 Teachers = subject.IdEmployees.Select(t => new EmployeeDto
                 {
                     IdEmployee = t.IdEmployee,
@@ -84,6 +86,8 @@ namespace ElectronicDiaryApi.Controllers
                     IdGroup = g.IdGroup,
                     Name = g.Name,
                     Classroom = g.Classroom,
+                    MinAge = g.MinAge,
+                    MaxAge = g.MaxAge,
                     Location = new LocationDto
                     {
                         IdLocation = g.IdLocationNavigation.IdLocation,
@@ -122,7 +126,7 @@ namespace ElectronicDiaryApi.Controllers
                 Description = createDto.Description,
                 Duration = createDto.Duration,
                 LessonLength = createDto.LessonLength,
-                IsDelete = false // По умолчанию не удален
+                Syllabus = createDto.Syllabus,
             };
 
             _context.Subjects.Add(subject);

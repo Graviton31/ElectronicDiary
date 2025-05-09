@@ -8,5 +8,7 @@
         public int IdSubject { get; set; }
         public int IdLocation { get; set; }
         public List<int> TeacherIds { get; set; } = new(); // Добавляем список учителей
+        public string MinAge { get; set; } = null!;
+        public string MaxAge { get; set; } = null!;
     }
 }
