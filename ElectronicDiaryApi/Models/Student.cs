@@ -23,7 +23,7 @@ public partial class Student
 
     public string? EducationName { get; set; }
 
-    public string? IsDelete { get; set; }
+    public bool? IsDelete { get; set; }
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();
 

@@ -62,15 +62,36 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        [HttpGet("all-short")]
+        public async Task<ActionResult<IEnumerable<EmployeeShortInfoDto>>> GetAllEmployeesShortInfo()
+        {
+            try
+            {
+                var employees = await _context.Employees
+                    .Select(e => new EmployeeShortInfoDto
+                    {
+                        IdEmployee = e.IdEmployee,
+                        FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()
+                    })
+                    .ToListAsync();
+
+                return Ok(employees);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Database error: {ex.Message}");
+            }
+        }
+
         // EmployeesController.cs
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<EmployeeSearchResultDto>>> SearchEmployees(string term)
+        public async Task<ActionResult<IEnumerable<EmployeeShortInfoDto>>> SearchEmployees(string term)
         {
             try
             {
                 var searchTerm = term?.Trim();
                 if (string.IsNullOrEmpty(searchTerm))
-                    return Ok(new List<EmployeeSearchResultDto>());
+                    return Ok(new List<EmployeeShortInfoDto>());
 
                 var query = _context.Employees
                     .Where(e => e.IsDelete != true)
@@ -88,7 +109,7 @@ namespace ElectronicDiaryApi.Controllers
                     )
                     .OrderBy(e => e.Surname)
                     .Take(10)
-                    .Select(e => new EmployeeSearchResultDto
+                    .Select(e => new EmployeeShortInfoDto
                     {
                         IdEmployee = e.IdEmployee,
                         FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()

@@ -9,13 +9,15 @@ public partial class Group
 
     public string Name { get; set; } = null!;
 
-    public sbyte? MaxStudentCount { get; set; }
+    public sbyte MaxStudentCount { get; set; }
 
     public string Classroom { get; set; } = null!;
 
     public string MinAge { get; set; } = null!;
 
     public string MaxAge { get; set; } = null!;
+
+    public bool? IsDelete { get; set; }
 
     public int IdSubject { get; set; }
 

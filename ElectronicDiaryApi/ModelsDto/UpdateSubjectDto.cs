@@ -1,10 +1,7 @@
-﻿using ElectronicDiaryApi.ModelsDto.UsersView;
-
-namespace ElectronicDiaryApi.ModelsDto
+﻿namespace ElectronicDiaryApi.ModelsDto
 {
-    public class SubjectDto
+    public class UpdateSubjectDto
     {
-        public int IdSubject { get; set; }
         public string Name { get; set; }
         public string FullName { get; set; }
         public string Description { get; set; }
@@ -12,6 +9,9 @@ namespace ElectronicDiaryApi.ModelsDto
         public sbyte LessonLength { get; set; }
         public string? Syllabus { get; set; }
         public bool? IsDelete { get; set; }
-        public List<EmployeeDto> Teachers { get; set; } = new();
+        public List<int> TeacherIds { get; set; } = new();
+
+        // Конструктор для удобства инициализации
+        //public UpdateSubjectDto() { }
     }
 }

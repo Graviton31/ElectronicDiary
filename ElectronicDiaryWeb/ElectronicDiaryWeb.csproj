@@ -20,4 +20,8 @@
     <ProjectReference Include="..\ElectronicDiaryApi\ElectronicDiaryApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\Enrollment\" />
+  </ItemGroup>
+
 </Project>

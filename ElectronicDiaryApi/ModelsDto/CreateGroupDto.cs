@@ -3,7 +3,7 @@
     public class CreateGroupDto
     {
         public string Name { get; set; }
-        public sbyte? MaxStudentCount { get; set; }
+        public sbyte MaxStudentCount { get; set; }
         public string Classroom { get; set; }
         public int IdSubject { get; set; }
         public int IdLocation { get; set; }

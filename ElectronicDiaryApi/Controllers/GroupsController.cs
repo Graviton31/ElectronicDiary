@@ -13,10 +13,12 @@ namespace ElectronicDiaryApi.Controllers
     public class GroupsController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<GroupsController> _logger;
 
-        public GroupsController(ElectronicDiaryContext context)
+        public GroupsController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -77,6 +79,7 @@ namespace ElectronicDiaryApi.Controllers
         {
             var group = await _context.Groups
                 .Include(g => g.IdLocationNavigation)
+                .Where(g => g.IsDelete != true)
                 .FirstOrDefaultAsync(g => g.IdGroup == id);
 
             if (group == null) return NotFound();
@@ -96,6 +99,92 @@ namespace ElectronicDiaryApi.Controllers
                     Address = group.IdLocationNavigation.Addres
                 }
             };
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutGroup(int id, UpdateGroupDto updateDto)
+        {
+            var location = await _context.Locations.FindAsync(updateDto.IdLocation);
+            if (location == null) return BadRequest("Invalid Location ID");
+
+            var group = await _context.Groups
+                .Include(g => g.IdEmployees)
+                .FirstOrDefaultAsync(g => g.IdGroup == id);
+
+            if (group == null) return NotFound();
+
+            // Обновление основных полей
+            group.Name = updateDto.Name;
+            group.Classroom = updateDto.Classroom;
+            group.MaxStudentCount = updateDto.MaxStudentCount;
+            group.MinAge = updateDto.MinAge;
+            group.MaxAge = updateDto.MaxAge;
+            group.IdLocation = updateDto.IdLocation;
+
+            // Обновление преподавателей
+            var currentTeachers = group.IdEmployees.ToList();
+            var selectedIds = updateDto.TeacherIds ?? new List<int>();
+
+            // Удаляем неактуальных преподавателей
+            foreach (var teacher in currentTeachers)
+            {
+                if (!selectedIds.Contains(teacher.IdEmployee))
+                {
+                    group.IdEmployees.Remove(teacher);
+                }
+            }
+
+            // Добавляем новых преподавателей
+            foreach (var teacherId in selectedIds)
+            {
+                if (!currentTeachers.Any(t => t.IdEmployee == teacherId))
+                {
+                    var teacher = await _context.Employees.FindAsync(teacherId);
+                    if (teacher != null) group.IdEmployees.Add(teacher);
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!GroupExists(id)) return NotFound();
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteGroup(int id)
+        {
+            try
+            {
+                var group = await _context.Groups.FindAsync(id);
+                if (group == null)
+                {
+                    _logger.LogWarning("Group not found: {GroupId}", id);
+                    return NotFound();
+                }
+
+                group.IsDelete = true;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Group {GroupId} marked as deleted", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting group {GroupId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private bool GroupExists(int id)
+        {
+            return _context.Groups.Any(e => e.IdGroup == id);
         }
     }
 }

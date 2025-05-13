@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ElectronicDiaryApi.Data;
+﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.UsersView;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -31,7 +25,7 @@ namespace ElectronicDiaryApi.Controllers
             var subjects = await _context.Subjects
                 .Include(s => s.Groups)
                 .Include(s => s.IdEmployees)
-                .Where(s => !s.IsDelete)
+                .Where(e => e.IsDelete != true)
                 .Select(s => new SubjectListItemDto
                 {
                     IdSubject = s.IdSubject,
@@ -67,7 +61,7 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     IdEmployee = t.IdEmployee,
                     FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
-                    Phone = t.Phone, 
+                    Phone = t.Phone,
                     Login = t.Login
                 }).ToList()
             };
@@ -77,7 +71,7 @@ namespace ElectronicDiaryApi.Controllers
         public async Task<ActionResult<List<GroupDto>>> GetSubjectGroups(int id)
         {
             return await _context.Groups
-                .Where(g => g.IdSubject == id)
+                .Where(g => g.IdSubject == id && g.IsDelete != true) // Добавляем проверку на удаление
                 .Include(g => g.IdLocationNavigation)
                 .Include(g => g.IdEmployees)
                 .Include(g => g.IdStudents)
@@ -99,7 +93,7 @@ namespace ElectronicDiaryApi.Controllers
                         IdEmployee = t.IdEmployee,
                         FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
                     }).ToList(),
-                    MaxStudentCount = g.MaxStudentCount ?? 0,
+                    MaxStudentCount = g.MaxStudentCount,
                     CurrentStudents = g.IdStudents.Count,
                     IdSubject = g.IdSubject,
                     SubjectName = g.IdSubjectNavigation.Name
@@ -151,15 +145,47 @@ namespace ElectronicDiaryApi.Controllers
 
         // PUT: api/Subjects/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/Subjects/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSubject(int id, Subject subject)
+        public async Task<IActionResult> PutSubject(int id, UpdateSubjectDto updateDto)
         {
-            if (id != subject.IdSubject)
+            var subject = await _context.Subjects
+                .Include(s => s.IdEmployees)
+                .FirstOrDefaultAsync(s => s.IdSubject == id);
+
+            if (subject == null) return NotFound();
+
+            // Обновление основных полей
+            subject.Name = updateDto.Name;
+            subject.FullName = updateDto.FullName;
+            subject.Description = updateDto.Description;
+            subject.Duration = updateDto.Duration;
+            subject.LessonLength = updateDto.LessonLength;
+            subject.Syllabus = updateDto.Syllabus;
+            subject.IsDelete = updateDto.IsDelete;
+
+            // Обновление преподавателей
+            var currentTeachers = subject.IdEmployees.ToList();
+            var selectedTeacherIds = updateDto.TeacherIds ?? new List<int>();
+
+            // Удаляем невыбранных преподавателей
+            foreach (var teacher in currentTeachers)
             {
-                return BadRequest();
+                if (!selectedTeacherIds.Contains(teacher.IdEmployee))
+                {
+                    subject.IdEmployees.Remove(teacher);
+                }
             }
 
-            _context.Entry(subject).State = EntityState.Modified;
+            // Добавляем новых преподавателей
+            foreach (var teacherId in selectedTeacherIds)
+            {
+                if (!currentTeachers.Any(t => t.IdEmployee == teacherId))
+                {
+                    var teacher = await _context.Employees.FindAsync(teacherId);
+                    if (teacher != null) subject.IdEmployees.Add(teacher);
+                }
+            }
 
             try
             {
@@ -167,14 +193,8 @@ namespace ElectronicDiaryApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SubjectExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!SubjectExists(id)) return NotFound();
+                throw;
             }
 
             return NoContent();

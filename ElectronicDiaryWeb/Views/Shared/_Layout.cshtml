@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ElectronicDiaryWeb.styles.css" asp-append-version="true" />
-    <!-- Добавляем Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-book-open me-2"></i>Electronic Diary
+                    <i class="bi bi-journal-bookmark me-2"></i>Electronic Diary
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -24,34 +24,34 @@
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Schedule" asp-action="Index">
-                                <i class="fas fa-calendar-alt me-1"></i>Расписание
+                                <i class="bi bi-calendar3 me-1"></i>Расписание
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Users" asp-action="Index">
-                                <i class="fas fa-users me-1"></i>Пользователи
+                                <i class="bi bi-people me-1"></i>Пользователи
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Journal" asp-action="Index">
-                                <i class="fas fa-clipboard-list me-1"></i>Журнал
+                                <i class="bi bi-clipboard-data me-1"></i>Журнал
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Subjects" asp-action="Index">
-                                <i class="fas fa-book me-1"></i>Предметы
+                                <i class="bi bi-book me-1"></i>Предметы
                             </a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">
-                                <i class="fas fa-home me-1"></i>Главная
+                                <i class="bi bi-house-door me-1"></i>Главная
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Privacy">
-                                <i class="fas fa-shield-alt me-1"></i>Безопасность
+                                <i class="bi bi-shield-lock me-1"></i>Безопасность
                             </a>
                         </li>
                     </ul>

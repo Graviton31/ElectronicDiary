@@ -1,7 +1,39 @@
 ﻿@model ElectronicDiaryWeb.ViewModel.SubjectDetailsViewModel
 
-<!-- Подключение Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    .card {
+        border-radius: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+
+    .border-start-4 {
+        border-left-width: 4px !important;
+    }
+
+    .list-group-item {
+        border: none;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.6em 1em;
+    }
+
+    .text-muted small {
+        font-size: 0.875em;
+    }
+</style>
 
 <div class="container py-4">
     <!-- Заголовок с кнопками управления -->
@@ -68,7 +100,7 @@
 
             <h3 class="h5 text-muted mb-3">Программа предмета</h3>
             <div class="alert alert-light mb-0">
-                @(string.IsNullOrEmpty(Model.Subject.Syllabus) ? "Программа отсутствует" : Model.Subject.Description)
+                @(string.IsNullOrEmpty(Model.Subject.Syllabus) ? "Программа отсутствует" : Model.Subject.Syllabus)
             </div>
         </div>
     </div>
@@ -224,37 +256,3 @@
     </div>
 </div>
 
-<style>
-    .card {
-        border-radius: 1rem;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-        }
-
-    .border-start-4 {
-        border-left-width: 4px !important;
-    }
-
-    .list-group-item {
-        border: none;
-        padding: 0.75rem 1.25rem;
-    }
-
-    .alert-warning {
-        background-color: #fff3cd;
-        border-color: #ffeeba;
-    }
-
-    .badge {
-        font-weight: 500;
-        padding: 0.6em 1em;
-    }
-
-    .text-muted small {
-        font-size: 0.875em;
-    }
-</style>

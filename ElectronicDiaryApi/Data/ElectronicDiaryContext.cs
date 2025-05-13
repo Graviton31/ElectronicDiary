@@ -159,6 +159,9 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasColumnName("classroom");
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
+            entity.Property(e => e.IsDelete)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("is_delete");
             entity.Property(e => e.MaxAge)
                 .HasMaxLength(2)
                 .HasColumnName("max_age");
@@ -505,7 +508,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.Property(e => e.FullName)
                 .HasMaxLength(80)
                 .HasColumnName("full_name");
-            entity.Property(e => e.IsDelete).HasColumnName("is_delete");
+            entity.Property(e => e.IsDelete)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("is_delete");
             entity.Property(e => e.LessonLength).HasColumnName("lesson_length");
             entity.Property(e => e.Name)
                 .HasMaxLength(30)
