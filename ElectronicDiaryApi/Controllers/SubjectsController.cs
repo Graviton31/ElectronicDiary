@@ -1,6 +1,8 @@
 ﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
+using ElectronicDiaryApi.ModelsDto.Group;
+using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryApi.ModelsDto.UsersView;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

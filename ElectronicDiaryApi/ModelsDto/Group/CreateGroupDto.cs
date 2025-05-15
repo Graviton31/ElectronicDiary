@@ -1,4 +1,4 @@
-﻿namespace ElectronicDiaryApi.ModelsDto
+﻿namespace ElectronicDiaryApi.ModelsDto.Group
 {
     public class CreateGroupDto
     {

@@ -1,4 +1,5 @@
-﻿using ElectronicDiaryApi.ModelsDto;
+﻿using ElectronicDiaryApi.ModelsDto.Group;
+using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryApi.ModelsDto.UsersView;
 
 namespace ElectronicDiaryWeb.ViewModel

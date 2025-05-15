@@ -1,4 +1,6 @@
 ﻿using ElectronicDiaryApi.Models;
+using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
+using ElectronicDiaryApi.ModelsDto.Subject;
 
 namespace ElectronicDiaryApi.ModelsDto.UsersView
 {

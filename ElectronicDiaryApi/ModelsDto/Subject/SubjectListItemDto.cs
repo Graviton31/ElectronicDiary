@@ -1,4 +1,4 @@
-﻿namespace ElectronicDiaryApi.ModelsDto
+﻿namespace ElectronicDiaryApi.ModelsDto.Subject
 {
     public class SubjectListItemDto
     {

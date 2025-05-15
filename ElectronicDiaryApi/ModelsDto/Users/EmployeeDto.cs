@@ -1,4 +1,6 @@
-﻿namespace ElectronicDiaryApi.ModelsDto.UsersView
+﻿using ElectronicDiaryApi.ModelsDto.Subject;
+
+namespace ElectronicDiaryApi.ModelsDto.UsersView
 {
     public class EmployeeDto
     {

@@ -1,6 +1,8 @@
 ﻿using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
-using ElectronicDiaryApi.ModelsDto.UsersView;
+using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
+using ElectronicDiaryApi.ModelsDto.Group;
+using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.ViewModel;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -178,11 +180,11 @@ namespace ElectronicDiaryWeb.Controllers
                 var locations = await _apiClient.GetFromJsonAsync<List<LocationDto>>("/api/Locations") ?? new();
 
                 // Загрузка преподавателей
-                var teachers = new List<EmployeeShortInfoDto>();
+                var teachers = new List<EnrollmentRequestShortInfoDto>();
                 var teachersResponse = await _apiClient.GetAsync("/api/Employees/all-short");
                 if (teachersResponse.IsSuccessStatusCode)
                 {
-                    teachers = await teachersResponse.Content.ReadFromJsonAsync<List<EmployeeShortInfoDto>>() ?? new();
+                    teachers = await teachersResponse.Content.ReadFromJsonAsync<List<EnrollmentRequestShortInfoDto>>() ?? new();
                 }
 
                 // Формирование ViewModel
@@ -314,7 +316,7 @@ namespace ElectronicDiaryWeb.Controllers
                 if (teachersResponse.IsSuccessStatusCode)
                 {
                     vm.TeacherNames = await teachersResponse.Content
-                        .ReadFromJsonAsync<List<EmployeeShortInfoDto>>()
+                        .ReadFromJsonAsync<List<EnrollmentRequestShortInfoDto>>()
                         .ContinueWith(t => t.Result?
                             .ToDictionary(x => x.IdEmployee, x => x.FullName)
                             ?? new Dictionary<int, string>());
@@ -347,7 +349,7 @@ namespace ElectronicDiaryWeb.Controllers
                 .ToList() ?? new List<SelectListItem>();
 
             // Восстановление имен преподавателей
-            var teachers = await _apiClient.GetFromJsonAsync<List<EmployeeShortInfoDto>>("/api/Employees/all-short");
+            var teachers = await _apiClient.GetFromJsonAsync<List<EnrollmentRequestShortInfoDto>>("/api/Employees/all-short");
             vm.TeacherNames = teachers?
                 .ToDictionary(t => t.IdEmployee, t => t.FullName)
                 ?? new Dictionary<int, string>();

@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
-using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Responses;
 using ElectronicDiaryApi.ModelsDto.UsersView;
+using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
+using ElectronicDiaryApi.ModelsDto.Subject;
+using ElectronicDiaryApi.ModelsDto.Group;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -18,10 +20,12 @@ namespace ElectronicDiaryApi.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<GroupsController> _logger;
 
-        public StudentsController(ElectronicDiaryContext context)
+        public StudentsController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Students
@@ -74,6 +78,8 @@ namespace ElectronicDiaryApi.Controllers
                     .Include(s => s.IdGroups)
                         .ThenInclude(g => g.IdSubjectNavigation)
                     .Include(s => s.IdParents)
+                    .Include(s => s.EnrollmentRequests)
+                        .ThenInclude(er => er.IdParentNavigation) // Загружаем родителя для каждой заявки
                     .FirstOrDefaultAsync(s => s.IdStudent == id);
 
                 if (student == null)
@@ -81,33 +87,38 @@ namespace ElectronicDiaryApi.Controllers
                     return NotFound("Студент не найден");
                 }
 
+                var fullName = string.Join(" ",
+                    new[] { student.Surname, student.Name, student.Patronymic }
+                        .Where(p => !string.IsNullOrEmpty(p)));
+
                 var result = new StudentDto
                 {
                     IdStudent = student.IdStudent,
-                    FullName = string.Join(" ",
-                        new[] { student.Surname, student.Name, student.Patronymic }
-                            .Where(p => !string.IsNullOrEmpty(p))),
+                    FullName = fullName,
                     Phone = student.Phone ?? "Не указан",
                     Login = student.Login,
                     EducationName = student.EducationName,
-                    Parents = student.IdParents.Select(p => new ParentDto
+                    Parents = student.IdParents?.Select(p => new ParentDto
                     {
                         FullName = string.Join(" ",
                             new[] { p.Surname, p.Name, p.Patronymic }
                                 .Where(n => !string.IsNullOrEmpty(n))),
                         Phone = p.Phone ?? "Не указан",
                         BirthDate = p.BirthDate,
-                        ParentRole =p.ParentRole,
-                    }).ToList(),
-                    EnrollmentRequests = student.EnrollmentRequests.Select(er => new EnrollmentRequestDto
+                        ParentRole = p.ParentRole,
+                    }).ToList() ?? new List<ParentDto>(), // Обработка null
+                    EnrollmentRequests = student.EnrollmentRequests?.Select(er => new EnrollmentRequestDto
                     {
                         IdRequest = er.IdRequests,
                         RequestDate = er.RequestDate,
                         Status = er.Status ?? "Нет статуса",
                         GroupName = er.IdGroupNavigation?.Name ?? "Неизвестная группа",
                         SubjectName = er.IdGroupNavigation?.IdSubjectNavigation?.Name ?? "Без предмета",
+                        ParentFullName = string.Join(" ", new[] 
+                                { er.IdParentNavigation.Surname, er.IdParentNavigation.Name, er.IdParentNavigation.Patronymic }),
+                        IdParent = er.IdParentNavigation.IdParent,
                         Comment = er.Comment
-                    }).ToList(),
+                    }).ToList() ?? new List<EnrollmentRequestDto>(), // Обработка null
                     Subjects = student.IdGroups
                         .GroupBy(g => g.IdSubjectNavigation)
                         .Select(g => new SubjectWithGroupsDto
@@ -128,6 +139,8 @@ namespace ElectronicDiaryApi.Controllers
             }
             catch (Exception ex)
             {
+                // Логирование исключения
+                _logger.LogError(ex, "Ошибка при получении деталей студента с ID {Id}", id);
                 return StatusCode(500, "Внутренняя ошибка сервера");
             }
         }

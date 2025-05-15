@@ -1,7 +1,9 @@
 ﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
-using ElectronicDiaryApi.ModelsDto;
+using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
+using ElectronicDiaryApi.ModelsDto.Group;
 using ElectronicDiaryApi.ModelsDto.Responses;
+using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryApi.ModelsDto.UsersView;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -63,12 +65,12 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         [HttpGet("all-short")]
-        public async Task<ActionResult<IEnumerable<EmployeeShortInfoDto>>> GetAllEmployeesShortInfo()
+        public async Task<ActionResult<IEnumerable<EnrollmentRequestShortInfoDto>>> GetAllEmployeesShortInfo()
         {
             try
             {
                 var employees = await _context.Employees
-                    .Select(e => new EmployeeShortInfoDto
+                    .Select(e => new EnrollmentRequestShortInfoDto
                     {
                         IdEmployee = e.IdEmployee,
                         FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()
@@ -85,13 +87,13 @@ namespace ElectronicDiaryApi.Controllers
 
         // EmployeesController.cs
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<EmployeeShortInfoDto>>> SearchEmployees(string term)
+        public async Task<ActionResult<IEnumerable<EnrollmentRequestShortInfoDto>>> SearchEmployees(string term)
         {
             try
             {
                 var searchTerm = term?.Trim();
                 if (string.IsNullOrEmpty(searchTerm))
-                    return Ok(new List<EmployeeShortInfoDto>());
+                    return Ok(new List<EnrollmentRequestShortInfoDto>());
 
                 var query = _context.Employees
                     .Where(e => e.IsDelete != true)
@@ -109,7 +111,7 @@ namespace ElectronicDiaryApi.Controllers
                     )
                     .OrderBy(e => e.Surname)
                     .Take(10)
-                    .Select(e => new EmployeeShortInfoDto
+                    .Select(e => new EnrollmentRequestShortInfoDto
                     {
                         IdEmployee = e.IdEmployee,
                         FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()

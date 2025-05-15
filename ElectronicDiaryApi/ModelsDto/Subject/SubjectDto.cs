@@ -1,6 +1,6 @@
 ﻿using ElectronicDiaryApi.ModelsDto.UsersView;
 
-namespace ElectronicDiaryApi.ModelsDto
+namespace ElectronicDiaryApi.ModelsDto.Subject
 {
     public class SubjectDto
     {

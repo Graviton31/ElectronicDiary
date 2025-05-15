@@ -1,6 +1,7 @@
 ﻿// API Controllers/ScheduleController.cs
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
+using ElectronicDiaryApi.ModelsDto.Shedule;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,7 +22,7 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         [HttpGet("{date}")]
-        public ActionResult<UnifiedScheduleResponse> GetAllGroupsSchedule(DateTime date)
+        public ActionResult<UnifiedScheduleResponseDto> GetAllGroupsSchedule(DateTime date)
         {
             var startOfWeek = date.Date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
             var endOfWeek = startOfWeek.AddDays(6);
@@ -45,7 +46,7 @@ namespace ElectronicDiaryApi.Controllers
                 ProcessGroupSchedule(group, unifiedSchedule, startOfWeekDateOnly, endOfWeekDateOnly);
             }
 
-            return Ok(new UnifiedScheduleResponse
+            return Ok(new UnifiedScheduleResponseDto
             {
                 WeekStartDate = startOfWeekDateOnly,
                 WeekEndDate = endOfWeekDateOnly,
@@ -53,16 +54,16 @@ namespace ElectronicDiaryApi.Controllers
             });
         }
 
-        private Dictionary<DateOnly, DaySchedule> InitializeWeekSchedule(DateOnly start, DateOnly end)
+        private Dictionary<DateOnly, DayScheduleDto> InitializeWeekSchedule(DateOnly start, DateOnly end)
         {
-            var schedule = new Dictionary<DateOnly, DaySchedule>();
+            var schedule = new Dictionary<DateOnly, DayScheduleDto>();
             for (var day = start; day <= end; day = day.AddDays(1))
             {
-                schedule[day] = new DaySchedule
+                schedule[day] = new DayScheduleDto
                 {
                     Date = day,
                     DayOfWeek = day.DayOfWeek.ToString(),
-                    Lessons = new List<UnifiedLessonInfo>()
+                    Lessons = new List<UnifiedLessonInfoDto>()
                 };
             }
             return schedule;
@@ -70,7 +71,7 @@ namespace ElectronicDiaryApi.Controllers
 
         private void ProcessGroupSchedule(
             Group group,
-            Dictionary<DateOnly, DaySchedule> schedule,
+            Dictionary<DateOnly, DayScheduleDto> schedule,
             DateOnly weekStart,
             DateOnly weekEnd)
         {
@@ -111,12 +112,12 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         private void AddStandardLesson(
-            Dictionary<DateOnly, DaySchedule> schedule,
+            Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
             StandardSchedule standardSchedule,
             DateOnly date)
         {
-            var lesson = new UnifiedLessonInfo
+            var lesson = new UnifiedLessonInfoDto
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
@@ -134,7 +135,7 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         private void ProcessReschedule(
-            Dictionary<DateOnly, DaySchedule> schedule,
+            Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
             ScheduleChange change)
         {
@@ -155,7 +156,7 @@ namespace ElectronicDiaryApi.Controllers
             // Add to new date
             if (change.NewDate.HasValue && schedule.ContainsKey(change.NewDate.Value))
             {
-                var newLesson = new UnifiedLessonInfo
+                var newLesson = new UnifiedLessonInfoDto
                 {
                     GroupName = group.Name,
                     SubjectName = group.IdSubjectNavigation.Name,
@@ -165,7 +166,7 @@ namespace ElectronicDiaryApi.Controllers
                     EndTime = change.NewEndTime ?? change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
                     IsChanged = true,
                     ChangeType = "перенос",
-                    OriginalDetails = new OriginalLessonDetails
+                    OriginalDetails = new OriginalLessonDetailsDto
                     {
                         Date = change.OldDate ?? DateOnly.MinValue,
                         StartTime = change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
@@ -181,7 +182,7 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         private void ProcessCancellation(
-            Dictionary<DateOnly, DaySchedule> schedule,
+            Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
             ScheduleChange change)
         {
@@ -200,13 +201,13 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         private void ProcessAdditionalLesson(
-            Dictionary<DateOnly, DaySchedule> schedule,
+            Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
             ScheduleChange change)
         {
             if (!change.NewDate.HasValue || !schedule.ContainsKey(change.NewDate.Value)) return;
 
-            var lesson = new UnifiedLessonInfo
+            var lesson = new UnifiedLessonInfoDto
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
@@ -223,42 +224,6 @@ namespace ElectronicDiaryApi.Controllers
             schedule[change.NewDate.Value].Lessons = schedule[change.NewDate.Value].Lessons
                 .OrderBy(l => l.StartTime)
                 .ToList();
-        }
-
-        public class UnifiedScheduleResponse
-        {
-            public DateOnly WeekStartDate { get; set; }
-            public DateOnly WeekEndDate { get; set; }
-            public List<DaySchedule> Days { get; set; }
-        }
-
-        public class DaySchedule
-        {
-            public DateOnly Date { get; set; }
-            public string DayOfWeek { get; set; }
-            public List<UnifiedLessonInfo> Lessons { get; set; }
-        }
-
-        public class UnifiedLessonInfo
-        {
-            public string GroupName { get; set; }
-            public string SubjectName { get; set; }
-            public string Classroom { get; set; }
-            public List<string> Teachers { get; set; }
-            public TimeOnly StartTime { get; set; }
-            public TimeOnly EndTime { get; set; }
-            public bool IsChanged { get; set; }
-            public string ChangeType { get; set; }
-            public bool IsCancelled { get; set; }
-            public bool IsAdditional { get; set; }
-            public OriginalLessonDetails OriginalDetails { get; set; }
-        }
-
-        public class OriginalLessonDetails
-        {
-            public DateOnly Date { get; set; }
-            public TimeOnly StartTime { get; set; }
-            public TimeOnly EndTime { get; set; }
         }
     }
 }

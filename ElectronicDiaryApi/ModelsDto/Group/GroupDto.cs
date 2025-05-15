@@ -1,4 +1,6 @@
-﻿namespace ElectronicDiaryApi.ModelsDto.UsersView
+﻿using ElectronicDiaryApi.ModelsDto.UsersView;
+
+namespace ElectronicDiaryApi.ModelsDto.Group
 {
     public class GroupDto
     {

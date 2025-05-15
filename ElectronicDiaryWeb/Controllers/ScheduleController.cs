@@ -1,10 +1,10 @@
-﻿using ElectronicDiaryWeb.Models;
+﻿using ElectronicDiaryApi.ModelsDto.Shedule;
+using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using static ElectronicDiaryApi.Controllers.ScheduleController;
 
 namespace ElectronicDiaryWeb.Controllers
 {
@@ -28,7 +28,7 @@ namespace ElectronicDiaryWeb.Controllers
                 var response = await _httpClient.GetAsync($"schedule/{targetDate:yyyy-MM-dd}");
                 response.EnsureSuccessStatusCode();
 
-                var schedule = await response.Content.ReadFromJsonAsync<UnifiedScheduleResponse>();
+                var schedule = await response.Content.ReadFromJsonAsync<UnifiedScheduleResponseDto>();
                 var model = new UnifiedScheduleViewModel
                 {
                     Schedule = schedule,

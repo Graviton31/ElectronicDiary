@@ -1,4 +1,4 @@
-﻿namespace ElectronicDiaryApi.ModelsDto
+﻿namespace ElectronicDiaryApi.ModelsDto.Subject
 {
     public class UpdateSubjectDto
     {
@@ -12,6 +12,6 @@
         public List<int> TeacherIds { get; set; } = new();
 
         // Конструктор для удобства инициализации
-        //public UpdateSubjectDto() { }
+        public UpdateSubjectDto() { }
     }
 }

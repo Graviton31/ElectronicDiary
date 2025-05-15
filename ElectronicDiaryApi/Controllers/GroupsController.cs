@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
-using ElectronicDiaryApi.ModelsDto.UsersView;
 using Microsoft.AspNetCore.Http.HttpResults;
+using ElectronicDiaryApi.ModelsDto.Group;
 
 namespace ElectronicDiaryApi.Controllers
 {

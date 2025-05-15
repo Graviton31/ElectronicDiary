@@ -1,7 +1,49 @@
 ﻿<!-- Views/Schedule/Index.cshtml -->
-@model UnifiedScheduleViewModel
+@model ElectronicDiaryWeb.ViewModel.UnifiedScheduleViewModel
 @using System.Globalization
-@using ElectronicDiaryWeb.ViewModel
+
+<style>
+    .lesson-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+    }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+    .time-block {
+        padding: 8px;
+        background-color: #e9ecef;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .subject-group .badge {
+        margin-right: 6px;
+        margin-bottom: 4px;
+        font-size: 0.9em;
+    }
+
+    .teachers {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .cancelled {
+        opacity: 0.6;
+        background-color: #ffeef0;
+        text-decoration: line-through;
+    }
+
+    .badge.bg-warning {
+        color: #000;
+    }
+</style>
 
 <div class="container">
     <h2 class="mb-4">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>
@@ -89,45 +131,3 @@
     }
 </div>
 
-<style>
-    .lesson-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-        transition: all 0.2s;
-    }
-
-        .lesson-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-    .time-block {
-        padding: 8px;
-        background-color: #e9ecef;
-        border-radius: 6px;
-        text-align: center;
-    }
-
-    .subject-group .badge {
-        margin-right: 6px;
-        margin-bottom: 4px;
-        font-size: 0.9em;
-    }
-
-    .teachers {
-        font-size: 0.9em;
-        color: #6c757d;
-        margin-top: 4px;
-    }
-
-    .cancelled {
-        opacity: 0.6;
-        background-color: #ffeef0;
-        text-decoration: line-through;
-    }
-
-    .badge.bg-warning {
-        color: #000;
-    }
-</style>
