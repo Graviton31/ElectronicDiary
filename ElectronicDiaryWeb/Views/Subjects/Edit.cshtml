@@ -171,14 +171,6 @@
 
                                         <div class="col-md-6">
                                             <div class="form-floating">
-                                                <input asp-for="ExistingGroups[i].Classroom"
-                                                       class="form-control" placeholder=" " />
-                                                <label asp-for="ExistingGroups[i].Classroom"></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
                                                 <input asp-for="ExistingGroups[i].MaxStudentCount"
                                                        class="form-control" min="1" max="30" placeholder=" " />
                                                 <label asp-for="ExistingGroups[i].MaxStudentCount"></label>
@@ -276,12 +268,6 @@
                     <div class="form-floating">
                         <input name="ExistingGroups[__INDEX__].Name" class="form-control" placeholder=" " />
                         <label>Название группы</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-floating">
-                        <input name="ExistingGroups[__INDEX__].Classroom" class="form-control" placeholder=" " />
-                        <label>Кабинет</label>
                     </div>
                 </div>
                 <div class="col-md-6">

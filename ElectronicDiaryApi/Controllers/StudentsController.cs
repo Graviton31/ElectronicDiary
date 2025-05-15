@@ -129,7 +129,6 @@ namespace ElectronicDiaryApi.Controllers
                             {
                                 IdGroup = gr.IdGroup,
                                 Name = gr.Name,
-                                Classroom = gr.Classroom,
                                 SubjectName = gr.IdSubjectNavigation.Name,
                             }).ToList()
                         }).ToList()

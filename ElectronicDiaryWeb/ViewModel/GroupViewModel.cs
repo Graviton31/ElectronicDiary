@@ -8,9 +8,6 @@ namespace ElectronicDiaryWeb.ViewModel
         [Display(Name = "Название группы")]
         public string Name { get; set; }
 
-        [Display(Name = "Аудитория")]
-        public string Classroom { get; set; }
-
         [Required(ErrorMessage = "Обязательное поле")]
         [Display(Name = "Локация")]
         public int SelectedLocationId { get; set; }

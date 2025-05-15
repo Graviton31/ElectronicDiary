@@ -81,7 +81,6 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     IdGroup = g.IdGroup,
                     Name = g.Name,
-                    Classroom = g.Classroom,
                     MinAge = g.MinAge,
                     MaxAge = g.MaxAge,
                     Location = new LocationDto

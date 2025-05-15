@@ -3,6 +3,15 @@
 @using System.Globalization
 
 <style>
+    .classroom {
+        font-size: 0.9em;
+        color: #4a4a4a;
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
     .lesson-card {
         border: 1px solid #dee2e6;
         border-radius: 8px;
@@ -10,10 +19,10 @@
         transition: all 0.2s;
     }
 
-        .lesson-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+    .lesson-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
     .time-block {
         padding: 8px;
@@ -99,7 +108,12 @@
                                                         <span class="badge bg-secondary">@lesson.GroupName</span>
                                                     </div>
                                                     <div class="classroom-teachers">
-                                                        <small class="text-muted">@lesson.Classroom</small>
+                                                        @if (!string.IsNullOrEmpty(lesson.Classroom))
+                                                        {
+                                                            <div class="classroom mb-1">
+                                                                <i class="bi bi-door-open"></i> Кабинет: @lesson.Classroom
+                                                            </div>
+                                                        }
                                                         <div class="teachers">
                                                             @string.Join(", ", lesson.Teachers)
                                                         </div>

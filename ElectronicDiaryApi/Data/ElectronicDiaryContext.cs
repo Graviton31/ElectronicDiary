@@ -154,9 +154,6 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasIndex(e => e.IdSubject, "fk_groups_subjects1_idx");
 
             entity.Property(e => e.IdGroup).HasColumnName("id_group");
-            entity.Property(e => e.Classroom)
-                .HasMaxLength(20)
-                .HasColumnName("classroom");
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
             entity.Property(e => e.IdSubject).HasColumnName("id_subject");
             entity.Property(e => e.IsDelete)
@@ -393,6 +390,9 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasColumnName("change_type");
             entity.Property(e => e.IdGroup).HasColumnName("id_group");
             entity.Property(e => e.IdSchedule).HasColumnName("id_schedule");
+            entity.Property(e => e.NewClassroom)
+                .HasMaxLength(20)
+                .HasColumnName("new_classroom");
             entity.Property(e => e.NewDate).HasColumnName("new_date");
             entity.Property(e => e.NewEndTime)
                 .HasColumnType("time")
@@ -421,6 +421,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasIndex(e => e.IdGroup, "fk_standard_schedule_groups1_idx");
 
             entity.Property(e => e.IdStandardSchedule).HasColumnName("id_standard_schedule");
+            entity.Property(e => e.Classroom)
+                .HasMaxLength(20)
+                .HasColumnName("classroom");
             entity.Property(e => e.EndTime)
                 .HasColumnType("time")
                 .HasColumnName("end_time");
@@ -448,7 +451,6 @@ public partial class ElectronicDiaryContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("education_name");
             entity.Property(e => e.IsDelete)
-                .HasMaxLength(45)
                 .HasDefaultValueSql("'0'")
                 .HasColumnName("is_delete");
             entity.Property(e => e.Login)

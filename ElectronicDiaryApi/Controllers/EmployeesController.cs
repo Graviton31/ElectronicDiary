@@ -168,7 +168,6 @@ namespace ElectronicDiaryApi.Controllers
                             {
                                 IdGroup = g.IdGroup,
                                 Name = g.Name,
-                                Classroom = g.Classroom,
                             }).ToList()
                     }).ToList()
                 };

@@ -34,7 +34,6 @@ namespace ElectronicDiaryApi.Controllers
             {
                 Name = createDto.Name,
                 MaxStudentCount = createDto.MaxStudentCount,
-                Classroom = createDto.Classroom,
                 IdSubject = createDto.IdSubject,
                 IdLocation = createDto.IdLocation,
                 MinAge = createDto.MinAge,
@@ -61,7 +60,6 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     IdGroup = group.IdGroup,
                     Name = group.Name,
-                    Classroom = group.Classroom,
                     IdSubject = group.IdSubject,
                     MinAge = createDto.MinAge,
                     MaxAge = createDto.MaxAge,
@@ -88,7 +86,6 @@ namespace ElectronicDiaryApi.Controllers
             {
                 IdGroup = group.IdGroup,
                 Name = group.Name,
-                Classroom = group.Classroom,
                 IdSubject = group.IdSubject,
                 MinAge = group.MinAge,
                 MaxAge = group.MaxAge,
@@ -115,7 +112,6 @@ namespace ElectronicDiaryApi.Controllers
 
             // Обновление основных полей
             group.Name = updateDto.Name;
-            group.Classroom = updateDto.Classroom;
             group.MaxStudentCount = updateDto.MaxStudentCount;
             group.MinAge = updateDto.MinAge;
             group.MaxAge = updateDto.MaxAge;

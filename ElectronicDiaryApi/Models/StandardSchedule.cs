@@ -15,6 +15,8 @@ public partial class StandardSchedule
 
     public TimeOnly EndTime { get; set; }
 
+    public string Classroom { get; set; } = null!;
+
     public virtual Group IdGroupNavigation { get; set; } = null!;
 
     public virtual ICollection<ScheduleChange> ScheduleChanges { get; set; } = new List<ScheduleChange>();

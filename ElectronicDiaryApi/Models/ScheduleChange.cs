@@ -19,6 +19,8 @@ public partial class ScheduleChange
 
     public TimeOnly? NewEndTime { get; set; }
 
+    public string? NewClassroom { get; set; }
+
     public int? IdSchedule { get; set; }
 
     public virtual Group IdGroupNavigation { get; set; } = null!;

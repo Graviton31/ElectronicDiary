@@ -108,7 +108,6 @@ namespace ElectronicDiaryWeb.Controllers
                     var groupDto = new CreateGroupDto
                     {
                         Name = group.Name,
-                        Classroom = group.Classroom,
                         IdSubject = createdSubject.IdSubject,
                         IdLocation = group.SelectedLocationId,
                         TeacherIds = group.SelectedTeacherIds,
@@ -204,7 +203,6 @@ namespace ElectronicDiaryWeb.Controllers
                     {
                         IdGroup = g.IdGroup,
                         Name = g.Name ?? "",
-                        Classroom = g.Classroom ?? "",
                         SelectedLocationId = g.Location.IdLocation,
                         SelectedTeacherIds = g.Teachers
                             .Select(t => t.IdEmployee)
@@ -282,7 +280,6 @@ namespace ElectronicDiaryWeb.Controllers
                         var createGroupDto = new CreateGroupDto
                         {
                             Name = group.Name,
-                            Classroom = group.Classroom,
                             IdSubject = id,
                             IdLocation = group.SelectedLocationId,
                             TeacherIds = group.SelectedTeacherIds ?? new List<int>(),
@@ -298,7 +295,6 @@ namespace ElectronicDiaryWeb.Controllers
                         var updateGroupDto = new UpdateGroupDto
                         {
                             Name = group.Name,
-                            Classroom = group.Classroom,
                             IdLocation = group.SelectedLocationId,
                             TeacherIds = group.SelectedTeacherIds ?? new List<int>(),
                             MaxStudentCount = group.MaxStudentCount,

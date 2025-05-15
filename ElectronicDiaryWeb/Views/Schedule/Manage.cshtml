@@ -1,0 +1,129 @@
+﻿<!-- Views/GroupSchedule/Manage.cshtml -->
+@model ElectronicDiaryWeb.Controllers.GroupScheduleManagementViewModel
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>@Model.Group.Name</h2>
+            <div class="text-muted">
+                @Model.Group.SubjectName • Возраст: @Model.Group.MinAge-@Model.Group.MaxAge лет
+            </div>
+        </div>
+        <div>
+            <a href="@Url.Action("Manage", new { groupId = Model.Group.Id, date = Model.PreviousWeek })"
+               class="btn btn-outline-primary">← Пред.</a>
+            <a href="@Url.Action("Manage", new { groupId = Model.Group.Id, date = DateTime.Today })"
+               class="btn btn-outline-secondary mx-2">Сегодня</a>
+            <a href="@Url.Action("Manage", new { groupId = Model.Group.Id, date = Model.NextWeek })"
+               class="btn btn-outline-primary">След. →</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var day in Model.Schedule.Days)
+        {
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            @day.DayOfWeek
+                            <small class="text-muted">@day.Date.ToString("dd.MM.yyyy")</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Стандартные занятия -->
+                        @foreach (var lesson in day.StandardLessons)
+                        {
+                            <div class="lesson-card mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="me-3">
+                                                <span class="badge bg-primary">
+                                                    @lesson.StartTime.ToString("hh\\:mm") - @lesson.EndTime.ToString("hh\\:mm")
+                                                </span>
+                                            </div>
+                                            <span class="text-muted">@lesson.Classroom</span>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="@Url.Action("EditStandard", new { scheduleId = lesson.Id })"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="@Url.Action("DeleteStandard", new { scheduleId = lesson.Id })"
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Удалить это занятие?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Изменения расписания -->
+                        @foreach (var change in day.Changes)
+                        {
+                            <div class="lesson-card mb-3 p-3 border rounded border-warning">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="me-3">
+                                                <span class="badge bg-warning">
+                                                    @change.NewStartTime?.ToString("hh\\:mm") - @change.NewEndTime?.ToString("hh\\:mm")
+                                                </span>
+                                            </div>
+                                            <span class="text-muted">@change.NewClassroom</span>
+                                        </div>
+                                        @if (change.OldDate.HasValue)
+                                        {
+                                            <div class="text-muted small">
+                                                Перенос с @change.OldDate?.ToString("dd.MM.yyyy")
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="@Url.Action("EditChange", new { changeId = change.Id })"
+                                           class="btn btn-sm btn-outline-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="@Url.Action("DeleteChange", new { changeId = change.Id })"
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Удалить это изменение?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer bg-light">
+                        <a href="@Url.Action("CreateStandard", new { groupId = Model.Group.Id })"
+                           class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-circle"></i> Добавить занятие
+                        </a>
+                        <a href="@Url.Action("CreateChange", new { groupId = Model.Group.Id })"
+                           class="btn btn-sm btn-warning ms-2">
+                            <i class="bi bi-clock-history"></i> Добавить изменение
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .lesson-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+    .bi {
+        font-size: 1.2rem;
+    }
+</style>

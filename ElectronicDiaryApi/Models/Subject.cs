@@ -15,11 +15,11 @@ public partial class Subject
 
     public sbyte Duration { get; set; }
 
+    public string? Syllabus { get; set; }
+
     public sbyte LessonLength { get; set; }
 
     public bool? IsDelete { get; set; }
-
-    public string? Syllabus { get; set; }
 
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
 

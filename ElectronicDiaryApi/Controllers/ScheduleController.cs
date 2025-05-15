@@ -121,10 +121,10 @@ namespace ElectronicDiaryApi.Controllers
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
-                Classroom = group.Classroom,
                 Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
                 StartTime = standardSchedule.StartTime,
                 EndTime = standardSchedule.EndTime,
+                Classroom = standardSchedule.Classroom,
                 IsChanged = false
             };
 
@@ -160,10 +160,10 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     GroupName = group.Name,
                     SubjectName = group.IdSubjectNavigation.Name,
-                    Classroom = group.Classroom,
                     Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
                     StartTime = change.NewStartTime ?? change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
                     EndTime = change.NewEndTime ?? change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
+                    Classroom = change.NewClassroom ?? change.IdScheduleNavigation?.Classroom,
                     IsChanged = true,
                     ChangeType = "перенос",
                     OriginalDetails = new OriginalLessonDetailsDto
@@ -211,10 +211,10 @@ namespace ElectronicDiaryApi.Controllers
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
-                Classroom = group.Classroom,
                 Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
                 StartTime = change.NewStartTime ?? TimeOnly.MinValue,
                 EndTime = change.NewEndTime ?? TimeOnly.MinValue,
+                Classroom = change.NewClassroom ?? string.Empty,
                 IsChanged = true,
                 ChangeType = "дополнительное",
                 IsAdditional = true

@@ -6,7 +6,6 @@ namespace ElectronicDiaryApi.ModelsDto.Group
     {
         public int IdGroup { get; set; }
         public string Name { get; set; }
-        public string Classroom { get; set; }
         public LocationDto Location { get; set; }
         public List<EmployeeDto> Teachers { get; set; } = new();
         public sbyte MaxStudentCount { get; set; }  // StudentCount из модели
