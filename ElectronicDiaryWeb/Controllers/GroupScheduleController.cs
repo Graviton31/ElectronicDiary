@@ -1,162 +1,333 @@
-﻿//// Controllers/GroupScheduleController.cs
-//using ElectronicDiaryApi.ModelsDto.Shedule;
-//using ElectronicDiaryWeb.Models;
-//using Microsoft.AspNetCore.Mvc;
-//using System;
-//using System.Net.Http;
-//using System.Threading.Tasks;
-//using static ElectronicDiaryApi.Controllers.GroupScheduleController;
+﻿using ElectronicDiaryWeb.Models;
+using ElectronicDiaryApi.ModelsDto.Shedule;
+using ElectronicDiaryApi.ModelsDto.Group;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Net.Http.Json;
+using System.Text.Json;
+using ElectronicDiaryApi.Controllers;
+using static ElectronicDiaryApi.Controllers.StandardScheduleController;
 
-//namespace ElectronicDiaryWeb.Controllers
-//{
-//    [Route("GroupSchedule")]
-//    public class GroupScheduleController : Controller
-//    {
-//        private readonly HttpClient _httpClient;
+namespace ElectronicDiaryWeb.Controllers
+{
+    [Route("GroupSchedule")]
+    public class GroupScheduleController : Controller
+    {
+        private readonly HttpClient _httpClient;
+        private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-//        public GroupScheduleController(IHttpClientFactory httpClientFactory)
-//        {
-//            _httpClient = httpClientFactory.CreateClient();
-//            _httpClient.BaseAddress = new Uri("https://localhost:7123/api/");
-//        }
+        public GroupScheduleController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClient = httpClientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("https://localhost:7123/api/");
+        }
 
-//        [HttpGet("Manage/{groupId}")]
-//        public async Task<IActionResult> Manage(int groupId, DateTime? date)
-//        {
-//            try
-//            {
-//                var targetDate = date ?? DateTime.Today;
+        [HttpGet]
+        public async Task<IActionResult> Index(int? groupId, DateTime? date, int? subjectId)
+        {
+            var model = new CombinedScheduleViewModel();
+            model.SubjectId = subjectId ?? 1;
 
-//                // Получение информации о группе
-//                var groupResponse = await _httpClient.GetAsync($"groups/{groupId}/info");
-//                groupResponse.EnsureSuccessStatusCode();
-//                var group = await groupResponse.Content.ReadFromJsonAsync<GroupInfoDto>();
+            try
+            {
+                // Загрузка групп
+                var groupsResponse = await _httpClient.GetAsync($"groups/{model.SubjectId}/groups");
+                groupsResponse.EnsureSuccessStatusCode();
+                model.Groups = await groupsResponse.Content.ReadFromJsonAsync<List<GroupNameDto>>(_jsonOptions);
 
-//                // Получение расписания
-//                var scheduleResponse = await _httpClient.GetAsync(
-//                    $"GroupSchedule/{groupId}?date={targetDate:yyyy-MM-dd}");
-//                scheduleResponse.EnsureSuccessStatusCode();
-//                var schedule = await scheduleResponse.Content.ReadFromJsonAsync<GroupScheduleResponseDto>();
+                // Автовыбор первой группы
+                if (model.Groups?.Any() == true && !groupId.HasValue)
+                {
+                    groupId = model.Groups[0].IdGroup;
+                    return RedirectToAction("Index", new { groupId, date, subjectId = model.SubjectId });
+                }
 
-//                var model = new GroupScheduleManagementViewModel
-//                {
-//                    Group = group,
-//                    Schedule = schedule,
-//                    CurrentDate = targetDate,
-//                    PreviousWeek = targetDate.AddDays(-7),
-//                    NextWeek = targetDate.AddDays(7)
-//                };
+                if (groupId.HasValue)
+                {
+                    // Загрузка расписания
+                    var targetDate = date ?? DateTime.Today;
+                    var scheduleResponse = await _httpClient.GetAsync(
+                        $"schedule/group/{groupId}/week/{targetDate:yyyy-MM-dd}");
+                    scheduleResponse.EnsureSuccessStatusCode();
 
-//                return View(model);
-//            }
-//            catch
-//            {
-//                return View("Error", new ErrorViewModel
-//                {
-//                    Message = "Ошибка загрузки данных группы"
-//                });
-//            }
-//        }
+                    model.Schedule = await scheduleResponse.Content.ReadFromJsonAsync<UnifiedScheduleResponseDto>(_jsonOptions);
+                    model.SelectedGroupId = groupId;
+                    model.CurrentWeekStart = model.Schedule.WeekStartDate.ToDateTime(TimeOnly.MinValue);
+                    model.PreviousWeekStart = model.CurrentWeekStart.AddDays(-7);
+                    model.NextWeekStart = model.CurrentWeekStart.AddDays(7);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка загрузки данных: {ex.Message}");
+            }
 
-//        [HttpGet("EditStandard/{scheduleId}")]
-//        public async Task<IActionResult> EditStandard(int scheduleId)
-//        {
-//            try
-//            {
-//                var response = await _httpClient.GetAsync($"GroupSchedule/standard/{scheduleId}");
-//                response.EnsureSuccessStatusCode();
-//                var lesson = await response.Content.ReadFromJsonAsync<StandardLessonDto>();
-//                return View(lesson);
-//            }
-//            catch
-//            {
-//                return View("Error", new ErrorViewModel
-//                {
-//                    Message = "Ошибка загрузки занятия"
-//                });
-//            }
-//        }
+            return View(model);
+        }
 
-//        [HttpPost("EditStandard/{scheduleId}")]
-//        public async Task<IActionResult> EditStandard(int scheduleId, StandardLessonDto dto)
-//        {
-//            try
-//            {
-//                var response = await _httpClient.PutAsJsonAsync(
-//                    $"GroupSchedule/standard/{scheduleId}", dto);
-//                response.EnsureSuccessStatusCode();
-//                return RedirectToAction("Manage", new { groupId = dto.GroupId });
-//            }
-//            catch
-//            {
-//                return View("Error", new ErrorViewModel
-//                {
-//                    Message = "Ошибка сохранения изменений"
-//                });
-//            }
-//        }
+        // GET /GroupSchedule/CreateStandardForm
+        [HttpGet("CreateStandardForm")] 
+        public async Task<IActionResult> CreateStandardForm(int groupId)
+        {
+            try
+            {
+                var model = new EditStandardScheduleViewModel
+                {
+                    GroupId = groupId,
+                    StartTime = TimeOnly.FromDateTime(DateTime.Now),
+                    EndTime = TimeOnly.FromDateTime(DateTime.Now.AddHours(1))
+                };
+                return PartialView("_StandardScheduleForm", model);
+            }
+            catch (Exception ex)
+            {
+                return PartialView("_Error", ex.Message);
+            }
+        }
 
-//        [HttpGet("CreateStandard/{groupId}")]
-//        public IActionResult CreateStandard(int groupId)
-//        {
-//            return View(new StandardLessonDto { GroupId = groupId });
-//        }
+        [HttpPost("CreateStandard")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateStandard(EditStandardScheduleViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return PartialView("_StandardScheduleForm", model);
 
-//        [HttpPost("CreateStandard/{groupId}")]
-//        public async Task<IActionResult> CreateStandard(int groupId, StandardLessonDto dto)
-//        {
-//            try
-//            {
-//                var response = await _httpClient.PostAsJsonAsync(
-//                    $"GroupSchedule/{groupId}/standard", dto);
-//                response.EnsureSuccessStatusCode();
-//                return RedirectToAction("Manage", new { groupId });
-//            }
-//            catch
-//            {
-//                return View("Error", new ErrorViewModel
-//                {
-//                    Message = "Ошибка создания занятия"
-//                });
-//            }
-//        }
+                var response = await _httpClient.PostAsJsonAsync(
+                    "api/standard-schedules",
+                    new StandardScheduleController.StandardScheduleRequest
+                    {
+                        GroupId = model.GroupId,
+                        WeekDay = model.WeekDay,
+                        StartTime = model.StartTime,
+                        EndTime = model.EndTime,
+                        Classroom = model.Classroom
+                    });
 
-//        [HttpGet("DeleteStandard/{scheduleId}")]
-//        public async Task<IActionResult> DeleteStandard(int scheduleId)
-//        {
-//            try
-//            {
-//                var response = await _httpClient.DeleteAsync($"GroupSchedule/standard/{scheduleId}");
-//                response.EnsureSuccessStatusCode();
-//                return RedirectToAction("Manage", new { groupId = TempData["GroupId"] });
-//            }
-//            catch
-//            {
-//                return View("Error", new ErrorViewModel
-//                {
-//                    Message = "Ошибка удаления занятия"
-//                });
-//            }
-//        }
+                response.EnsureSuccessStatusCode();
+                return Content("<script>window.location.reload();</script>", "text/html");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка создания: {ex.Message}");
+                return PartialView("_StandardScheduleForm", model);
+            }
+        }
 
-//        // Аналогичные методы для работы с изменениями (Schedule Changes)
-//    }
+        [HttpGet("EditStandard/{id}")]
+        public async Task<IActionResult> EditStandard(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/standard-schedules/{id}");
+                response.EnsureSuccessStatusCode();
+                
+                var schedule = await response.Content.ReadFromJsonAsync<StandardScheduleResponse>(_jsonOptions);
+                
+                var model = new EditStandardScheduleViewModel
+                {
+                    Id = schedule.Id,
+                    GroupId = schedule.GroupId,
+                    WeekDay = schedule.WeekDay,
+                    StartTime = schedule.StartTime,
+                    EndTime = schedule.EndTime,
+                    Classroom = schedule.Classroom
+                };
 
-//    public class GroupInfoDto
-//    {
-//        public int Id { get; set; }
-//        public string Name { get; set; }
-//        public string SubjectName { get; set; }
-//        public int MinAge { get; set; }
-//        public int MaxAge { get; set; }
-//    }
+                return PartialView("_StandardScheduleForm", model);
+            }
+            catch (Exception ex)
+            {
+                return PartialView("_Error", ex.Message);
+            }
+        }
 
-//    public class GroupScheduleManagementViewModel
-//    {
-//        public GroupInfoDto Group { get; set; }
-//        public GroupScheduleResponseDto Schedule { get; set; }
-//        public DateTime CurrentDate { get; set; }
-//        public DateTime PreviousWeek { get; set; }
-//        public DateTime NextWeek { get; set; }
-//    }
-//}
+        [HttpPost("EditStandard/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditStandard(int id, EditStandardScheduleViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return PartialView("_StandardScheduleForm", model);
+
+                var response = await _httpClient.PutAsJsonAsync(
+                    $"api/standard-schedules/{id}",
+                    new StandardScheduleController.StandardScheduleRequest
+                    {
+                        GroupId = model.GroupId,
+                        WeekDay = model.WeekDay,
+                        StartTime = model.StartTime,
+                        EndTime = model.EndTime,
+                        Classroom = model.Classroom
+                    });
+
+                response.EnsureSuccessStatusCode();
+                return Content("<script>window.location.reload();</script>", "text/html");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка сохранения: {ex.Message}");
+                return PartialView("_StandardScheduleForm", model);
+            }
+        }
+
+        [HttpGet("CreateChangeForm")]
+        public async Task<IActionResult> CreateChangeForm(int groupId)
+        {
+            try
+            {
+                var model = new EditScheduleChangeViewModel 
+                { 
+                    GroupId = groupId,
+                    NewDate = DateOnly.FromDateTime(DateTime.Now)
+                };
+
+                // Загрузка стандартных занятий
+                var schedulesResponse = await _httpClient.GetAsync($"standard-schedules/group/{groupId}");
+                schedulesResponse.EnsureSuccessStatusCode();
+                
+                var schedules = await schedulesResponse.Content
+                    .ReadFromJsonAsync<List<StandardScheduleResponse>>(_jsonOptions);
+
+                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem 
+                {
+                    Value = s.Id.ToString(),
+                    Text = $"{GetDayName(s.WeekDay)} {s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}"
+                });
+
+                return PartialView("_ScheduleChangeForm", model);
+            }
+            catch (Exception ex)
+            {
+                return PartialView("_Error", ex.Message);
+            }
+        }
+
+        [HttpPost("CreateChange")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateChange(EditScheduleChangeViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return PartialView("_ScheduleChangeForm", model);
+
+                var response = await _httpClient.PostAsJsonAsync(
+                    "api/schedule-changes",
+                    new ScheduleChangeController.ScheduleChangeRequest
+                    {
+                        GroupId = model.GroupId,
+                        ChangeType = model.ChangeType,
+                        OldDate = model.OldDate,
+                        NewDate = model.NewDate,
+                        NewStartTime = model.NewStartTime,
+                        NewEndTime = model.NewEndTime,
+                        NewClassroom = model.NewClassroom,
+                        StandardScheduleId = model.StandardScheduleId
+                    });
+
+                response.EnsureSuccessStatusCode();
+                return Content("<script>window.location.reload();</script>", "text/html");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка создания: {ex.Message}");
+                return PartialView("_ScheduleChangeForm", model);
+            }
+        }
+
+        [HttpGet("EditChange/{id}")]
+        public async Task<IActionResult> EditChange(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/schedule-changes/{id}");
+                response.EnsureSuccessStatusCode();
+                
+                var change = await response.Content.ReadFromJsonAsync<ScheduleChangeController.ScheduleChangeResponse>(_jsonOptions);
+
+                var model = new EditScheduleChangeViewModel
+                {
+                    Id = change.Id,
+                    GroupId = change.GroupId,
+                    ChangeType = change.ChangeType,
+                    OldDate = change.OldDate,
+                    NewDate = change.NewDate,
+                    NewStartTime = change.NewStartTime,
+                    NewEndTime = change.NewEndTime,
+                    NewClassroom = change.NewClassroom,
+                    StandardScheduleId = change.StandardScheduleId
+                };
+
+                // Повторная загрузка стандартных занятий
+                var schedulesResponse = await _httpClient.GetAsync($"api/standard-schedules/group/{model.GroupId}");
+                schedulesResponse.EnsureSuccessStatusCode();
+                
+                var schedules = await schedulesResponse.Content
+                    .ReadFromJsonAsync<List<StandardScheduleResponse>>(_jsonOptions);
+
+                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem 
+                {
+                    Value = s.Id.ToString(),
+                    Text = $"{GetDayName(s.WeekDay)} {s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}"
+                });
+
+                return PartialView("_ScheduleChangeForm", model);
+            }
+            catch (Exception ex)
+            {
+                return PartialView("_Error", ex.Message);
+            }
+        }
+
+        [HttpPost("EditChange/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditChange(int id, EditScheduleChangeViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return PartialView("_ScheduleChangeForm", model);
+
+                var response = await _httpClient.PutAsJsonAsync(
+                    $"api/schedule-changes/{id}",
+                    new ScheduleChangeController.ScheduleChangeRequest
+                    {
+                        GroupId = model.GroupId,
+                        ChangeType = model.ChangeType,
+                        OldDate = model.OldDate,
+                        NewDate = model.NewDate,
+                        NewStartTime = model.NewStartTime,
+                        NewEndTime = model.NewEndTime,
+                        NewClassroom = model.NewClassroom,
+                        StandardScheduleId = model.StandardScheduleId
+                    });
+
+                response.EnsureSuccessStatusCode();
+                return Content("<script>window.location.reload();</script>", "text/html");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка сохранения: {ex.Message}");
+                return PartialView("_ScheduleChangeForm", model);
+            }
+        }
+
+        private string GetDayName(sbyte weekDay)
+        {
+            return weekDay switch
+            {
+                1 => "Понедельник",
+                2 => "Вторник",
+                3 => "Среда",
+                4 => "Четверг",
+                5 => "Пятница",
+                6 => "Суббота",
+                7 => "Воскресенье",
+                _ => "Неизвестный день"
+            };
+        }
+    }
+}

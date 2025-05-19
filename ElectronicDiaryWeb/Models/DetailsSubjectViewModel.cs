@@ -2,7 +2,7 @@
 using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryApi.ModelsDto.UsersView;
 
-namespace ElectronicDiaryWeb.ViewModel
+namespace ElectronicDiaryWeb.Models
 {
     public class SubjectDetailsViewModel
     {

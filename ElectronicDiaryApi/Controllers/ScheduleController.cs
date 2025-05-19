@@ -54,6 +54,41 @@ namespace ElectronicDiaryApi.Controllers
             });
         }
 
+        [HttpGet("group/{groupId}/week/{date}")]
+        public ActionResult<UnifiedScheduleResponseDto> GetSingleGroupSchedule(int groupId, DateTime date)
+        {
+            var group = _context.Groups
+                .Include(g => g.IdLocationNavigation)
+                .Include(g => g.IdSubjectNavigation)
+                .Include(g => g.IdEmployees)
+                .Include(g => g.StandardSchedules)
+                .Include(g => g.ScheduleChanges)
+                    .ThenInclude(c => c.IdScheduleNavigation)
+                .FirstOrDefault(g => g.IdGroup == groupId);
+
+            if (group == null)
+            {
+                return NotFound("Group not found");
+            }
+
+            var startOfWeek = date.Date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
+            var endOfWeek = startOfWeek.AddDays(6);
+
+            var startOfWeekDateOnly = DateOnly.FromDateTime(startOfWeek);
+            var endOfWeekDateOnly = DateOnly.FromDateTime(endOfWeek);
+
+            var unifiedSchedule = InitializeWeekSchedule(startOfWeekDateOnly, endOfWeekDateOnly);
+
+            ProcessGroupSchedule(group, unifiedSchedule, startOfWeekDateOnly, endOfWeekDateOnly);
+
+            return Ok(new UnifiedScheduleResponseDto
+            {
+                WeekStartDate = startOfWeekDateOnly,
+                WeekEndDate = endOfWeekDateOnly,
+                Days = unifiedSchedule.Values.OrderBy(d => d.Date).ToList()
+            });
+        }
+
         private Dictionary<DateOnly, DayScheduleDto> InitializeWeekSchedule(DateOnly start, DateOnly end)
         {
             var schedule = new Dictionary<DateOnly, DayScheduleDto>();
@@ -188,9 +223,13 @@ namespace ElectronicDiaryApi.Controllers
         {
             if (!change.OldDate.HasValue || !schedule.ContainsKey(change.OldDate.Value)) return;
 
+            // Получаем время из связанного стандартного расписания
+            var originalStartTime = change.IdScheduleNavigation?.StartTime;
+            if (originalStartTime == null) return;
+
             var lessons = schedule[change.OldDate.Value].Lessons
                 .Where(l => l.GroupName == group.Name &&
-                           l.StartTime == change.IdScheduleNavigation?.StartTime)
+                           l.StartTime == originalStartTime)
                 .ToList();
 
             foreach (var lesson in lessons)

@@ -3,51 +3,57 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddHttpClient();
-
-builder.Services.AddCors(options =>
+// 1. Добавление сервисов
+builder.Services.AddControllersWithViews(); // Поддержка MVC
+builder.Services.AddHttpClient(); // Для HttpClientFactory
+builder.Services.AddSession(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        builder =>
-        {
-            builder.WithOrigins("https://localhost:7123", "http://localhost:5033") // URL клиентского приложения
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
-});
-
-builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromMinutes(10);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
+// 2. Настройка CORS (важно для доступа к API)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+            "https://localhost:7012", // Ваш MVC-фронтенд
+            "https://localhost:7123" // API (если нужно)
+        )
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 3. Конфигурация Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseSession();
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-app.UseCors("AllowSpecificOrigin");
-
+app.UseCors("AllowFrontend"); // Подключение CORS ПОСЛЕ UseRouting
 app.UseAuthorization();
+app.UseSession();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Schedule}/{action=Index}/{id?}");
+// 4. Настройка маршрутов
+app.UseEndpoints(endpoints =>
+{
+    // Для атрибутной маршрутизации (важно для вашего GroupScheduleController)
+    endpoints.MapControllers();
+
+    // Conventional routing
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Schedule}/{action=Index}/{id?}");
+});
 
 app.Run();

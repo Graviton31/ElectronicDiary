@@ -72,6 +72,31 @@ namespace ElectronicDiaryApi.Controllers
                 });
         }
 
+        [HttpGet("{id}/groups")]
+        public async Task<ActionResult<IEnumerable<GroupDto>>> GetSubjectGroups(int id)
+        {
+            // Проверяем существование предмета
+            var subjectExists = await _context.Subjects
+                .AnyAsync(s => s.IdSubject == id && s.IsDelete != true);
+
+            if (!subjectExists)
+            {
+                return NotFound("Subject not found");
+            }
+
+            // Получаем группы с фильтрацией
+            var groups = await _context.Groups
+                .Where(g => g.IdSubject == id && g.IsDelete != true)
+                .Select(g => new GroupNameDto
+                {
+                    IdGroup = g.IdGroup,
+                    Name = g.Name
+                })
+                .ToListAsync();
+
+            return Ok(groups);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<GroupDto>> GetGroup(int id)
         {

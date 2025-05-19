@@ -1,0 +1,188 @@
+﻿@model ElectronicDiaryWeb.Models.EditScheduleChangeViewModel
+
+<form asp-action="CreateChange" method="post" onsubmit="submitChangeForm(event)" id="changeForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="GroupId" />
+
+    <div class="mb-3">
+        <label class="form-label">Тип изменения</label>
+        <select asp-for="ChangeType" class="form-select change-type-selector" required>
+            <option value="">Выберите тип</option>
+            <option value="перенос">Перенос занятия</option>
+            <option value="отмена">Отмена занятия</option>
+            <option value="дополнительное">Дополнительное занятие</option>
+        </select>
+        <span asp-validation-for="ChangeType" class="text-danger"></span>
+    </div>
+
+    <div id="changeDetails" style="display: none;">
+        <!-- Original Lesson -->
+        <div class="row mb-3 original-lesson-section">
+            <div class="col-md-12">
+                <label class="form-label">Первоначальное занятие</label>
+                <select asp-for="StandardScheduleId" class="form-select standard-schedule-select"
+                        asp-items="ViewBag.StandardSchedules" required>
+                    <option value="">Выберите занятие</option>
+                </select>
+                <small class="form-text text-muted mt-1 d-block">Выберите занятие из стандартного расписания</small>
+
+                <div class="mt-2 original-date-container" style="display: none;">
+                    <label class="form-label">Дата занятия</label>
+                    <input type="date" class="form-control original-date" readonly>
+                    <input type="hidden" asp-for="OldDate" class="original-date-hidden">
+                </div>
+            </div>
+        </div>
+
+        <!-- New Date -->
+        <div class="row mb-3 new-date-section">
+            <div class="col-md-12">
+                <label class="form-label">Новая дата</label>
+                <div class="input-group">
+                    <input asp-for="NewDate" type="date" class="form-control" required>
+                    <span class="input-group-text">
+                        <i class="bi bi-calendar"></i>
+                    </span>
+                </div>
+                <small class="form-text text-muted mt-1 d-block">Дата нового занятия</small>
+            </div>
+        </div>
+
+        <!-- Time and Classroom -->
+        <div class="time-classroom-section">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Время начала</label>
+                    <div class="input-group">
+                        <input asp-for="NewStartTime" type="time" class="form-control" required>
+                        <span class="input-group-text">
+                            <i class="bi bi-clock"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Время окончания</label>
+                    <div class="input-group">
+                        <input asp-for="NewEndTime" type="time" class="form-control" required>
+                        <span class="input-group-text">
+                            <i class="bi bi-clock"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Кабинет</label>
+                <input asp-for="NewClassroom" class="form-control">
+                <small class="form-text text-muted mt-1 d-block">Если изменился</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-warning">Сохранить изменения</button>
+    </div>
+</form>
+
+<script>
+    (function() {
+        console.log('[DEBUG] Partial view script started');
+
+        const form = document.getElementById('changeForm');
+        if (!form) {
+            console.error('[DEBUG] Form element not found!');
+            return;
+        }
+        console.log('[DEBUG] Form element found:', form);
+
+        function handleChangeType(selectedType) {
+            console.log('[DEBUG] Handling change type:', selectedType);
+
+            const sections = {
+                changeDetails: form.querySelector('#changeDetails'),
+                originalLesson: form.querySelector('.original-lesson-section'),
+                newDate: form.querySelector('.new-date-section'),
+                timeClassroom: form.querySelector('.time-classroom-section')
+            };
+
+            console.log('[DEBUG] Sections found:', sections);
+
+            // Скрыть всё
+            Object.values(sections).forEach(s => {
+                if (s) {
+                    console.log(`[DEBUG] Hiding section:`, s);
+                    s.style.display = 'none';
+                }
+            });
+
+            if (!selectedType) {
+                console.log('[DEBUG] No type selected, exiting');
+                return;
+            }
+
+            if (sections.changeDetails) {
+                console.log('[DEBUG] Showing change details');
+                sections.changeDetails.style.display = 'block';
+            }
+
+            switch(selectedType) {
+                case 'отмена':
+                    console.log('[DEBUG] Case: cancellation');
+                    if (sections.originalLesson) {
+                        sections.originalLesson.style.display = 'block';
+                        console.log('[DEBUG] Showing original lesson section');
+                    }
+                    break;
+
+                case 'перенос':
+                    console.log('[DEBUG] Case: transfer');
+                    if (sections.originalLesson) {
+                        sections.originalLesson.style.display = 'block';
+                        console.log('[DEBUG] Showing original lesson section');
+                    }
+                    if (sections.newDate) {
+                        sections.newDate.style.display = 'block';
+                        console.log('[DEBUG] Showing new date section');
+                    }
+                    if (sections.timeClassroom) {
+                        sections.timeClassroom.style.display = 'block';
+                        console.log('[DEBUG] Showing time/classroom section');
+                    }
+                    break;
+
+                case 'дополнительное':
+                    console.log('[DEBUG] Case: additional');
+                    if (sections.newDate) {
+                        sections.newDate.style.display = 'block';
+                        console.log('[DEBUG] Showing new date section');
+                    }
+                    if (sections.timeClassroom) {
+                        sections.timeClassroom.style.display = 'block';
+                        console.log('[DEBUG] Showing time/classroom section');
+                    }
+                    break;
+
+                default:
+                    console.log('[DEBUG] Unknown type:', selectedType);
+            }
+        }
+
+        const selector = form.querySelector('.change-type-selector');
+        if (!selector) {
+            console.error('[DEBUG] Selector element not found!');
+            return;
+        }
+        console.log('[DEBUG] Selector element found:', selector);
+
+        selector.addEventListener('change', (e) => {
+            console.log('[DEBUG] Selector change event triggered');
+            handleChangeType(e.target.value);
+        });
+
+        console.log('[DEBUG] Initializing with value:', selector.value);
+        handleChangeType(selector.value);
+
+        console.log('[DEBUG] Script initialization completed');
+    })();
+</script>

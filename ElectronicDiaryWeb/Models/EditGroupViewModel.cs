@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace ElectronicDiaryWeb.ViewModel
+namespace ElectronicDiaryWeb.Models
 {
     public class EditGroupViewModel
     {

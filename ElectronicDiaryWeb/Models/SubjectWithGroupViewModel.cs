@@ -1,22 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
+﻿using ElectronicDiaryApi.ModelsDto;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
-namespace ElectronicDiaryWeb.ViewModel
+namespace ElectronicDiaryWeb.Models
 {
-    public class EditSubjectViewModel
+    public class SubjectWithGroupViewModel
     {
-
-        public EditSubjectViewModel()
-        {
-            SelectedSubjectTeacherIds = new List<int>();
-            ExistingGroups = new List<EditGroupViewModel>();
-            Locations = new List<SelectListItem>();
-            TeacherNames = new Dictionary<int, string>();
-        }
-
-        public int IdSubject { get; set; }
-
+        // Данные предмета
         [Required(ErrorMessage = "Обязательное поле")]
         [Display(Name = "Короткое название")]
         public string SubjectName { get; set; }
@@ -26,7 +16,7 @@ namespace ElectronicDiaryWeb.ViewModel
         public string SubjectFullName { get; set; }
 
         [Display(Name = "Описание")]
-        public string SubjectDescription { get; set; }
+        public string? SubjectDescription { get; set; }
 
         [Required(ErrorMessage = "Обязательное поле")]
         [Range(1, 10, ErrorMessage = "Длительность от 1 до 10")]
@@ -44,8 +34,12 @@ namespace ElectronicDiaryWeb.ViewModel
         [Display(Name = "Преподаватели предмета")]
         public List<int> SelectedSubjectTeacherIds { get; set; } = new();
 
-        public List<EditGroupViewModel> ExistingGroups { get; set; } = new();
+        // Список групп
+        public List<GroupViewModel> Groups { get; set; } = new() { new GroupViewModel() };
+
+        // Списки для выбора
         public List<SelectListItem> Locations { get; set; } = new();
-        public Dictionary<int, string> TeacherNames { get; set; } = new();
+
+        
     }
 }
