@@ -130,10 +130,10 @@
             newLesson: form.querySelector('.new-lesson-section')
         };
 
-        // Исправленная функция получения дня недели
+        // Функция получения дня недели
         function getDayName(weekDay) {
-            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']; // Неделя начинается с воскресенья
-            return days[weekDay] || '???';
+            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']; // Новый порядок дней
+            return days[(weekDay + 6) % 7] || '???'; // Корректировка индекса
         }
 
         // Функция управления видимостью секций (исправленная)
@@ -188,7 +188,7 @@
             }
         }
 
-        // Исправленный обработчик загрузки расписаний
+        // Обработчик загрузки расписаний
         async function handleDateChange(date) {
             console.log('[DEBUG] Handling date change:', date);
             standardScheduleSelect.disabled = true;
