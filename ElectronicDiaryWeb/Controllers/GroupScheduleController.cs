@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using ElectronicDiaryApi.Controllers;
 using static ElectronicDiaryApi.Controllers.StandardScheduleController;
+using static ElectronicDiaryApi.Controllers.ScheduleChangeController;
 
 namespace ElectronicDiaryWeb.Controllers
 {
@@ -15,11 +16,36 @@ namespace ElectronicDiaryWeb.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+        private readonly ILogger<GroupsController> _logger;
 
-        public GroupScheduleController(IHttpClientFactory httpClientFactory)
+        public GroupScheduleController(IHttpClientFactory httpClientFactory, ILogger<GroupsController> logger)
         {
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://localhost:7123/api/");
+            _logger = logger;
+        }
+
+        // Controllers/GroupScheduleController.cs
+        [HttpGet("GetStandardSchedules")]
+        public async Task<IActionResult> GetStandardSchedules(int groupId, DateTime date)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(
+                    $"StandardScheduleApi/GetStandardSchedules?groupId={groupId}&date={date:yyyy-MM-dd}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode);
+                }
+
+                var schedules = await response.Content.ReadFromJsonAsync<List<StandardScheduleResponse>>();
+                return Ok(schedules);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error communicating with API");
+            }
         }
 
         [HttpGet]
@@ -47,7 +73,7 @@ namespace ElectronicDiaryWeb.Controllers
                     // Загрузка расписания
                     var targetDate = date ?? DateTime.Today;
                     var scheduleResponse = await _httpClient.GetAsync(
-                        $"schedule/group/{groupId}/week/{targetDate:yyyy-MM-dd}");
+                        $"Schedule/group/{groupId}/week/{targetDate:yyyy-MM-dd}");
                     scheduleResponse.EnsureSuccessStatusCode();
 
                     model.Schedule = await scheduleResponse.Content.ReadFromJsonAsync<UnifiedScheduleResponseDto>(_jsonOptions);
@@ -95,7 +121,7 @@ namespace ElectronicDiaryWeb.Controllers
                     return PartialView("_StandardScheduleForm", model);
 
                 var response = await _httpClient.PostAsJsonAsync(
-                    "api/standard-schedules",
+                    "StandardSchedules",
                     new StandardScheduleController.StandardScheduleRequest
                     {
                         GroupId = model.GroupId,
@@ -120,7 +146,7 @@ namespace ElectronicDiaryWeb.Controllers
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/standard-schedules/{id}");
+                var response = await _httpClient.GetAsync($"StandardSchedules/{id}");
                 response.EnsureSuccessStatusCode();
                 
                 var schedule = await response.Content.ReadFromJsonAsync<StandardScheduleResponse>(_jsonOptions);
@@ -153,7 +179,7 @@ namespace ElectronicDiaryWeb.Controllers
                     return PartialView("_StandardScheduleForm", model);
 
                 var response = await _httpClient.PutAsJsonAsync(
-                    $"api/standard-schedules/{id}",
+                    $"StandardSchedules/{id}",
                     new StandardScheduleController.StandardScheduleRequest
                     {
                         GroupId = model.GroupId,
@@ -185,7 +211,7 @@ namespace ElectronicDiaryWeb.Controllers
                 };
 
                 // Загрузка стандартных занятий
-                var schedulesResponse = await _httpClient.GetAsync($"standard-schedules/group/{groupId}");
+                var schedulesResponse = await _httpClient.GetAsync($"StandardSchedules/group/{groupId}");
                 schedulesResponse.EnsureSuccessStatusCode();
                 
                 var schedules = await schedulesResponse.Content
@@ -209,14 +235,45 @@ namespace ElectronicDiaryWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateChange(EditScheduleChangeViewModel model)
         {
+            if (!ModelState.IsValid)
+                return PartialView("_ScheduleChangeForm", model);
+
             try
             {
-                if (!ModelState.IsValid)
-                    return PartialView("_ScheduleChangeForm", model);
+                if (model.ChangeType is "отмена" or "перенос")
+                {
+                    if (!model.StandardScheduleId.HasValue || !model.OldDate.HasValue)
+                    {
+                        ModelState.AddModelError("", "Необходимо выбрать дату и время занятия");
+                        return PartialView("_ScheduleChangeForm", model);
+                    }
 
-                var response = await _httpClient.PostAsJsonAsync(
-                    "api/schedule-changes",
-                    new ScheduleChangeController.ScheduleChangeRequest
+                    var scheduleResponse = await _httpClient.GetAsync($"StandardSchedules/{model.StandardScheduleId}");
+                    if (!scheduleResponse.IsSuccessStatusCode)
+                    {
+                        ModelState.AddModelError("", "Выбранное занятие не существует");
+                        return PartialView("_ScheduleChangeForm", model);
+                    }
+
+                    var schedule = await scheduleResponse.Content.ReadFromJsonAsync<StandardScheduleResponse>();
+
+                    // Корректная конвертация дня недели
+                    var selectedDateWeekday = model.OldDate.Value.DayOfWeek switch
+                    {
+                        DayOfWeek.Sunday => 7,
+                        _ => (int)model.OldDate.Value.DayOfWeek
+                    };
+
+                    if (schedule.WeekDay != selectedDateWeekday)
+                    {
+                        ModelState.AddModelError("", "Выбранная дата не соответствует дню недели занятия");
+                        return PartialView("_ScheduleChangeForm", model);
+                    }
+                }
+
+                var changeResponse = await _httpClient.PostAsJsonAsync(
+                    "ScheduleChanges",
+                    new ScheduleChangeRequest
                     {
                         GroupId = model.GroupId,
                         ChangeType = model.ChangeType,
@@ -228,12 +285,12 @@ namespace ElectronicDiaryWeb.Controllers
                         StandardScheduleId = model.StandardScheduleId
                     });
 
-                response.EnsureSuccessStatusCode();
+                changeResponse.EnsureSuccessStatusCode();
                 return Content("<script>window.location.reload();</script>", "text/html");
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", $"Ошибка создания: {ex.Message}");
+                ModelState.AddModelError("", $"Ошибка: {ex.Message}");
                 return PartialView("_ScheduleChangeForm", model);
             }
         }
@@ -243,7 +300,7 @@ namespace ElectronicDiaryWeb.Controllers
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/schedule-changes/{id}");
+                var response = await _httpClient.GetAsync($"ScheduleChanges/{id}");
                 response.EnsureSuccessStatusCode();
                 
                 var change = await response.Content.ReadFromJsonAsync<ScheduleChangeController.ScheduleChangeResponse>(_jsonOptions);
@@ -262,7 +319,7 @@ namespace ElectronicDiaryWeb.Controllers
                 };
 
                 // Повторная загрузка стандартных занятий
-                var schedulesResponse = await _httpClient.GetAsync($"api/standard-schedules/group/{model.GroupId}");
+                var schedulesResponse = await _httpClient.GetAsync($"StandardSchedules/group/{model.GroupId}");
                 schedulesResponse.EnsureSuccessStatusCode();
                 
                 var schedules = await schedulesResponse.Content
@@ -292,7 +349,7 @@ namespace ElectronicDiaryWeb.Controllers
                     return PartialView("_ScheduleChangeForm", model);
 
                 var response = await _httpClient.PutAsJsonAsync(
-                    $"api/schedule-changes/{id}",
+                    $"ScheduleChanges/{id}",
                     new ScheduleChangeController.ScheduleChangeRequest
                     {
                         GroupId = model.GroupId,

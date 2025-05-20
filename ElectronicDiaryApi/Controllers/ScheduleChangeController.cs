@@ -7,7 +7,7 @@ using ElectronicDiaryApi.Models;
 namespace ElectronicDiaryApi.Controllers
 {
     [ApiController]
-    [Route("api/schedule-changes")]
+    [Route("api/ScheduleChanges")]
     public class ScheduleChangeController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;

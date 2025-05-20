@@ -16,65 +16,88 @@
     </div>
 
     <div id="changeDetails" style="display: none;">
-        <!-- Original Lesson -->
+        <!-- Объединенный блок для исходного занятия -->
         <div class="row mb-3 original-lesson-section">
             <div class="col-md-12">
-                <label class="form-label">Первоначальное занятие</label>
-                <select asp-for="StandardScheduleId" class="form-select standard-schedule-select"
-                        asp-items="ViewBag.StandardSchedules" required>
-                    <option value="">Выберите занятие</option>
-                </select>
-                <small class="form-text text-muted mt-1 d-block">Выберите занятие из стандартного расписания</small>
+                <div class="border p-3 rounded-3 mb-4 bg-light">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-calendar2-event fs-5 text-primary me-2"></i>
+                        <h6 class="mb-0 fw-semibold">Исходное занятие</h6>
+                    </div>
 
-                <div class="mt-2 original-date-container" style="display: none;">
-                    <label class="form-label">Дата занятия</label>
-                    <input type="date" class="form-control original-date" readonly>
-                    <input type="hidden" asp-for="OldDate" class="original-date-hidden">
+                    <!-- Дата занятия -->
+                    <div class="mb-3">
+                        <label class="form-label">Дата занятия <span class="text-danger">*</span></label>
+                        <input type="date" asp-for="OldDate" class="form-control original-date-input" required>
+                        <small class="form-text text-muted mt-1">
+                            <i class="bi bi-info-circle"></i> Выберите дату из стандартного расписания группы
+                        </small>
+                        <span asp-validation-for="OldDate" class="text-danger"></span>
+                    </div>
+
+                    <!-- Время занятия -->
+                    <div class="mb-3">
+                        <label class="form-label">Время занятия <span class="text-danger">*</span></label>
+                        <select asp-for="StandardScheduleId" class="form-select standard-schedule-select" required>
+                            <option value="">Выберите время...</option>
+                        </select>
+                        <div class="schedule-error text-danger mt-1 small"></div>
+                        <span asp-validation-for="StandardScheduleId" class="text-danger"></span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- New Date -->
-        <div class="row mb-3 new-date-section">
+        <!-- Новый объединенный блок для нового занятия -->
+        <div class="row mb-3 new-lesson-section">
             <div class="col-md-12">
-                <label class="form-label">Новая дата</label>
-                <div class="input-group">
-                    <input asp-for="NewDate" type="date" class="form-control" required>
-                    <span class="input-group-text">
-                        <i class="bi bi-calendar"></i>
-                    </span>
-                </div>
-                <small class="form-text text-muted mt-1 d-block">Дата нового занятия</small>
-            </div>
-        </div>
+                <div class="border p-3 rounded-3 mb-4 bg-light">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-calendar2-plus fs-5 text-success me-2"></i>
+                        <h6 class="mb-0 fw-semibold">Новое занятие</h6>
+                    </div>
 
-        <!-- Time and Classroom -->
-        <div class="time-classroom-section">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Время начала</label>
-                    <div class="input-group">
-                        <input asp-for="NewStartTime" type="time" class="form-control" required>
-                        <span class="input-group-text">
-                            <i class="bi bi-clock"></i>
-                        </span>
+                    <!-- Новая дата -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Новая дата <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input asp-for="NewDate" type="date" class="form-control" required>
+                            </div>
+                            <small class="form-text text-muted mt-1 d-block">
+                                <i class="bi bi-calendar-check"></i> Обязательно выберите дату нового занятия
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Время и кабинет -->
+                    <div class="time-classroom-section">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Время начала <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="NewStartTime" type="time" class="form-control" required>
+                                </div>
+                                <small class="text-danger small time-validation-msg"></small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Время окончания <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="NewEndTime" type="time" class="form-control" required>
+                                </div>
+                                <small class="text-danger small time-validation-msg"></small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Кабинет</label>
+                            <input asp-for="NewClassroom" class="form-control">
+                            <small class="form-text text-muted mt-1 d-block">
+                                <i class="bi bi-info-circle"></i> Можно не указывать, если не изменился
+                            </small>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Время окончания</label>
-                    <div class="input-group">
-                        <input asp-for="NewEndTime" type="time" class="form-control" required>
-                        <span class="input-group-text">
-                            <i class="bi bi-clock"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Кабинет</label>
-                <input asp-for="NewClassroom" class="form-control">
-                <small class="form-text text-muted mt-1 d-block">Если изменился</small>
             </div>
         </div>
     </div>
@@ -85,104 +108,148 @@
     </div>
 </form>
 
+<!-- Views/GroupSchedule/_ScheduleChangeForm.cshtml -->
 <script>
     (function() {
-        console.log('[DEBUG] Partial view script started');
-
+        console.log('[DEBUG] Schedule change form script started');
         const form = document.getElementById('changeForm');
+        const API_BASE_URL = 'https://localhost:7123/api/';
+
         if (!form) {
             console.error('[DEBUG] Form element not found!');
             return;
         }
-        console.log('[DEBUG] Form element found:', form);
 
+        // Элементы формы
+        const changeTypeSelector = form.querySelector('.change-type-selector');
+        const originalDateInput = form.querySelector('.original-date-input');
+        const standardScheduleSelect = form.querySelector('.standard-schedule-select');
+        const errorContainer = form.querySelector('.schedule-error');
+        const sections = {
+            originalLesson: form.querySelector('.original-lesson-section'),
+            newLesson: form.querySelector('.new-lesson-section')
+        };
+
+        // Исправленная функция получения дня недели
+        function getDayName(weekDay) {
+            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']; // Неделя начинается с воскресенья
+            return days[weekDay] || '???';
+        }
+
+        // Функция управления видимостью секций (исправленная)
         function handleChangeType(selectedType) {
-            console.log('[DEBUG] Handling change type:', selectedType);
+            Object.values(sections).forEach(section => section.style.display = 'none');
+            form.querySelector('#changeDetails').style.display = 'block';
 
-            const sections = {
-                changeDetails: form.querySelector('#changeDetails'),
-                originalLesson: form.querySelector('.original-lesson-section'),
-                newDate: form.querySelector('.new-date-section'),
-                timeClassroom: form.querySelector('.time-classroom-section')
-            };
-
-            console.log('[DEBUG] Sections found:', sections);
-
-            // Скрыть всё
-            Object.values(sections).forEach(s => {
-                if (s) {
-                    console.log(`[DEBUG] Hiding section:`, s);
-                    s.style.display = 'none';
-                }
-            });
-
-            if (!selectedType) {
-                console.log('[DEBUG] No type selected, exiting');
-                return;
-            }
-
-            if (sections.changeDetails) {
-                console.log('[DEBUG] Showing change details');
-                sections.changeDetails.style.display = 'block';
-            }
+            const timeInputs = form.querySelectorAll('.time-classroom-section input');
+            const newDateInput = form.querySelector('#NewDate');
 
             switch(selectedType) {
-                case 'отмена':
-                    console.log('[DEBUG] Case: cancellation');
-                    if (sections.originalLesson) {
-                        sections.originalLesson.style.display = 'block';
-                        console.log('[DEBUG] Showing original lesson section');
-                    }
+                case 'перенос':
+                    sections.originalLesson.style.display = 'block';
+                    sections.newLesson.style.display = 'block';
+                    newDateInput.required = true;
+                    timeInputs.forEach(i => i.required = true);
                     break;
 
-                case 'перенос':
-                    console.log('[DEBUG] Case: transfer');
-                    if (sections.originalLesson) {
-                        sections.originalLesson.style.display = 'block';
-                        console.log('[DEBUG] Showing original lesson section');
-                    }
-                    if (sections.newDate) {
-                        sections.newDate.style.display = 'block';
-                        console.log('[DEBUG] Showing new date section');
-                    }
-                    if (sections.timeClassroom) {
-                        sections.timeClassroom.style.display = 'block';
-                        console.log('[DEBUG] Showing time/classroom section');
-                    }
+                case 'отмена':
+                    sections.originalLesson.style.display = 'block';
+                    newDateInput.required = false;
+                    timeInputs.forEach(i => i.required = false);
+                    sections.newLesson.style.display = 'none';
                     break;
 
                 case 'дополнительное':
-                    console.log('[DEBUG] Case: additional');
-                    if (sections.newDate) {
-                        sections.newDate.style.display = 'block';
-                        console.log('[DEBUG] Showing new date section');
-                    }
-                    if (sections.timeClassroom) {
-                        sections.timeClassroom.style.display = 'block';
-                        console.log('[DEBUG] Showing time/classroom section');
-                    }
+                    sections.newLesson.style.display = 'block';
+                    newDateInput.required = true;
+                    timeInputs.forEach(i => i.required = true);
+                    sections.originalLesson.style.display = 'none';
                     break;
 
                 default:
-                    console.log('[DEBUG] Unknown type:', selectedType);
+                    form.querySelector('#changeDetails').style.display = 'none';
             }
         }
 
-        const selector = form.querySelector('.change-type-selector');
-        if (!selector) {
-            console.error('[DEBUG] Selector element not found!');
-            return;
-        }
-        console.log('[DEBUG] Selector element found:', selector);
+        async function loadStandardSchedules(date) {
+            const groupId = document.querySelector('#GroupId').value;
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}StandardSchedules/GetStandardSchedules?groupId=${groupId}&date=${date}`
+                );
 
-        selector.addEventListener('change', (e) => {
-            console.log('[DEBUG] Selector change event triggered');
-            handleChangeType(e.target.value);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка загрузки расписаний:', error);
+                throw error; // Пробрасываем ошибку дальше
+            }
+        }
+
+        // Исправленный обработчик загрузки расписаний
+        async function handleDateChange(date) {
+            console.log('[DEBUG] Handling date change:', date);
+            standardScheduleSelect.disabled = true;
+            errorContainer.textContent = '';
+
+            try {
+                const schedules = await loadStandardSchedules(date);
+                standardScheduleSelect.innerHTML = '<option value="">Выберите время</option>';
+
+                if (!schedules || schedules.length === 0) {
+                    const option = document.createElement('option');
+                    option.textContent = '❌ Нет занятий на выбранную дату';
+                    option.disabled = true;
+                    standardScheduleSelect.appendChild(option);
+                } else {
+                    schedules.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.id;
+                        const start = s.startTime.slice(0, 5);
+                        const end = s.endTime.slice(0, 5);
+                        const dateObj = new Date(date);
+                        const weekDayNumber = dateObj.getDay(); // 0-6 (воскресенье-суббота)
+
+                        // Исправленное получение дня недели
+                        option.textContent = `${getDayName(weekDayNumber)} ${start}-${end} (${s.classroom})`;
+                        standardScheduleSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                errorContainer.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Ошибка загрузки. Проверьте интернет и попробуйте снова';
+                standardScheduleSelect.innerHTML = '<option value="">⚠️ Ошибка загрузки</option>';
+            } finally {
+                standardScheduleSelect.disabled = false;
+            }
+        }
+
+        // Инициализация обработчиков событий
+        function initEventListeners() {
+            changeTypeSelector.addEventListener('change', (e) => handleChangeType(e.target.value));
+            originalDateInput.addEventListener('change', (e) => handleDateChange(e.target.value));
+
+            // Инициализация при первой загрузке
+            handleChangeType(changeTypeSelector.value);
+            if (originalDateInput.value) handleDateChange(originalDateInput.value);
+        }
+
+        initEventListeners();
+
+        // Валидация времени
+        const startTimeInput = form.querySelector('#NewStartTime');
+        const endTimeInput = form.querySelector('#NewEndTime');
+
+        startTimeInput.addEventListener('change', function() {
+            if (this.value && endTimeInput.value && this.value >= endTimeInput.value) {
+                endTimeInput.setCustomValidity('Invalid time');
+                endTimeInput.nextElementSibling.textContent = '❌ Время окончания должно быть позже начала';
+            } else {
+                endTimeInput.setCustomValidity('');
+                endTimeInput.nextElementSibling.textContent = '';
+            }
         });
 
-        console.log('[DEBUG] Initializing with value:', selector.value);
-        handleChangeType(selector.value);
-
-        console.log('[DEBUG] Script initialization completed');
     })();
 </script>

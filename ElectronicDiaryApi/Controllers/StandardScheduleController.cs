@@ -7,7 +7,7 @@ using ElectronicDiaryApi.Models;
 namespace ElectronicDiaryApi.Controllers
 {
     [ApiController]
-    [Route("api/standard-schedules")]
+    [Route("api/StandardSchedules")]
     public class StandardScheduleController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
@@ -15,6 +15,34 @@ namespace ElectronicDiaryApi.Controllers
         public StandardScheduleController(ElectronicDiaryContext context)
         {
             _context = context;
+        }
+
+        [HttpGet("GetStandardSchedules")]
+        public async Task<IActionResult> GetStandardSchedules(
+           [FromQuery] int groupId,
+           [FromQuery] DateTime date)
+        {
+            try
+            {
+                var weekday = date.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)date.DayOfWeek;
+
+                var schedules = await _context.StandardSchedules
+                    .Where(s => s.IdGroup == groupId && s.WeekDay == weekday)
+                    .Select(s => new
+                    {
+                        Id = s.IdStandardSchedule,
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        Classroom = s.Classroom
+                    })
+                    .ToListAsync();
+
+                return Ok(schedules);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpGet("{id}")]
