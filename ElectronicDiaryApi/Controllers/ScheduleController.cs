@@ -160,6 +160,7 @@ namespace ElectronicDiaryApi.Controllers
                 StartTime = standardSchedule.StartTime,
                 EndTime = standardSchedule.EndTime,
                 Classroom = standardSchedule.Classroom,
+                StandardScheduleId = standardSchedule.IdStandardSchedule,
                 IsChanged = false
             };
 
@@ -201,11 +202,13 @@ namespace ElectronicDiaryApi.Controllers
                     Classroom = change.NewClassroom ?? change.IdScheduleNavigation?.Classroom,
                     IsChanged = true,
                     ChangeType = "перенос",
+                    ScheduleChangeId = change.IdScheduleChange,
                     OriginalDetails = new OriginalLessonDetailsDto
                     {
                         Date = change.OldDate ?? DateOnly.MinValue,
                         StartTime = change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
-                        EndTime = change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue
+                        EndTime = change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
+                        Classroom = change.IdScheduleNavigation?.Classroom ?? string.Empty
                     }
                 };
 
@@ -236,6 +239,7 @@ namespace ElectronicDiaryApi.Controllers
             {
                 lesson.IsCancelled = true;
                 lesson.ChangeType = "отмена";
+                lesson.ScheduleChangeId = change.IdScheduleChange;
             }
         }
 
@@ -256,6 +260,7 @@ namespace ElectronicDiaryApi.Controllers
                 Classroom = change.NewClassroom ?? string.Empty,
                 IsChanged = true,
                 ChangeType = "дополнительное",
+                ScheduleChangeId = change.IdScheduleChange,
                 IsAdditional = true
             };
 

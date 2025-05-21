@@ -1,7 +1,6 @@
 ﻿@model ElectronicDiaryWeb.Models.EditScheduleChangeViewModel
 
 <form asp-action="CreateChange" method="post" onsubmit="submitChangeForm(event)" id="changeForm">
-    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="GroupId" />
 
     <div class="mb-3">

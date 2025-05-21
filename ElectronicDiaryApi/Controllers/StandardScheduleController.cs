@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
+using ElectronicDiaryApi.ModelsDto.Shedule;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -11,10 +12,12 @@ namespace ElectronicDiaryApi.Controllers
     public class StandardScheduleController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<GroupsController> _logger;
 
-        public StandardScheduleController(ElectronicDiaryContext context)
+        public StandardScheduleController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet("GetStandardSchedules")]
@@ -46,15 +49,19 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<StandardScheduleResponse>> GetById(int id)
+        public async Task<ActionResult<StandardScheduleDto>> GetById(int id)
         {
             var schedule = await _context.StandardSchedules
-                .Include(s => s.IdGroupNavigation)
                 .FirstOrDefaultAsync(s => s.IdStandardSchedule == id);
 
-            return schedule == null
-                ? NotFound()
-                : Ok(MapToResponse(schedule));
+            if (schedule == null) return NotFound();
+
+            return new StandardScheduleDto
+            {
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                Classroom = schedule.Classroom
+            };
         }
 
         [HttpPost]
@@ -97,19 +104,32 @@ namespace ElectronicDiaryApi.Controllers
             return NoContent();
         }
 
+        // В StandardScheduleController.cs
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            _logger.LogInformation($"Attempting to delete standard schedule with ID: {id}");
+
             var schedule = await _context.StandardSchedules
                 .Include(s => s.ScheduleChanges)
                 .FirstOrDefaultAsync(s => s.IdStandardSchedule == id);
 
-            if (schedule == null) return NotFound();
+            if (schedule == null)
+            {
+                _logger.LogWarning($"Standard schedule with ID {id} not found");
+                return NotFound();
+            }
+
             if (schedule.ScheduleChanges.Any())
+            {
+                _logger.LogWarning($"Cannot delete standard schedule {id} - has related changes");
                 return BadRequest("Cannot delete schedule with existing changes");
+            }
 
             _context.StandardSchedules.Remove(schedule);
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Successfully deleted standard schedule with ID: {id}");
             return NoContent();
         }
 

@@ -1,4 +1,6 @@
-﻿namespace ElectronicDiaryWeb.Models
+﻿using ElectronicDiaryApi.ModelsDto.Shedule;
+
+namespace ElectronicDiaryWeb.Models
 {
     public class EditScheduleChangeViewModel
     {
@@ -11,5 +13,7 @@
         public TimeOnly? NewEndTime { get; set; }
         public string NewClassroom { get; set; }
         public int? StandardScheduleId { get; set; }
+
+        public StandardScheduleDto StandardSchedule { get; set; }
     }
 }

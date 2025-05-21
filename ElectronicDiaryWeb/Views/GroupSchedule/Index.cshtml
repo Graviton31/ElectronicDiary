@@ -38,6 +38,22 @@
             background: #dc3545;
             transform: rotate(-5deg);
         }
+
+    .bi-trash {
+        transition: color 0.2s;
+    }
+
+    .btn-outline-danger:hover .bi-trash {
+        color: #dc3545 !important;
+    }
+
+    .btn-outline-danger {
+        border-color: #dc3545;
+    }
+
+    .modal-header.bg-danger {
+        background-color: #dc3545 !important;
+    }
 </style>
 
 <div class="container mt-4">
@@ -182,25 +198,16 @@
                                                 </div>
 
                                                 <div class="d-flex flex-column gap-2">
-                                                    @if (lesson.StandardScheduleId.HasValue)
+                                                    @if (lesson.StandardScheduleId.HasValue || lesson.ScheduleChangeId.HasValue)
                                                     {
-                                                        <a asp-action="EditStandard"
-                                                           asp-route-id="@lesson.StandardScheduleId"
-                                                           class="btn btn-icon btn-sm btn-outline-primary rounded-circle"
-                                                           title="Редактировать"
-                                                           data-bs-toggle="tooltip">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </a>
-                                                    }
-                                                    @if (lesson.ScheduleChangeId.HasValue)
-                                                    {
-                                                        <a asp-action="EditChange"
-                                                           asp-route-id="@lesson.ScheduleChangeId"
-                                                           class="btn btn-icon btn-sm btn-outline-warning rounded-circle"
-                                                           title="Редактировать изменение"
-                                                           data-bs-toggle="tooltip">
-                                                            <i class="bi bi-clock-history"></i>
-                                                        </a>
+                                                        <button type="button"
+                                                                class="btn btn-icon btn-sm btn-outline-danger rounded-circle align-self-end"
+                                                                title="Удалить"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#deleteModal"
+                                                                onclick="setDeleteParams(@lesson.StandardScheduleId, @lesson.ScheduleChangeId)">
+                                                            <i class="bi bi-trash fs-6"></i>
+                                                        </button>
                                                     }
                                                 </div>
                                             </div>
@@ -252,7 +259,25 @@
     </div>
 </div>
 
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="deleteModalBody">
+                <!-- Контент будет генерироваться динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
+    const API_BASE_URL = 'https://localhost:7123/api/';
+
     // Load standard schedule form
     function loadStandardScheduleForm() {
         const groupId = @Model.SelectedGroupId;
@@ -267,23 +292,6 @@
             .catch(error => {
                 console.error(error);
                 document.getElementById('standardLessonModalContent').innerHTML = "Ошибка загрузки формы";
-            });
-    }
-
-    // Load schedule change form
-    function loadScheduleChangeForm() {
-        const groupId = @Model.SelectedGroupId;
-        fetch(`/GroupSchedule/CreateChangeForm?groupId=${groupId}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Ошибка загрузки формы');
-                return response.text();
-            })
-            .then(html => {
-                document.getElementById('scheduleChangeModalContent').innerHTML = html;
-            })
-            .catch(error => {
-                console.error(error);
-                document.getElementById('scheduleChangeModalContent').innerHTML = "Ошибка загрузки формы";
             });
     }
 
@@ -312,12 +320,35 @@
 
     async function submitChangeForm(event) {
         event.preventDefault();
-        const formData = new FormData(event.target);
+        const form = event.target;
+        const formData = new FormData(form);
+
+        // Конвертация FormData в объект
+        const data = {
+            GroupId: formData.get('GroupId'),
+            ChangeType: formData.get('ChangeType'),
+            OldDate: formData.get('OldDate') || null,
+            NewDate: formData.get('NewDate') || null,
+            NewStartTime: formData.get('NewStartTime') || null,
+            NewEndTime: formData.get('NewEndTime') || null,
+            NewClassroom: formData.get('NewClassroom') || null,
+            StandardScheduleId: formData.get('StandardScheduleId') || null
+        };
+
+        // Валидация
+        const errors = validateChangeForm(data);
+        if (errors.length > 0) {
+            alert(`Ошибки:\n${errors.join("\n")}`);
+            return;
+        }
 
         try {
-            const response = await fetch(event.target.action, {
+            const response = await fetch(`${API_BASE_URL}ScheduleChanges`, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
             });
 
             if (response.ok) {
@@ -325,11 +356,43 @@
                 window.location.reload();
             } else {
                 const errorText = await response.text();
-                document.getElementById('scheduleChangeModalContent').innerHTML = errorText;
+                alert(`Ошибка: ${errorText}`);
             }
         } catch (error) {
             console.error('Ошибка:', error);
+            alert('Ошибка сети. Проверьте подключение.');
         }
+    }
+
+    function validateChangeForm(data) {
+        const errors = [];
+
+        // Обязательные поля для всех типов
+        if (!data.ChangeType) errors.push("Выберите тип изменения");
+
+        // Валидация для переноса
+        if (data.ChangeType === "перенос") {
+            if (!data.OldDate) errors.push("Укажите исходную дату");
+            if (!data.StandardScheduleId) errors.push("Выберите время занятия");
+            if (!data.NewDate) errors.push("Укажите новую дату");
+        }
+
+        if (data.NewStartTime && data.NewEndTime) {
+            const start = new Date(`2000-01-01T${data.NewStartTime}`);
+            const end = new Date(`2000-01-01T${data.NewEndTime}`);
+            if (start >= end) {
+                errors.push("Время окончания должно быть позже начала");
+            }
+        }
+
+        // Валидация для дополнительных занятий
+        if (data.ChangeType === "дополнительное") {
+            if (!data.NewDate) errors.push("Укажите дату занятия");
+            if (!data.NewStartTime) errors.push("Укажите время начала");
+            if (!data.NewEndTime) errors.push("Укажите время окончания");
+        }
+
+        return errors;
     }
 
     // Load schedule change form
@@ -357,5 +420,86 @@
                 console.error('Ошибка:', error);
                 container.innerHTML = "Ошибка загрузки формы";
             });
+    }
+
+    let currentStandardId = null;
+    let currentChangeId = null;
+
+    function setDeleteParams(standardId, changeId) {
+        currentStandardId = standardId;
+        currentChangeId = changeId;
+        const modalBody = document.getElementById('deleteModalBody');
+        modalBody.innerHTML = ''; // Очищаем предыдущее содержимое
+
+        if (currentStandardId && currentChangeId) {
+            // Если есть оба ID, предлагаем выбор
+            modalBody.innerHTML = `
+                <div class="mb-3">
+                    <p>Что именно вы хотите удалить?</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="deleteOption"
+                               id="deleteStandard" value="standard" checked>
+                        <label class="form-check-label" for="deleteStandard">
+                            Стандартное расписание (ID: ${currentStandardId})
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="deleteOption"
+                               id="deleteChange" value="change">
+                        <label class="form-check-label" for="deleteChange">
+                            Изменение расписания (ID: ${currentChangeId})
+                        </label>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Если только один тип записи
+            const id = currentStandardId || currentChangeId;
+            const type = currentStandardId ? 'стандартное расписание' : 'изменение расписания';
+            modalBody.innerHTML = `
+                <p>Вы уверены, что хотите удалить ${type} (ID: ${id})?</p>
+            `;
+        }
+
+        // Добавляем кнопку подтверждения
+        const confirmBtn = document.createElement('button');
+        confirmBtn.type = 'button';
+        confirmBtn.className = 'btn btn-danger';
+        confirmBtn.textContent = 'Удалить';
+        confirmBtn.onclick = performDelete;
+
+        modalBody.appendChild(confirmBtn);
+    }
+
+    async function performDelete() {
+        let deleteType, recordId;
+
+        if (currentStandardId && currentChangeId) {
+            // Если был выбор между двумя вариантами
+            const selected = document.querySelector('input[name="deleteOption"]:checked').value;
+            deleteType = selected;
+            recordId = selected === 'standard' ? currentStandardId : currentChangeId;
+        } else {
+            // Если только один вариант
+            deleteType = currentStandardId ? 'standard' : 'change';
+            recordId = currentStandardId || currentChangeId;
+        }
+
+        const url = `${API_BASE_URL}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
+
+        try {
+            const response = await fetch(url, { method: 'DELETE' });
+
+            if (response.ok) {
+                $('#deleteModal').modal('hide');
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert(`Ошибка: ${error.title || 'Неизвестная ошибка'}`);
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка сети');
+        }
     }
 </script>

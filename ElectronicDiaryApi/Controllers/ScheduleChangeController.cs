@@ -11,10 +11,12 @@ namespace ElectronicDiaryApi.Controllers
     public class ScheduleChangeController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<GroupsController> _logger;
 
-        public ScheduleChangeController(ElectronicDiaryContext context)
+        public ScheduleChangeController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet("{id}")]
@@ -33,27 +35,41 @@ namespace ElectronicDiaryApi.Controllers
         public async Task<ActionResult<ScheduleChangeResponse>> Create(
             [FromBody] ScheduleChangeRequest request)
         {
+            _logger.LogInformation("Received request: {@Request}", request);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (!await _context.Groups.AnyAsync(g => g.IdGroup == request.GroupId))
                 return BadRequest("Group not found");
-
-            var change = new ScheduleChange
+            try
             {
-                IdGroup = request.GroupId,
-                ChangeType = request.ChangeType,
-                OldDate = request.OldDate,
-                NewDate = request.NewDate,
-                NewStartTime = request.NewStartTime,
-                NewEndTime = request.NewEndTime,
-                NewClassroom = request.NewClassroom,
-                IdSchedule = request.StandardScheduleId
-            };
+                var change = new ScheduleChange
+                {
+                    IdGroup = request.GroupId,
+                    ChangeType = request.ChangeType,
+                    OldDate = request.OldDate,
+                    NewDate = request.NewDate,
+                    NewStartTime = request.NewStartTime,
+                    NewEndTime = request.NewEndTime,
+                    NewClassroom = request.NewClassroom,
+                    IdSchedule = request.StandardScheduleId
+                };
 
-            _context.ScheduleChanges.Add(change);
-            await _context.SaveChangesAsync();
+                _context.ScheduleChanges.Add(change);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById),
-                new { id = change.IdScheduleChange },
-                MapToResponse(change));
+                return CreatedAtAction(nameof(GetById),
+                    new { id = change.IdScheduleChange },
+                    MapToResponse(change));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating schedule change");
+                return StatusCode(500);
+            }
         }
 
         [HttpPut("{id}")]
@@ -78,11 +94,19 @@ namespace ElectronicDiaryApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            _logger.LogInformation($"Attempting to delete schedule change with ID: {id}");
+
             var change = await _context.ScheduleChanges.FindAsync(id);
-            if (change == null) return NotFound();
+            if (change == null)
+            {
+                _logger.LogWarning($"Schedule change with ID {id} not found");
+                return NotFound();
+            }
 
             _context.ScheduleChanges.Remove(change);
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Successfully deleted schedule change with ID: {id}");
             return NoContent();
         }
 
@@ -102,6 +126,7 @@ namespace ElectronicDiaryApi.Controllers
             };
         }
 
+        // Убрать атрибуты [FromForm] и изменить типы данных
         public class ScheduleChangeRequest
         {
             public int GroupId { get; set; }

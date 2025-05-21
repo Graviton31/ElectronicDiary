@@ -12,7 +12,7 @@
         public bool IsCancelled { get; set; }
         public bool IsAdditional { get; set; }
         public string ChangeType { get; set; }
-        public OriginalLessonDetailsDto OriginalDetails { get; set; }
+        public OriginalLessonDetailsDto? OriginalDetails { get; set; }
         public int? StandardScheduleId { get; set; }
         public int? ScheduleChangeId { get; set; }
     }
