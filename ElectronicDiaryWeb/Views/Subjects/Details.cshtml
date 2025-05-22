@@ -1,4 +1,4 @@
-﻿@model ElectronicDiaryWeb.ViewModel.SubjectDetailsViewModel
+﻿@model ElectronicDiaryWeb.Models.SubjectDetailsViewModel
 
 <style>
     .card {
@@ -46,7 +46,7 @@
                class="btn btn-primary px-4">
                 <i class="bi bi-pencil-square me-2"></i>Редактировать
             </a>
-            <a asp-controller="Schedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+            <a asp-controller="GroupSchedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
                class="btn btn-secondary px-4">
                 <i class="bi bi-calendar-week me-2"></i>Расписание
             </a>

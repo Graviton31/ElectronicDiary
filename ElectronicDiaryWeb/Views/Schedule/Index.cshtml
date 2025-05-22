@@ -1,137 +1,111 @@
-﻿<!-- Views/Schedule/Index.cshtml -->
-@model ElectronicDiaryWeb.ViewModel.UnifiedScheduleViewModel
+﻿@model ElectronicDiaryWeb.Models.UnifiedScheduleViewModel
 @using System.Globalization
 
-<style>
-    .classroom {
-        font-size: 0.9em;
-        color: #4a4a4a;
-        background-color: #e9ecef;
-        padding: 4px 8px;
-        border-radius: 4px;
-        display: inline-block;
-    }
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary fw-bold">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>
 
-    .lesson-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-        transition: all 0.2s;
-    }
-
-    .lesson-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .time-block {
-        padding: 8px;
-        background-color: #e9ecef;
-        border-radius: 6px;
-        text-align: center;
-    }
-
-    .subject-group .badge {
-        margin-right: 6px;
-        margin-bottom: 4px;
-        font-size: 0.9em;
-    }
-
-    .teachers {
-        font-size: 0.9em;
-        color: #6c757d;
-        margin-top: 4px;
-    }
-
-    .cancelled {
-        opacity: 0.6;
-        background-color: #ffeef0;
-        text-decoration: line-through;
-    }
-
-    .badge.bg-warning {
-        color: #000;
-    }
-</style>
-
-<div class="container">
-    <h2 class="mb-4">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>
-
-    <div class="week-navigation mb-4">
+    <div class="d-flex justify-content-center gap-2 mb-4">
         <a href="@Url.Action("Index", new { date = Model.PreviousWeekStart })"
-           class="btn btn-outline-primary">← Предыдущая неделя</a>
+           class="btn btn-outline-primary px-4 rounded-pill">
+            ← Предыдущая
+        </a>
         <a href="@Url.Action("Index", new { date = DateTime.Today })"
-           class="btn btn-outline-secondary mx-2">Текущая неделя</a>
+           class="btn btn-outline-secondary px-4 rounded-pill">
+            Сегодня
+        </a>
         <a href="@Url.Action("Index", new { date = Model.NextWeekStart })"
-           class="btn btn-outline-primary">Следующая неделя →</a>
+           class="btn btn-outline-primary px-4 rounded-pill">
+            Следующая →
+        </a>
     </div>
 
     @if (Model.Schedule?.Days == null || !Model.Schedule.Days.Any())
     {
-        <div class="alert alert-info">Нет данных о расписании</div>
+        <div class="alert alert-info d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-x fs-5"></i>
+            Нет данных о расписании
+        </div>
     }
     else
     {
-        <div class="row">
+        <div class="row g-4">
             @foreach (var day in Model.Schedule.Days)
             {
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h4>@day.Date.ToString("dddd", new CultureInfo("ru-RU"))</h4>
-                            <h5>@day.Date.ToString("dd.MM.yyyy")</h5>
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+                            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-semibold">
+                                    @day.Date.ToString("dddd", new CultureInfo("ru-RU"))
+                                </span>
+                                <span class="badge bg-primary rounded-pill">
+                                    @day.Date.ToString("dd.MM.yy")
+                                </span>
+                            </h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body pt-3 pb-0">
                             @if (!day.Lessons.Any())
                             {
-                                <div class="text-muted">Нет занятий</div>
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-calendar-x fs-4"></i>
+                                    <div class="mt-2">Нет занятий</div>
+                                </div>
                             }
                             else
                             {
                                 foreach (var lesson in day.Lessons.OrderBy(l => l.StartTime))
                                 {
                                     <div class="lesson-card mb-3 p-3 @(lesson.IsCancelled ? "cancelled" : "")">
-                                        <div class="row">
-                                            <div class="col-3">
-                                                <div class="time-block">
-                                                    <strong>@lesson.StartTime.ToString("HH\\:mm") - @lesson.EndTime.ToString("HH\\:mm")</strong>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1 me-3">
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <span class="badge bg-light text-dark border">
+                                                        @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
+                                                    </span>
                                                     @if (lesson.IsCancelled)
                                                     {
-                                                        <div class="badge bg-danger mt-1">Отменено</div>
-                                                    }
-                                                </div>
-                                            </div>
-                                            <div class="col-9">
-                                                <div class="lesson-details">
-                                                    <div class="subject-group">
-                                                        <span class="badge bg-info">@lesson.SubjectName</span>
-                                                        <span class="badge bg-secondary">@lesson.GroupName</span>
-                                                    </div>
-                                                    <div class="classroom-teachers">
-                                                        @if (!string.IsNullOrEmpty(lesson.Classroom))
-                                                        {
-                                                            <div class="classroom mb-1">
-                                                                <i class="bi bi-door-open"></i> Кабинет: @lesson.Classroom
-                                                            </div>
-                                                        }
-                                                        <div class="teachers">
-                                                            @string.Join(", ", lesson.Teachers)
-                                                        </div>
-                                                    </div>
-                                                    @if (lesson.ChangeType == "перенос")
-                                                    {
-                                                        <div class="changes mt-2">
-                                                            <span class="badge bg-warning">
-                                                                Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
-                                                                @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
-                                                            </span>
-                                                        </div>
+                                                        <span class="badge bg-danger">
+                                                            <i class="bi bi-x-circle me-1"></i>Отменено
+                                                        </span>
                                                     }
                                                     @if (lesson.IsAdditional)
                                                     {
-                                                        <span class="badge bg-success">Дополнительное</span>
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-plus-circle me-1"></i>Дополнительное
+                                                        </span>
                                                     }
                                                 </div>
+
+                                                <h6 class="mb-2 text-truncate">@lesson.SubjectName</h6>
+
+                                                <div class="text-muted small">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="bi bi-people me-2"></i>
+                                                        @lesson.GroupName
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(lesson.Classroom))
+                                                    {
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <i class="bi bi-door-open me-2"></i>
+                                                            @lesson.Classroom
+                                                        </div>
+                                                    }
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-person me-2"></i>
+                                                        <span class="text-truncate">@string.Join(", ", lesson.Teachers)</span>
+                                                    </div>
+                                                </div>
+
+                                                @if (lesson.ChangeType == "перенос")
+                                                {
+                                                    <div class="mt-2">
+                                                        <div class="alert alert-warning py-1 mb-0">
+                                                            <i class="bi bi-arrow-left-right me-2"></i>
+                                                            Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
+                                                            @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
+                                                        </div>
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -145,3 +119,32 @@
     }
 </div>
 
+<style>
+    .lesson-card {
+        border-radius: 12px;
+        background: #f8fafc;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .lesson-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+    .cancelled {
+        position: relative;
+        opacity: 0.7;
+        background: repeating-linear-gradient( -45deg, transparent, transparent 5px, rgba(220,53,69,0.05) 5px, rgba(220,53,69,0.05) 10px );
+    }
+
+        .cancelled::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #dc3545;
+            transform: rotate(-5deg);
+        }
+</style>
