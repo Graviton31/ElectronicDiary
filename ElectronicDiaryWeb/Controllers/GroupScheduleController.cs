@@ -8,6 +8,7 @@ using System.Text.Json;
 using ElectronicDiaryApi.Controllers;
 using static ElectronicDiaryApi.Controllers.StandardScheduleController;
 using static ElectronicDiaryApi.Controllers.ScheduleChangeController;
+using ElectronicDiaryWeb.Models.Shedule;
 
 namespace ElectronicDiaryWeb.Controllers
 {
@@ -92,7 +93,7 @@ namespace ElectronicDiaryWeb.Controllers
         }
 
         // GET /GroupSchedule/CreateStandardForm
-        [HttpGet("CreateStandardForm")] 
+        [HttpGet("CreateStandardForm")]
         public async Task<IActionResult> CreateStandardForm(int groupId)
         {
             try
@@ -103,7 +104,7 @@ namespace ElectronicDiaryWeb.Controllers
                     StartTime = TimeOnly.FromDateTime(DateTime.Now),
                     EndTime = TimeOnly.FromDateTime(DateTime.Now.AddHours(1))
                 };
-                return PartialView("_StandardScheduleForm", model);
+                return PartialView("_StandardSchedulePartial", model);
             }
             catch (Exception ex)
             {
@@ -118,7 +119,7 @@ namespace ElectronicDiaryWeb.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return PartialView("_StandardScheduleForm", model);
+                    return PartialView("_StandardSchedulePartial", model);
 
                 var response = await _httpClient.PostAsJsonAsync(
                     "StandardSchedules",
@@ -137,7 +138,7 @@ namespace ElectronicDiaryWeb.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Ошибка создания: {ex.Message}");
-                return PartialView("_StandardScheduleForm", model);
+                return PartialView("_StandardSchedulePartial", model);
             }
         }
 
@@ -148,9 +149,9 @@ namespace ElectronicDiaryWeb.Controllers
             {
                 var response = await _httpClient.GetAsync($"StandardSchedules/{id}");
                 response.EnsureSuccessStatusCode();
-                
+
                 var schedule = await response.Content.ReadFromJsonAsync<StandardScheduleResponse>(_jsonOptions);
-                
+
                 var model = new EditStandardScheduleViewModel
                 {
                     Id = schedule.Id,
@@ -161,7 +162,7 @@ namespace ElectronicDiaryWeb.Controllers
                     Classroom = schedule.Classroom
                 };
 
-                return PartialView("_StandardScheduleForm", model);
+                return PartialView("_StandardSchedulePartial", model);
             }
             catch (Exception ex)
             {
@@ -176,7 +177,7 @@ namespace ElectronicDiaryWeb.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return PartialView("_StandardScheduleForm", model);
+                    return PartialView("_StandardSchedulePartial", model);
 
                 var response = await _httpClient.PutAsJsonAsync(
                     $"StandardSchedules/{id}",
@@ -195,7 +196,7 @@ namespace ElectronicDiaryWeb.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Ошибка сохранения: {ex.Message}");
-                return PartialView("_StandardScheduleForm", model);
+                return PartialView("_StandardSchedulePartial", model);
             }
         }
 
@@ -204,8 +205,8 @@ namespace ElectronicDiaryWeb.Controllers
         {
             try
             {
-                var model = new EditScheduleChangeViewModel 
-                { 
+                var model = new EditScheduleChangeViewModel
+                {
                     GroupId = groupId,
                     NewDate = DateOnly.FromDateTime(DateTime.Now)
                 };
@@ -213,17 +214,17 @@ namespace ElectronicDiaryWeb.Controllers
                 // Загрузка стандартных занятий
                 var schedulesResponse = await _httpClient.GetAsync($"StandardSchedules/group/{groupId}");
                 schedulesResponse.EnsureSuccessStatusCode();
-                
+
                 var schedules = await schedulesResponse.Content
                     .ReadFromJsonAsync<List<StandardScheduleResponse>>(_jsonOptions);
 
-                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem 
+                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem
                 {
                     Value = s.Id.ToString(),
                     Text = $"{GetDayName(s.WeekDay)} {s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}"
                 });
 
-                return PartialView("_ScheduleChangeForm", model);
+                return PartialView("_ScheduleChangePartial", model);
             }
             catch (Exception ex)
             {
@@ -236,7 +237,7 @@ namespace ElectronicDiaryWeb.Controllers
         public async Task<IActionResult> CreateChange(EditScheduleChangeViewModel model)
         {
             if (!ModelState.IsValid)
-                return PartialView("_ScheduleChangeForm", model);
+                return PartialView("_ScheduleChangePartial", model);
 
             try
             {
@@ -245,14 +246,14 @@ namespace ElectronicDiaryWeb.Controllers
                     if (!model.StandardScheduleId.HasValue || !model.OldDate.HasValue)
                     {
                         ModelState.AddModelError("", "Необходимо выбрать дату и время занятия");
-                        return PartialView("_ScheduleChangeForm", model);
+                        return PartialView("_ScheduleChangePartial", model);
                     }
 
                     var scheduleResponse = await _httpClient.GetAsync($"StandardSchedules/{model.StandardScheduleId}");
                     if (!scheduleResponse.IsSuccessStatusCode)
                     {
                         ModelState.AddModelError("", "Выбранное занятие не существует");
-                        return PartialView("_ScheduleChangeForm", model);
+                        return PartialView("_ScheduleChangePartial", model);
                     }
 
                     var schedule = await scheduleResponse.Content.ReadFromJsonAsync<StandardScheduleResponse>();
@@ -267,7 +268,7 @@ namespace ElectronicDiaryWeb.Controllers
                     if (schedule.WeekDay != selectedDateWeekday)
                     {
                         ModelState.AddModelError("", "Выбранная дата не соответствует дню недели занятия");
-                        return PartialView("_ScheduleChangeForm", model);
+                        return PartialView("_ScheduleChangePartial", model);
                     }
                 }
 
@@ -277,10 +278,10 @@ namespace ElectronicDiaryWeb.Controllers
                     {
                         GroupId = model.GroupId,
                         ChangeType = model.ChangeType,
-                        OldDate = model.OldDate,
-                        NewDate = model.NewDate,
-                        NewStartTime = model.NewStartTime,
-                        NewEndTime = model.NewEndTime,
+                        OldDate = Convert.ToString(model.OldDate),
+                        NewDate = Convert.ToString(model.NewDate),
+                        NewStartTime = Convert.ToString(model.NewStartTime),
+                        NewEndTime = Convert.ToString(model.NewEndTime),
                         NewClassroom = model.NewClassroom,
                         StandardScheduleId = model.StandardScheduleId
                     });
@@ -291,7 +292,7 @@ namespace ElectronicDiaryWeb.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Ошибка: {ex.Message}");
-                return PartialView("_ScheduleChangeForm", model);
+                return PartialView("_ScheduleChangePartial", model);
             }
         }
 
@@ -302,7 +303,7 @@ namespace ElectronicDiaryWeb.Controllers
             {
                 var response = await _httpClient.GetAsync($"ScheduleChanges/{id}");
                 response.EnsureSuccessStatusCode();
-                
+
                 var change = await response.Content.ReadFromJsonAsync<ScheduleChangeController.ScheduleChangeResponse>(_jsonOptions);
 
                 var model = new EditScheduleChangeViewModel
@@ -321,17 +322,17 @@ namespace ElectronicDiaryWeb.Controllers
                 // Повторная загрузка стандартных занятий
                 var schedulesResponse = await _httpClient.GetAsync($"StandardSchedules/group/{model.GroupId}");
                 schedulesResponse.EnsureSuccessStatusCode();
-                
+
                 var schedules = await schedulesResponse.Content
                     .ReadFromJsonAsync<List<StandardScheduleResponse>>(_jsonOptions);
 
-                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem 
+                ViewBag.StandardSchedules = schedules.Select(s => new SelectListItem
                 {
                     Value = s.Id.ToString(),
                     Text = $"{GetDayName(s.WeekDay)} {s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}"
                 });
 
-                return PartialView("_ScheduleChangeForm", model);
+                return PartialView("_ScheduleChangePartial", model);
             }
             catch (Exception ex)
             {
@@ -346,7 +347,7 @@ namespace ElectronicDiaryWeb.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return PartialView("_ScheduleChangeForm", model);
+                    return PartialView("_ScheduleChangePartial", model);
 
                 var response = await _httpClient.PutAsJsonAsync(
                     $"ScheduleChanges/{id}",
@@ -354,10 +355,10 @@ namespace ElectronicDiaryWeb.Controllers
                     {
                         GroupId = model.GroupId,
                         ChangeType = model.ChangeType,
-                        OldDate = model.OldDate,
-                        NewDate = model.NewDate,
-                        NewStartTime = model.NewStartTime,
-                        NewEndTime = model.NewEndTime,
+                        OldDate = Convert.ToString(model.OldDate),
+                        NewDate = Convert.ToString(model.NewDate),
+                        NewStartTime = Convert.ToString(model.NewStartTime),
+                        NewEndTime = Convert.ToString(model.NewEndTime),
                         NewClassroom = model.NewClassroom,
                         StandardScheduleId = model.StandardScheduleId
                     });
@@ -368,7 +369,7 @@ namespace ElectronicDiaryWeb.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Ошибка сохранения: {ex.Message}");
-                return PartialView("_ScheduleChangeForm", model);
+                return PartialView("_ScheduleChangePartial", model);
             }
         }
 

@@ -33,10 +33,8 @@ namespace ElectronicDiaryApi.Controllers
 
         [HttpPost]
         public async Task<ActionResult<ScheduleChangeResponse>> Create(
-            [FromBody] ScheduleChangeRequest request)
+    [FromBody] ScheduleChangeRequest request)
         {
-            _logger.LogInformation("Received request: {@Request}", request);
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -44,16 +42,17 @@ namespace ElectronicDiaryApi.Controllers
 
             if (!await _context.Groups.AnyAsync(g => g.IdGroup == request.GroupId))
                 return BadRequest("Group not found");
+
             try
             {
                 var change = new ScheduleChange
                 {
                     IdGroup = request.GroupId,
                     ChangeType = request.ChangeType,
-                    OldDate = request.OldDate,
-                    NewDate = request.NewDate,
-                    NewStartTime = request.NewStartTime,
-                    NewEndTime = request.NewEndTime,
+                    OldDate = request.GetOldDate(),
+                    NewDate = request.GetNewDate(),
+                    NewStartTime = request.GetNewStartTime(),
+                    NewEndTime = request.GetNewEndTime(),
                     NewClassroom = request.NewClassroom,
                     IdSchedule = request.StandardScheduleId
                 };
@@ -80,10 +79,10 @@ namespace ElectronicDiaryApi.Controllers
             if (change == null) return NotFound();
 
             change.ChangeType = request.ChangeType;
-            change.OldDate = request.OldDate;
-            change.NewDate = request.NewDate;
-            change.NewStartTime = request.NewStartTime;
-            change.NewEndTime = request.NewEndTime;
+            change.OldDate = request.GetOldDate();
+            change.NewDate = request.GetNewDate();
+            change.NewStartTime = request.GetNewStartTime();
+            change.NewEndTime = request.GetNewEndTime();
             change.NewClassroom = request.NewClassroom;
             change.IdSchedule = request.StandardScheduleId;
 
@@ -131,12 +130,18 @@ namespace ElectronicDiaryApi.Controllers
         {
             public int GroupId { get; set; }
             public string ChangeType { get; set; }
-            public DateOnly? OldDate { get; set; }
-            public DateOnly? NewDate { get; set; }
-            public TimeOnly? NewStartTime { get; set; }
-            public TimeOnly? NewEndTime { get; set; }
+            public string? OldDate { get; set; } // Изменено на string
+            public string? NewDate { get; set; } // Изменено на string
+            public string? NewStartTime { get; set; } // Изменено на string
+            public string? NewEndTime { get; set; } // Изменено на string
             public string? NewClassroom { get; set; }
             public int? StandardScheduleId { get; set; }
+
+            // Добавьте методы для конвертации
+            public DateOnly? GetOldDate() => OldDate != null ? DateOnly.Parse(OldDate) : null;
+            public DateOnly? GetNewDate() => NewDate != null ? DateOnly.Parse(NewDate) : null;
+            public TimeOnly? GetNewStartTime() => NewStartTime != null ? TimeOnly.Parse(NewStartTime) : null;
+            public TimeOnly? GetNewEndTime() => NewEndTime != null ? TimeOnly.Parse(NewEndTime) : null;
         }
 
         public class ScheduleChangeResponse

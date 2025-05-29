@@ -1,5 +1,6 @@
-﻿<!-- Views/GroupSchedule/_StandardScheduleForm.cshtml -->
-@model ElectronicDiaryWeb.Models.EditStandardScheduleViewModel
+﻿@using ElectronicDiaryWeb.Models.Shedule
+<!-- Views/GroupSchedule/_StandardSchedulePartial.cshtml -->
+@model EditStandardScheduleViewModel
 
 <form asp-action="CreateStandard" method="post" onsubmit="submitStandardForm(event)">
     @Html.AntiForgeryToken()

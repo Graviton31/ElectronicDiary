@@ -205,7 +205,7 @@
                                                                 title="Удалить"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#deleteModal"
-                                                                onclick="setDeleteParams(@lesson.StandardScheduleId, @lesson.ScheduleChangeId)">
+                                                                onclick="setDeleteParams(@(lesson.StandardScheduleId ?? 0), @(lesson.ScheduleChangeId ?? 0))">
                                                             <i class="bi bi-trash fs-6"></i>
                                                         </button>
                                                     }
@@ -323,7 +323,7 @@
         const form = event.target;
         const formData = new FormData(form);
 
-        // Конвертация FormData в объект
+        // Конвертация FormData в объект с правильными форматами дат
         const data = {
             GroupId: formData.get('GroupId'),
             ChangeType: formData.get('ChangeType'),
@@ -332,7 +332,7 @@
             NewStartTime: formData.get('NewStartTime') || null,
             NewEndTime: formData.get('NewEndTime') || null,
             NewClassroom: formData.get('NewClassroom') || null,
-            StandardScheduleId: formData.get('StandardScheduleId') || null
+            StandardScheduleId: formData.get('StandardScheduleId') ? parseInt(formData.get('StandardScheduleId')) : null
         };
 
         // Валидация
@@ -367,58 +367,56 @@
     function validateChangeForm(data) {
         const errors = [];
 
-        // Обязательные поля для всех типов
         if (!data.ChangeType) errors.push("Выберите тип изменения");
 
-        // Валидация для переноса
         if (data.ChangeType === "перенос") {
             if (!data.OldDate) errors.push("Укажите исходную дату");
             if (!data.StandardScheduleId) errors.push("Выберите время занятия");
             if (!data.NewDate) errors.push("Укажите новую дату");
         }
 
-        if (data.NewStartTime && data.NewEndTime) {
-            const start = new Date(`2000-01-01T${data.NewStartTime}`);
-            const end = new Date(`2000-01-01T${data.NewEndTime}`);
-            if (start >= end) {
-                errors.push("Время окончания должно быть позже начала");
-            }
-        }
-
-        // Валидация для дополнительных занятий
         if (data.ChangeType === "дополнительное") {
             if (!data.NewDate) errors.push("Укажите дату занятия");
             if (!data.NewStartTime) errors.push("Укажите время начала");
             if (!data.NewEndTime) errors.push("Укажите время окончания");
         }
 
+        if (data.NewStartTime && data.NewEndTime && data.NewStartTime >= data.NewEndTime) {
+            errors.push("Время окончания должно быть позже начала");
+        }
+
         return errors;
     }
 
     // Load schedule change form
-        function loadScheduleChangeForm() {
-        console.log('[DEBUG] Loading schedule change form...');
+    function loadScheduleChangeForm() {
         const groupId = @Model.SelectedGroupId;
+        const container = document.getElementById('scheduleChangeModalContent');
+        container.innerHTML = '<div class="text-center py-4"><i class="bi bi-arrow-repeat spinner"></i> Загрузка...</div>';
+
         fetch(`/GroupSchedule/CreateChangeForm?groupId=${groupId}`)
             .then(response => {
                 if (!response.ok) throw new Error('Ошибка загрузки формы');
                 return response.text();
             })
             .then(html => {
-                const container = document.getElementById('scheduleChangeModalContent');
                 container.innerHTML = html;
-
-                // Принудительно выполняем скрипты
+                // Инициализация скриптов после загрузки
                 const scripts = container.querySelectorAll('script');
-                scripts.forEach(oldScript => {
+                scripts.forEach(script => {
                     const newScript = document.createElement('script');
-                    newScript.text = oldScript.text;
+                    newScript.text = script.text;
                     document.body.appendChild(newScript).parentNode.removeChild(newScript);
                 });
             })
             .catch(error => {
                 console.error('Ошибка:', error);
-                container.innerHTML = "Ошибка загрузки формы";
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Ошибка загрузки формы: ${error.message}
+                    </div>
+                `;
             });
     }
 
@@ -426,8 +424,9 @@
     let currentChangeId = null;
 
     function setDeleteParams(standardId, changeId) {
-        currentStandardId = standardId;
-        currentChangeId = changeId;
+        currentStandardId = standardId !== 0 ? standardId : null;
+        currentChangeId = changeId !== 0 ? changeId : null;
+
         const modalBody = document.getElementById('deleteModalBody');
         modalBody.innerHTML = ''; // Очищаем предыдущее содержимое
 

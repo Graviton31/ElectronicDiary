@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using ElectronicDiaryWeb.Models.Group;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace ElectronicDiaryWeb.Models
+namespace ElectronicDiaryWeb.Models.Subject
 {
     public class EditSubjectViewModel
     {

@@ -1,6 +1,6 @@
 ﻿using ElectronicDiaryApi.ModelsDto.Shedule;
 
-namespace ElectronicDiaryWeb.Models
+namespace ElectronicDiaryWeb.Models.Shedule
 {
     public class EditScheduleChangeViewModel
     {

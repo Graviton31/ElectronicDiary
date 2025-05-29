@@ -1,4 +1,5 @@
-﻿@model ElectronicDiaryWeb.Models.EditScheduleChangeViewModel
+﻿@using ElectronicDiaryWeb.Models.Shedule
+@model EditScheduleChangeViewModel
 
 <form asp-action="CreateChange" method="post" onsubmit="submitChangeForm(event)" id="changeForm">
     <input type="hidden" asp-for="GroupId" />
@@ -27,7 +28,8 @@
                     <!-- Дата занятия -->
                     <div class="mb-3">
                         <label class="form-label">Дата занятия <span class="text-danger">*</span></label>
-                        <input type="date" asp-for="OldDate" class="form-control original-date-input" required>
+                        <input asp-for="OldDate" type="date" class="form-control original-date-input"
+                               required="@(Model.ChangeType == "перенос" || Model.ChangeType == "отмена")">
                         <small class="form-text text-muted mt-1">
                             <i class="bi bi-info-circle"></i> Выберите дату из стандартного расписания группы
                         </small>
@@ -37,7 +39,8 @@
                     <!-- Время занятия -->
                     <div class="mb-3">
                         <label class="form-label">Время занятия <span class="text-danger">*</span></label>
-                        <select asp-for="StandardScheduleId" class="form-select standard-schedule-select" required>
+                        <select asp-for="StandardScheduleId" class="form-select standard-schedule-select"
+                                required="@(Model.ChangeType == "перенос" || Model.ChangeType == "отмена")">
                             <option value="">Выберите время...</option>
                         </select>
                         <div class="schedule-error text-danger mt-1 small"></div>
@@ -107,7 +110,6 @@
     </div>
 </form>
 
-<!-- Views/GroupSchedule/_ScheduleChangeForm.cshtml -->
 <script>
     (function() {
         console.log('[DEBUG] Schedule change form script started');
@@ -137,37 +139,31 @@
 
         // Функция управления видимостью секций (исправленная)
         function handleChangeType(selectedType) {
-            Object.values(sections).forEach(section => section.style.display = 'none');
-            form.querySelector('#changeDetails').style.display = 'block';
-
-            const timeInputs = form.querySelectorAll('.time-classroom-section input');
+            const originalDateInput = form.querySelector('#OldDate');
+            const standardScheduleSelect = form.querySelector('#StandardScheduleId');
             const newDateInput = form.querySelector('#NewDate');
+            const timeInputs = form.querySelectorAll('.time-classroom-section input');
 
-            switch(selectedType) {
-                case 'перенос':
-                    sections.originalLesson.style.display = 'block';
-                    sections.newLesson.style.display = 'block';
-                    newDateInput.required = true;
-                    timeInputs.forEach(i => i.required = true);
-                    break;
+            // Управление required атрибутами
+            originalDateInput.required = selectedType === 'перенос' || selectedType === 'отмена';
+            standardScheduleSelect.required = selectedType === 'перенос' || selectedType === 'отмена';
+            newDateInput.required = selectedType === 'перенос' || selectedType === 'дополнительное';
 
-                case 'отмена':
-                    sections.originalLesson.style.display = 'block';
-                    newDateInput.required = false;
-                    timeInputs.forEach(i => i.required = false);
-                    sections.newLesson.style.display = 'none';
-                    break;
+            timeInputs.forEach(input => {
+                input.required = selectedType === 'перенос' || selectedType === 'дополнительное';
+            });
 
-                case 'дополнительное':
-                    sections.newLesson.style.display = 'block';
-                    newDateInput.required = true;
-                    timeInputs.forEach(i => i.required = true);
-                    sections.originalLesson.style.display = 'none';
-                    break;
+            // Управление видимостью секций
+            form.querySelector('#changeDetails').style.display = 'block';
+            form.querySelector('.original-lesson-section').style.display =
+                (selectedType === 'перенос' || selectedType === 'отмена') ? 'block' : 'none';
+            form.querySelector('.new-lesson-section').style.display =
+                (selectedType === 'перенос' || selectedType === 'дополнительное') ? 'block' : 'none';
 
-                default:
-                    form.querySelector('#changeDetails').style.display = 'none';
-            }
+            // Сброс валидации при изменении типа
+            form.querySelectorAll('input, select').forEach(el => {
+                el.setCustomValidity('');
+            });
         }
 
         async function loadStandardSchedules(date) {

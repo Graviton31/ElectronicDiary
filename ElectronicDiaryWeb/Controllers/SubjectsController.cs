@@ -4,6 +4,8 @@ using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
 using ElectronicDiaryApi.ModelsDto.Group;
 using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryWeb.Models;
+using ElectronicDiaryWeb.Models.Group;
+using ElectronicDiaryWeb.Models.Subject;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;

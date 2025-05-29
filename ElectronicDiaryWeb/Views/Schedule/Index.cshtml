@@ -1,5 +1,6 @@
-﻿@model ElectronicDiaryWeb.Models.UnifiedScheduleViewModel
+﻿@model UnifiedScheduleViewModel
 @using System.Globalization
+@using ElectronicDiaryWeb.Models.Shedule
 
 <div class="container mt-4">
     <h2 class="mb-4 text-primary fw-bold">Расписание на неделю @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>

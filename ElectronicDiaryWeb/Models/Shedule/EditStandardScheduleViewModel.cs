@@ -1,4 +1,4 @@
-﻿namespace ElectronicDiaryWeb.Models
+﻿namespace ElectronicDiaryWeb.Models.Shedule
 {
     public class EditStandardScheduleViewModel
     {

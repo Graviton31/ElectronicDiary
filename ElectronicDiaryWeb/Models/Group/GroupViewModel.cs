@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ElectronicDiaryWeb.Models
+namespace ElectronicDiaryWeb.Models.Group
 {
     public class GroupViewModel
     {

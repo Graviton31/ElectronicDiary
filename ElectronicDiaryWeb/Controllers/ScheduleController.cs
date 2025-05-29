@@ -1,6 +1,7 @@
 ﻿using ElectronicDiaryApi.ModelsDto.Shedule;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.Models;
+using ElectronicDiaryWeb.Models.Shedule;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;

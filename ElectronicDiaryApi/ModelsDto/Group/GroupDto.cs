@@ -14,6 +14,5 @@ namespace ElectronicDiaryApi.ModelsDto.Group
         public string SubjectName { get; set; }
         public string MinAge { get; set; } = null!;
         public string MaxAge { get; set; } = null!;
-        //public bool? IsDelete { get; set; }
     }
 }
