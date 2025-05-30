@@ -1,0 +1,1543 @@
+﻿@model List<ElectronicDiaryApi.ModelsDto.Subject.SubjectDto>
+
+@{
+    ViewData["Title"] = "Электронный журнал";
+}
+
+<div class="e-journal-container">
+    <!-- Заголовок с иконкой -->
+    <header class="journal-header mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-journal-bookmark-fill journal-icon me-3"></i>
+            <h1 class="journal-title">Электронный журнал</h1>
+        </div>
+        <hr class="header-divider">
+    </header>
+
+    <div class="journal-layout">
+        <!-- Боковая панель с предметами -->
+        <aside class="journal-sidebar">
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="bi bi-book-half me-2"></i>Предметы
+                </h3>
+                <ul id="subjectList" class="subject-list">
+                    @foreach (var subject in Model)
+                    {
+                        <li class="subject-item">
+                            <a href="#" class="subject-link" data-id="@subject.IdSubject">
+                                <i class="bi bi-journal-text subject-icon"></i>
+                                <span class="subject-name">@subject.Name</span>
+                                <i class="bi bi-chevron-down toggle-icon"></i>
+                            </a>
+                            <ul class="group-list" id="groups-@subject.IdSubject" style="display:none;"></ul>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Основное содержимое -->
+        <main class="journal-content">
+            <!-- Панель управления журналом -->
+            <div class="journal-controls mb-4">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="journal-selector" style="display: none;">
+                            <label for="journalSelector" class="form-label">
+                                <i class="bi bi-journals"></i> Выбор журнала
+                            </label>
+                            <select id="journalSelector" class="form-select">
+                                <option value="">Выберите журнал</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-md-end gap-2">
+                            <button class="btn btn-primary" id="showAddLessonModal" style="display: none;">
+                                <i class="bi bi-plus-lg"></i> <span class="btn-text">Добавить урок</span>
+                            </button>
+                            <button class="btn btn-success" id="showCreateJournalModalBtn" style="display: none;">
+                                <i class="bi bi-journal-plus"></i> <span class="btn-text">Создать журнал</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Контейнер журнала -->
+            <div class="journal-card">
+                <div id="journalContainer">
+                    <div class="empty-state">
+                        <i class="bi bi-journal empty-icon"></i>
+                        <h4 class="empty-title">Выберите группу</h4>
+                        <p class="empty-text">Для отображения журнала выберите группу из списка</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Модальное окно добавления урока -->
+<div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить новый урок</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="lessonDateInput" class="form-label">Дата урока</label>
+                    <input type="date" class="form-control" id="lessonDateInput">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmAddLesson">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно комментария -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Комментарий для родителей</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-floating">
+                    <textarea class="form-control" id="commentTextarea"
+                              placeholder="Введите комментарий"
+                              style="height: 120px"></textarea>
+                    <label for="commentTextarea">Комментарий</label>
+                </div>
+                <input type="hidden" id="commentVisitId">
+                <input type="hidden" id="commentStudentId">
+                <input type="hidden" id="commentLessonId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="clearCommentBtn">
+                    <i class="bi bi-trash"></i> Очистить
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Отмена
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCommentBtn">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создания журнала -->
+<div class="modal fade" id="createJournalModal" tabindex="-1" aria-labelledby="createJournalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createJournalModalLabel">Создать новый журнал</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="journalStartDate" class="form-label">Дата начала</label>
+                    <input type="date" class="form-control" id="journalStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="journalEndDate" class="form-label">Дата окончания</label>
+                    <input type="date" class="form-control" id="journalEndDate">
+                </div>
+                <div class="mb-3">
+                    <label for="lessonsCount" class="form-label">Количество уроков</label>
+                    <input type="number" class="form-control" id="lessonsCount" min="1" value="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmCreateJournal">Создать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Шаблоны -->
+<div id="noJournalTemplate" style="display: none;">
+    <div class="alert alert-warning d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            {message}
+            <button class="btn btn-primary mt-2" id="createJournalBtn">
+                <i class="bi bi-journal-plus"></i> Создать журнал
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="noLessonsTemplate" style="display: none;">
+    <div class="alert alert-info d-flex align-items-center">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <div>Журнал создан, но уроки еще не добавлены</div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --info-color: #4895ef;
+        --warning-color: #f8961e;
+        --danger-color: #f72585;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --sidebar-width: 280px;
+        --sidebar-collapsed-width: 80px;
+        --header-height: 80px;
+        --transition-speed: 0.3s;
+    }
+
+    /* Общие стили */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .e-journal-container {
+        padding: 20px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    /* Заголовок */
+    .journal-header {
+        padding: 15px 0;
+    }
+
+    .journal-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+    }
+
+    .journal-title {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin: 0;
+        font-size: 1.8rem;
+    }
+
+    .header-divider {
+        border-top: 2px solid var(--primary-color);
+        opacity: 0.2;
+        margin: 10px 0;
+    }
+
+    .status-cell {
+        min-width: 60px;
+    }
+
+    .status-select {
+        padding: 4px;
+    }
+
+    /* Макет */
+    .journal-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Боковая панель */
+    .journal-sidebar {
+        flex: 0 0 var(--sidebar-width);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .sidebar-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        height: 100%;
+    }
+
+    .sidebar-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+
+    .subject-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .subject-item {
+        margin-bottom: 5px;
+    }
+
+    .subject-link {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        color: var(--dark-color);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+        .subject-link:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+        }
+
+    .subject-icon {
+        margin-right: 10px;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+    }
+
+    .subject-name {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .toggle-icon {
+        transition: transform 0.2s;
+    }
+
+    .subject-link.collapsed .toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .group-list {
+        list-style: none;
+        padding-left: 20px;
+        margin-top: 5px;
+    }
+
+        .group-list .list-group-item {
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+
+        .group-list .group-link {
+            color: #555;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+            .group-list .group-link:hover {
+                color: var(--primary-color);
+            }
+
+        .group-list .bi {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+    /* Основное содержимое */
+    .journal-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .journal-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        min-height: 300px;
+    }
+
+    /* Элементы управления */
+    .journal-controls {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .journal-selector {
+        margin-bottom: 15px;
+    }
+
+        .journal-selector .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .journal-selector .bi {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+
+        .journal-selector .form-select {
+            font-size: 0.95rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            height: auto;
+        }
+
+    /* Состояние пустого журнала */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 15px;
+    }
+
+    .empty-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+
+    .empty-text {
+        font-size: 0.95rem;
+    }
+
+    /* Таблица журнала */
+    .journal-container {
+        position: relative;
+        overflow-x: auto;
+        width: 100%;
+        margin-bottom: 1rem;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .journal-table {
+        table-layout: auto; /* Изменено с fixed на auto для автоматической ширины */
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.95rem;
+    }
+
+        .journal-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+            height: 50px;
+            padding: 12px 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            .journal-table th:first-child,
+            .journal-table td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 3;
+                background-color: white;
+                min-width: 150px;
+                width: 150px;
+            }
+
+            .journal-table th:first-child {
+                z-index: 4;
+                background-color: #f8f9fa;
+            }
+
+        .journal-table td {
+            padding: 12px 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+    /* Ячейки статусов */
+    .status-cell {
+        height: 80px;
+        min-width: 80px;
+        position: relative;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .status-select {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .status-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+
+        .status-select option {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+
+    .student-name-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 8px 12px;
+        font-weight: 500;
+        position: relative;
+    }
+
+    /* Кнопка комментария */
+    .comment-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        font-size: 12px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.8;
+        transition: all 0.2s;
+        background-color: white;
+        border: 1px solid #dee2e6;
+    }
+
+        .comment-btn:hover {
+            opacity: 1;
+            background-color: #f8f9fa;
+            transform: scale(1.1);
+        }
+
+        .comment-btn .bi {
+            font-size: 0.9rem;
+        }
+
+    .has-comment {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    /* Стили статусов */
+    .table-success {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    .table-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .table-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .table-info {
+        background-color: rgba(23, 162, 184, 0.1);
+    }
+
+    .table-secondary {
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+
+    /* Пустые уроки */
+    .empty-lesson {
+        background-color: #f8f9fa;
+        border: 1px dashed #dee2e6;
+    }
+
+    /* Анимации */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    /* Кнопки */
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+    /* Адаптация для мобильных устройств */
+    @@media (min-width: 992px) {
+        .journal-layout {
+            flex-direction: row;
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        .journal-layout {
+            flex-direction: column;
+        }
+
+        .journal-sidebar {
+            flex: 0 0 auto;
+            width: 100%;
+        }
+
+        .sidebar-card {
+            padding: 15px;
+        }
+
+        .journal-title {
+            font-size: 1.5rem;
+        }
+
+        .btn-text {
+            display: none;
+        }
+
+        .journal-controls {
+            padding: 10px;
+        }
+
+        .journal-selector .form-label {
+            font-size: 0.9rem;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .e-journal-container {
+            padding: 15px;
+        }
+
+        .journal-header {
+            padding: 10px 0;
+        }
+
+        .journal-icon {
+            font-size: 1.5rem;
+        }
+
+        .journal-title {
+            font-size: 1.3rem;
+        }
+
+        .journal-table th:first-child,
+        .journal-table td:first-child {
+            min-width: 120px;
+            width: 120px;
+        }
+
+        .journal-table th:not(:first-child),
+        .journal-table td:not(:first-child) {
+            min-width: 70px;
+            width: 70px;
+            padding: 2px;
+        }
+
+        .status-cell {
+            height: 70px;
+            min-width: 70px;
+        }
+
+        .status-select {
+            font-size: 0.8rem;
+            padding: 4px;
+        }
+
+        .student-name-cell {
+            font-size: 0.8rem;
+            padding: 8px;
+        }
+
+        .comment-btn {
+            width: 24px;
+            height: 24px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .journal-table th:first-child,
+        .journal-table td:first-child {
+            min-width: 100px;
+            width: 100px;
+        }
+
+        .journal-table th:not(:first-child),
+        .journal-table td:not(:first-child) {
+            min-width: 55px;
+            width: 55px;
+        }
+
+        .status-cell {
+            height: 55px;
+            min-width: 50px;
+        }
+
+        .status-select {
+            font-size: 0.75rem;
+        }
+
+        .comment-btn {
+            width: 22px;
+            height: 22px;
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+        }
+
+        .empty-title {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Улучшения для выпадающего списка журналов */
+    .journal-selector {
+        transition: all 0.3s ease;
+    }
+
+        .journal-selector .form-select {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+            .journal-selector .form-select:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+            }
+
+    /* Индикатор загрузки */
+    .loading-spinner {
+        display: inline-block;
+        width: 2rem;
+        height: 2rem;
+        vertical-align: text-bottom;
+        border: 0.25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+    }
+
+    @@keyframes spinner-border {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Сообщения об ошибках */
+    .alert {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.375rem;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    /* Улучшения для модальных окон */
+    .modal-content {
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    /* Дополнительные улучшения UX */
+    [data-bs-toggle="collapse"] {
+        cursor: pointer;
+    }
+
+    .tooltip {
+        font-size: 0.85rem;
+    }
+
+    /* Плавные переходы */
+    * {
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const baseUrl = 'https://localhost:7123/api/Journals';
+        let currentGroupId = null;
+        let currentSubjectId = null;
+        let currentJournalId = null;
+        let currentJournalDates = { start: null, end: null };
+        let availableJournals = [];
+
+        // Инициализация модальных окон
+        const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
+        const createJournalModal = new bootstrap.Modal(document.getElementById('createJournalModal'));
+        const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+
+        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+
+        // Обработчик клика по предмету
+        document.querySelectorAll('.subject-link').forEach(link => {
+            link.addEventListener('click', async function(e) {
+                e.preventDefault();
+                currentSubjectId = this.dataset.id;
+                const groupList = document.getElementById(`groups-${currentSubjectId}`);
+
+                // Переключение видимости списка групп
+                groupList.style.display = groupList.style.display === 'none' ? 'block' : 'none';
+
+                // Загрузка групп, если еще не загружены
+                if (groupList.children.length === 0) {
+                    await loadGroupsForSubject(currentSubjectId, groupList);
+                }
+            });
+        });
+
+        // Обработчик клика по группе
+        document.addEventListener('click', async function(e) {
+            if (e.target.classList.contains('group-link')) {
+                e.preventDefault();
+                currentGroupId = e.target.dataset.id;
+                // Загружаем журнал без указания конкретного ID, чтобы выбрать первый доступный
+                await loadGroupJournal(currentGroupId);
+            }
+        });
+
+        // Обработчик кнопки создания журнала
+        document.getElementById('showCreateJournalModalBtn').addEventListener('click', function() {
+            if (!currentGroupId) {
+                showError('Сначала выберите группу');
+                return;
+            }
+            showCreateJournalModal(currentGroupId);
+        });
+
+        // Обработчик кнопки добавления урока
+        document.getElementById('showAddLessonModal').addEventListener('click', function() {
+            if (!currentJournalId) {
+                showError('Сначала выберите журнал из списка');
+                return;
+            }
+            showAddLessonModal();
+        });
+
+        // Обработчик кнопки создания журнала (из шаблона)
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'createJournalBtn') {
+                e.preventDefault();
+                if (!currentGroupId) {
+                    showError('Не выбрана группа');
+                    return;
+                }
+                showCreateJournalModal(currentGroupId);
+            }
+        });
+
+        // Обработчик сохранения комментария
+        document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
+
+        // Очистка комментария
+        document.getElementById('clearCommentBtn').addEventListener('click', function() {
+            document.getElementById('commentTextarea').value = '';
+        });
+
+        // Обработчики модальных окон
+        document.getElementById('confirmAddLesson').addEventListener('click', addNewLesson);
+        document.getElementById('confirmCreateJournal').addEventListener('click', createNewJournalHandler);
+
+        // Обработчик изменения статуса
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('status-select')) {
+                handleVisitUpdate(e.target, true);
+            }
+        });
+
+        // Обработчик изменения выпадающего списка журналов
+        document.getElementById('journalSelector').addEventListener('change', async function(e) {
+            if (this.value && currentGroupId) {
+                await loadGroupJournal(currentGroupId, parseInt(this.value));
+            }
+        });
+
+        // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
+
+        // Загрузка групп для предмета
+        async function loadGroupsForSubject(subjectId, groupList) {
+            try {
+                const response = await fetch(`${baseUrl}/${subjectId}/Groups`);
+                if (!response.ok) throw new Error('Ошибка загрузки групп');
+
+                const groups = await response.json();
+                groupList.innerHTML = groups.map(group => `
+                    <li class="list-group-item">
+                        <a href="#" class="group-link" data-id="${group.idGroup}">
+                            ${group.name}
+                        </a>
+                    </li>
+                `).join('');
+            } catch (error) {
+                showError('Ошибка загрузки групп: ' + error.message);
+            }
+        }
+
+        // Загрузка журнала группы
+        async function loadGroupJournal(groupId, journalId = null) {
+            try {
+                console.log(`Загрузка журнала для группы ${groupId}, journalId: ${journalId}`);
+                showLoading();
+
+                // 1. Загрузка списка журналов
+                const journalsUrl = `${baseUrl}/Groups/${groupId}/Journals`;
+                console.log(`Отправка запроса к: ${journalsUrl}`);
+
+                const journalsResponse = await fetch(journalsUrl);
+                if (!journalsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${journalsResponse.status}`);
+                }
+
+                availableJournals = await journalsResponse.json();
+                console.log('Получены журналы:', availableJournals);
+
+                if (availableJournals.length === 0) {
+                    console.log('Журналы не найдены');
+                    renderJournalContainer({ message: 'Для этой группы еще не создан журнал' });
+                    return;
+                }
+
+                // 2. Выбор журнала
+                const selectedJournalId = journalId || availableJournals[0].idJournal;
+                console.log(`Выбран журнал с ID: ${selectedJournalId}`);
+                currentJournalId = selectedJournalId;
+
+                // Находим выбранный журнал в списке
+                const selectedJournal = availableJournals.find(j => j.idJournal == selectedJournalId);
+                currentJournalDates = {
+                    start: selectedJournal.startDate,
+                    end: selectedJournal.endDate
+                };
+
+                // 3. Обновление селектора
+                updateJournalSelector(availableJournals, selectedJournalId);
+
+                // 4. Загрузка уроков
+                const lessonsUrl = `${baseUrl}/Journals/${selectedJournalId}/Lessons`;
+                console.log(`Отправка запроса к: ${lessonsUrl}`);
+
+                const lessonsResponse = await fetch(lessonsUrl);
+                if (!lessonsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${lessonsResponse.status}`);
+                }
+
+                const data = await lessonsResponse.json();
+                console.log('Получены данные уроков:', data);
+
+                // Используем lessonsCount из ответа API
+                data.journalInfo = data.journalInfo || {
+                    lessonsCount: selectedJournal.lessonsCount || data.lessons?.length || 0,
+                    startDate: selectedJournal.startDate,
+                    endDate: selectedJournal.endDate
+                };
+
+                console.log('Prepared data for render:', {
+                    students: data.students,
+                    lessons: data.lessons,
+                    journalInfo: data.journalInfo,
+                    message: data.message
+                });
+
+                renderJournalContainer(data);
+
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                showError('Ошибка загрузки журнала: ' + error.message);
+            }
+        }
+
+        // Обновление выпадающего списка журналов
+        function updateJournalSelector(journals, selectedJournalId = null) {
+            const selector = document.getElementById('journalSelector');
+            const selectorContainer = selector.closest('.journal-selector');
+
+            selector.innerHTML = '<option value="">Выберите журнал</option>';
+
+            if (!journals || journals.length === 0) {
+                selectorContainer.style.display = 'none';
+                return;
+            }
+
+            journals.forEach(journal => {
+                const option = document.createElement('option');
+                option.value = journal.idJournal;
+                option.textContent = `${formatDate(journal.startDate)} - ${formatDate(journal.endDate)}`;
+
+                if (selectedJournalId && journal.idJournal == selectedJournalId) {
+                    option.selected = true;
+                }
+
+                selector.appendChild(option);
+            });
+
+            selectorContainer.style.display = 'block';
+        }
+
+        // Отображение контейнера журнала
+        function renderJournalContainer(data) {
+            console.log('--- renderJournalContainer started ---');
+            console.log('Data received:', data);
+
+            const container = document.getElementById('journalContainer');
+            container.innerHTML = '';
+
+            const showAddLessonBtn = document.getElementById('showAddLessonModal');
+            const showCreateJournalBtn = document.getElementById('showCreateJournalModalBtn');
+            const journalSelector = document.getElementById('journalSelector');
+
+            // Показываем/скрываем элементы управления
+            const hasJournal = !data.message && data.lessons;
+            showAddLessonBtn.style.display = hasJournal ? 'block' : 'none';
+            showCreateJournalBtn.style.display = 'block';
+            journalSelector.style.display = availableJournals.length > 0 ? 'block' : 'none';
+
+            if (data.message) {
+                console.log('Showing message:', data.message);
+                const template = document.getElementById('noJournalTemplate').innerHTML;
+                container.insertAdjacentHTML('beforeend', template.replace('{message}', data.message));
+            } else if (data.lessons && data.lessons.length === 0) {
+                console.log('No lessons available');
+                container.insertAdjacentHTML('beforeend', document.getElementById('noLessonsTemplate').innerHTML);
+            } else if (data.students && data.lessons) {
+                console.log('Displaying journal with lessons');
+                displayJournal(data.students, data.lessons, data.journalInfo);
+            }
+
+            console.log('--- renderJournalContainer completed ---');
+        }
+
+        // Отображение таблицы журнала
+        function displayJournal(students, lessons, journalInfo) {
+            console.log('--- displayJournal started ---');
+            console.log('Journal Info:', journalInfo);
+            console.log('Students:', students);
+            console.log('Lessons:', lessons);
+
+            const container = document.getElementById('journalContainer');
+            container.innerHTML = '';
+
+            // Сортируем уроки по дате
+            const sortedLessons = [...lessons].sort((a, b) => {
+                return new Date(a.lessonDate) - new Date(b.lessonDate);
+            });
+
+            console.log('Sorted Lessons:', sortedLessons);
+
+            // Получаем общее количество уроков из информации о журнале
+            const totalLessons = journalInfo?.lessonsCount || 0;
+            console.log('Total Lessons (from journalInfo):', totalLessons);
+
+            // Создаем массив всех уроков (реальные + пустые)
+            const allLessons = [];
+
+            // Добавляем реальные уроки
+            sortedLessons.forEach(lesson => {
+                allLessons.push({
+                    ...lesson,
+                    isReal: true
+                });
+            });
+
+            console.log('Real lessons count:', allLessons.length);
+
+            // Добавляем пустые уроки до общего количества
+            for (let i = sortedLessons.length; i < totalLessons; i++) {
+                allLessons.push({
+                    idLesson: null,
+                    lessonDate: null,
+                    visits: {},
+                    isReal: false
+                });
+            }
+
+            console.log('All lessons (real + empty):', allLessons);
+            console.log('Total lessons after adding empty:', allLessons.length);
+
+            let html = `
+                <div class="journal-container">
+                    <table class="table table-bordered table-hover journal-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Студент</th>
+            `;
+
+            // Заголовки с датами уроков (реальные и пустые)
+            allLessons.forEach((lesson, index) => {
+                const date = lesson.isReal ? new Date(lesson.lessonDate) : null;
+                const classNames = lesson.isReal ? '' : 'empty-lesson';
+                const title = lesson.isReal ? formatDate(date, false) : `Урок ${index + 1}`;
+
+                html += `<th class="text-center ${classNames}" title="${title}">${
+                    lesson.isReal ? formatDate(date, true) : index + 1
+                }</th>`;
+            });
+
+            html += `</tr></thead><tbody>`;
+
+            // Строки с студентами
+            students.forEach(student => {
+                html += `<tr><td class="student-name-cell">${student.fullName}</td>`;
+
+                // Ячейки с посещениями (реальные и пустые)
+                allLessons.forEach(lesson => {
+                    if (lesson.isReal) {
+                        // Реальный урок
+                        const visit = lesson.visits[student.idStudent];
+                        const visitId = visit?.idVisit;
+                        const currentStatus = visit?.unvisitedStatuses || null;
+                        const comment = visit?.comment || '';
+
+                        html += `
+                            <td class="text-center status-cell ${getStatusClass(currentStatus)}">
+                                <select class="form-select status-select"
+                                        data-visit-id="${visitId || ''}"
+                                        data-student-id="${student.idStudent}"
+                                        data-lesson-id="${lesson.idLesson}">
+                                    <option value="" ${currentStatus === null ? 'selected' : ''}>✓</option>
+                                    <option value="н" ${currentStatus === 'н' ? 'selected' : ''}>н</option>
+                                    <option value="б" ${currentStatus === 'б' ? 'selected' : ''}>б</option>
+                                    <option value="у/п" ${currentStatus === 'у/п' ? 'selected' : ''}>у/п</option>
+                                    <option value="к" ${currentStatus === 'к' ? 'selected' : ''}>к</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary comment-btn ${comment ? 'has-comment' : ''}"
+                                        data-comment="${comment || ''}"
+                                        data-student-id="${student.idStudent}"
+                                        data-lesson-id="${lesson.idLesson}"
+                                        title="${comment || 'Добавить комментарий'}">
+                                    <i class="bi ${comment ? 'bi-chat-square-text-fill' : 'bi-chat-square-text'}"></i>
+                                </button>
+                            </td>
+                        `;
+                    } else {
+                        // Пустой урок
+                        html += `
+                            <td class="text-center empty-lesson">
+                                <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-muted">-</span>
+                                </div>
+                            </td>
+                        `;
+                    }
+                });
+
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.insertAdjacentHTML('beforeend', html);
+
+            console.log('--- HTML generated and inserted ---');
+
+            // Добавляем обработчики для кнопок комментариев
+            document.querySelectorAll('.comment-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const visitId = this.closest('td').querySelector('.status-select').dataset.visitId;
+                    const studentId = this.dataset.studentId;
+                    const lessonId = this.dataset.lessonId;
+                    const comment = this.dataset.comment || '';
+                    showCommentModal(visitId, studentId, lessonId, comment);
+                });
+            });
+
+            console.log('--- displayJournal completed ---');
+        }
+
+        // ==================== РАБОТА С ЖУРНАЛАМИ ====================
+
+        // Показать модальное окно создания журнала
+        function showCreateJournalModal(groupId) {
+            // Устанавливаем разумные даты по умолчанию
+            const now = new Date();
+            const startDate = now.getMonth() >= 8 ?
+                new Date(now.getFullYear(), 8, 1) : // 1 сентября текущего года
+                new Date(now.getFullYear() - 1, 8, 1); // 1 сентября прошлого года
+            const endDate = new Date(startDate.getFullYear() + 1, 5, 30); // 30 июня следующего года
+
+            document.getElementById('journalStartDate').valueAsDate = startDate;
+            document.getElementById('journalEndDate').valueAsDate = endDate;
+            document.getElementById('lessonsCount').value = 36; // Значение по умолчанию
+
+            createJournalModal.show();
+        }
+
+        // Создание нового журнала
+        async function createNewJournalHandler() {
+            const startDateInput = document.getElementById('journalStartDate');
+            const endDateInput = document.getElementById('journalEndDate');
+            const lessonsCountInput = document.getElementById('lessonsCount');
+
+            if (!startDateInput.value || !endDateInput.value) {
+                showError('Пожалуйста, заполните даты начала и окончания');
+                return;
+            }
+
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const lessonsCount = lessonsCountInput.value ? parseInt(lessonsCountInput.value) : null;
+
+            if (startDate >= endDate) {
+                showError('Дата окончания должна быть позже даты начала');
+                return;
+            }
+
+            try {
+                createJournalModal.hide();
+                showLoading('Создание журнала...');
+
+                const response = await fetch(`${baseUrl}/Journals`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        GroupId: parseInt(currentGroupId),
+                        StartDate: startDateInput.value,
+                        EndDate: endDateInput.value,
+                        LessonsCount: lessonsCount
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+
+                // После успешного создания перезагружаем журнал
+                await loadGroupJournal(currentGroupId);
+
+            } catch (error) {
+                showError('Не удалось создать журнал: ' + error.message);
+            }
+        }
+
+        // ==================== РАБОТА С УРОКАМИ ====================
+
+        // Показать модальное окно добавления урока
+        function showAddLessonModal() {
+            document.getElementById('lessonDateInput').valueAsDate = new Date();
+            addLessonModal.show();
+        }
+
+        // Добавление нового урока
+        async function addNewLesson() {
+            if (!currentJournalId) {
+                showError('Не выбран журнал для добавления урока');
+                return;
+            }
+
+            const dateInput = document.getElementById('lessonDateInput');
+            const dateValue = dateInput.value;
+
+            if (!dateValue) {
+                showError('Пожалуйста, выберите дату');
+                return;
+            }
+
+            try {
+                addLessonModal.hide();
+                showLoading('Добавление урока...');
+
+                const response = await fetch(`${baseUrl}/Journals/${currentJournalId}/Lessons`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dateValue)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.title || errorData.message || 'Не удалось добавить урок');
+                }
+
+                // Перезагружаем текущий журнал
+                await loadGroupJournal(currentGroupId, currentJournalId);
+
+            } catch (error) {
+                console.error('Ошибка при добавлении урока:', error);
+                showError('Не удалось добавить урок: ' + error.message);
+            }
+        }
+
+        // ==================== РАБОТА С ПОСЕЩЕНИЯМИ ====================
+
+        // Обновление статуса посещения
+        async function handleVisitUpdate(element, isStatusUpdate) {
+            const visitId = element.dataset.visitId;
+            const studentId = element.dataset.studentId;
+            const lessonId = element.dataset.lessonId;
+            const value = element.value || null;
+            const cell = element.closest('td');
+
+            try {
+                cell.classList.add('updating');
+
+                const response = visitId
+                    ? await fetch(`${baseUrl}/Visits/${visitId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ UnvisitedStatuses: value })
+                      })
+                    : await fetch(`${baseUrl}/Visits`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            IdStudent: parseInt(studentId),
+                            IdLesson: parseInt(lessonId),
+                            UnvisitedStatuses: value
+                        })
+                      });
+
+                if (!response.ok) throw new Error(await response.text());
+
+                const result = await response.json();
+
+                // Обновляем ID посещения, если оно было создано
+                if (!visitId && result.idVisit) {
+                    element.dataset.visitId = result.idVisit;
+                }
+
+                // Обновляем класс ячейки
+                cell.className = 'text-center status-cell ' + getStatusClass(value);
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showError('Не удалось сохранить статус: ' + error.message);
+            } finally {
+                cell.classList.remove('updating');
+            }
+        }
+
+        // ==================== РАБОТА С КОММЕНТАРИЯМИ ====================
+
+        // Показать модальное окно комментария
+        function showCommentModal(visitId, studentId, lessonId, comment) {
+            document.getElementById('commentTextarea').value = comment || '';
+            document.getElementById('commentVisitId').value = visitId || '';
+            document.getElementById('commentStudentId').value = studentId;
+            document.getElementById('commentLessonId').value = lessonId;
+            commentModal.show();
+        }
+
+        // Сохранить комментарий
+        async function saveComment() {
+            const modal = document.getElementById('commentModal');
+            const textarea = modal.querySelector('#commentTextarea');
+            const visitId = modal.querySelector('#commentVisitId').value;
+            const studentId = modal.querySelector('#commentStudentId').value;
+            const lessonId = modal.querySelector('#commentLessonId').value;
+            const comment = textarea.value.trim();
+
+            try {
+                // Определяем URL и метод
+                const url = visitId
+                    ? `${baseUrl}/Visits/${visitId}`
+                    : `${baseUrl}/Visits`;
+
+                const method = visitId ? 'PUT' : 'POST';
+
+                const body = visitId
+                    ? { Comment: comment }
+                    : {
+                        IdStudent: parseInt(studentId),
+                        IdLesson: parseInt(lessonId),
+                        Comment: comment,
+                        UnvisitedStatuses: null
+                    };
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+
+                const result = await response.json();
+
+                // Обновляем данные в таблице
+                updateVisitInTable(studentId, lessonId, {
+                    idVisit: result.idVisit || visitId,
+                    comment: comment,
+                    unvisitedStatuses: null
+                });
+
+                // Закрываем модальное окно
+                commentModal.hide();
+
+                // Обновляем кнопку комментария в таблице
+                const commentBtn = document.querySelector(`button[data-student-id="${studentId}"][data-lesson-id="${lessonId}"]`);
+                if (commentBtn) {
+                    commentBtn.dataset.comment = comment;
+                    commentBtn.title = comment || 'Добавить комментарий';
+                    commentBtn.classList.toggle('has-comment', !!comment);
+
+                    const icon = commentBtn.querySelector('i');
+                    if (icon) {
+                        icon.className = comment ? 'bi bi-chat-square-text-fill' : 'bi bi-chat-square-text';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Ошибка сохранения комментария:', error);
+                showError('Не удалось сохранить комментарий: ' + error.message);
+            }
+        }
+
+        // Обновить данные посещения в таблице
+        function updateVisitInTable(studentId, lessonId, visitData) {
+            const cell = document.querySelector(`td[data-student-id="${studentId}"][data-lesson-id="${lessonId}"]`);
+            if (!cell) return;
+
+            // Обновляем кнопку комментария
+            const btn = cell.querySelector('.comment-btn');
+            if (btn) {
+                btn.dataset.comment = visitData.comment || '';
+                btn.title = visitData.comment || 'Добавить комментарий';
+                btn.classList.toggle('has-comment', !!visitData.comment);
+
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = visitData.comment ? 'bi bi-chat-square-text-fill' : 'bi bi-chat-square-text';
+                }
+            }
+
+            // Обновляем select, если visitId изменился
+            const select = cell.querySelector('.status-select');
+            if (select && visitData.idVisit) {
+                select.dataset.visitId = visitData.idVisit;
+            }
+        }
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+        // Форматирование даты
+        function formatDate(date, short = false) {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+
+            if (short) {
+                // Формат ДД.ММ
+                const day = d.getDate().toString().padStart(2, '0');
+                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                return `${day}.${month}`;
+            }
+            return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Форматирование даты
+        function formatDate(date, short = false) {
+            if (!date) return '';
+            const d = new Date(date);
+            return short
+                ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+                : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Определение класса для статуса
+        function getStatusClass(status) {
+            if (status === null) return 'table-success';
+            switch(status) {
+                case 'н': return 'table-danger';
+                case 'б': return 'table-warning';
+                case 'у/п': return 'table-info';
+                case 'к': return 'table-secondary';
+                default: return '';
+            }
+        }
+
+        // Показать индикатор загрузки
+        function showLoading(message = 'Загрузка...') {
+            const container = document.getElementById('journalContainer');
+            container.innerHTML = `
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            const container = document.getElementById('journalContainer') || document.body;
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => alert.remove(), 5000);
+        }
+    });
+</script>

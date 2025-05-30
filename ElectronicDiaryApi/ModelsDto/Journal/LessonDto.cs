@@ -3,7 +3,7 @@
     public class LessonDto
     {
         public int IdLesson { get; set; }
-        public DateOnly? LessonDate { get; set; }
-        public Dictionary<int, VisitDto> Visits { get; set; }
+        public DateOnly LessonDate { get; set; }
+        public Dictionary<int, VisitDto> Visits { get; set; } = new Dictionary<int, VisitDto>();
     }
 }

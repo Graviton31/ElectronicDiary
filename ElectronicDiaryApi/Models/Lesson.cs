@@ -7,7 +7,7 @@
     {
         public int IdLesson { get; set; }
 
-        public DateOnly? LessonDate { get; set; }
+        public DateOnly LessonDate { get; set; }
 
         public int IdJournal { get; set; }
 
