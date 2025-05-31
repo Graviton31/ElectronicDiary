@@ -228,6 +228,16 @@ namespace ElectronicDiaryApi.Controllers
         [HttpPost("Journals")]
         public async Task<ActionResult<JournalDto>> CreateJournal([FromBody] CreateJournalDto dto)
         {
+            // Проверка обязательных полей
+            if (dto.GroupId <= 0)
+                return BadRequest("Неверный идентификатор группы");
+
+            if (dto.LessonsCount == null || dto.LessonsCount < 1)
+                return BadRequest("Количество уроков должно быть положительным числом");
+
+            if (dto.StartDate >= dto.EndDate)
+                return BadRequest("Дата окончания должна быть позже даты начала");
+
             // Проверка существования группы
             var group = await _context.Groups
                 .FirstOrDefaultAsync(g => g.IdGroup == dto.GroupId && g.IsDelete != true);

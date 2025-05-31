@@ -925,8 +925,12 @@
         // Загрузка групп для предмета
         async function loadGroupsForSubject(subjectId, groupList) {
             try {
+                showLoading('Загрузка групп...');
                 const response = await fetch(`${baseUrl}/${subjectId}/Groups`);
-                if (!response.ok) throw new Error('Ошибка загрузки групп');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Ошибка загрузки групп');
+                }
 
                 const groups = await response.json();
                 groupList.innerHTML = groups.map(group => `
@@ -937,7 +941,10 @@
                     </li>
                 `).join('');
             } catch (error) {
-                showError('Ошибка загрузки групп: ' + error.message);
+                console.error('Ошибка загрузки групп:', error);
+                showError('Ошибка загрузки групп: ' + (error.message || 'неизвестная ошибка'));
+            } finally {
+                hideLoading();
             }
         }
 
@@ -945,7 +952,7 @@
         async function loadGroupJournal(groupId, journalId = null) {
             try {
                 console.log(`Загрузка журнала для группы ${groupId}, journalId: ${journalId}`);
-                showLoading();
+                showLoading('Загрузка журнала...');
 
                 // 1. Загрузка списка журналов
                 const journalsUrl = `${baseUrl}/Groups/${groupId}/Journals`;
@@ -953,7 +960,8 @@
 
                 const journalsResponse = await fetch(journalsUrl);
                 if (!journalsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${journalsResponse.status}`);
+                    const errorText = await journalsResponse.text();
+                    throw new Error(errorText || `HTTP error! status: ${journalsResponse.status}`);
                 }
 
                 availableJournals = await journalsResponse.json();
@@ -986,7 +994,8 @@
 
                 const lessonsResponse = await fetch(lessonsUrl);
                 if (!lessonsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${lessonsResponse.status}`);
+                    const errorText = await lessonsResponse.text();
+                    throw new Error(errorText || `HTTP error! status: ${lessonsResponse.status}`);
                 }
 
                 const data = await lessonsResponse.json();
@@ -1010,7 +1019,18 @@
 
             } catch (error) {
                 console.error('Ошибка загрузки журнала:', error);
-                showError('Ошибка загрузки журнала: ' + error.message);
+                showError('Ошибка загрузки журнала: ' + (error.message || 'неизвестная ошибка'));
+
+                // Пытаемся восстановить предыдущее состояние
+                if (currentGroupId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1019,7 +1039,7 @@
             const selector = document.getElementById('journalSelector');
             const selectorContainer = selector.closest('.journal-selector');
 
-            selector.innerHTML = '<option value="">Выберите журнал</option>';
+            selector.innerHTML = ''; // Убрали пункт "Выберите журнал"
 
             if (!journals || journals.length === 0) {
                 selectorContainer.style.display = 'none';
@@ -1215,12 +1235,29 @@
 
         // Показать модальное окно создания журнала
         function showCreateJournalModal(groupId) {
+            // Проверяем существующие журналы для этой группы
+            const existingJournals = availableJournals.filter(j => j.idGroup == groupId);
+
             // Устанавливаем разумные даты по умолчанию
-            const now = new Date();
-            const startDate = now.getMonth() >= 8 ?
-                new Date(now.getFullYear(), 8, 1) : // 1 сентября текущего года
-                new Date(now.getFullYear() - 1, 8, 1); // 1 сентября прошлого года
-            const endDate = new Date(startDate.getFullYear() + 1, 5, 30); // 30 июня следующего года
+            let startDate, endDate;
+
+            if (existingJournals.length > 0) {
+                // Берем дату окончания последнего журнала + 1 день
+                const lastJournal = existingJournals.sort((a, b) => new Date(b.endDate) - new Date(a.endDate))[0];
+                startDate = new Date(lastJournal.endDate);
+                startDate.setDate(startDate.getDate() + 1);
+            } else {
+                // Если журналов нет, устанавливаем текущий учебный год
+                const now = new Date();
+                startDate = now.getMonth() >= 8 ?
+                    new Date(now.getFullYear(), 8, 1) : // 1 сентября текущего года
+                    new Date(now.getFullYear() - 1, 8, 1); // 1 сентября прошлого года
+            }
+
+            endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + 1);
+            endDate.setMonth(5); // Июнь
+            endDate.setDate(30); // 30 июня
 
             document.getElementById('journalStartDate').valueAsDate = startDate;
             document.getElementById('journalEndDate').valueAsDate = endDate;
@@ -1244,8 +1281,14 @@
             const endDate = new Date(endDateInput.value);
             const lessonsCount = lessonsCountInput.value ? parseInt(lessonsCountInput.value) : null;
 
+            // Проверка на корректность дат
             if (startDate >= endDate) {
                 showError('Дата окончания должна быть позже даты начала');
+                return;
+            }
+
+            if (lessonsCount <= 0) {
+                showError('Количество уроков должно быть больше 0');
                 return;
             }
 
@@ -1266,14 +1309,42 @@
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(errorText);
+
+                    // Проверяем, содержит ли ошибка информацию о пересечении периодов
+                    if (errorText.includes("Журнал на этот период уже существует")) {
+                        showError('Не удалось создать журнал: уже существует журнал на этот период. Пожалуйста, выберите другой период.');
+                    } else {
+                        throw new Error(errorText || 'Не удалось создать журнал');
+                    }
+                    return;
                 }
 
                 // После успешного создания перезагружаем журнал
                 await loadGroupJournal(currentGroupId);
 
             } catch (error) {
-                showError('Не удалось создать журнал: ' + error.message);
+                console.error('Ошибка создания журнала:', error);
+
+                // Улучшенное сообщение об ошибке
+                let errorMessage = 'Не удалось создать журнал';
+                if (error.message.includes("Журнал на этот период уже существует")) {
+                    errorMessage = 'Не удалось создать журнал: уже существует журнал на этот период. Пожалуйста, выберите другой период.';
+                } else {
+                    errorMessage += ': ' + (error.message || 'неизвестная ошибка');
+                }
+
+                showError(errorMessage);
+
+                // Восстанавливаем предыдущее состояние
+                if (currentGroupId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1300,6 +1371,12 @@
                 return;
             }
 
+            const lessonDate = new Date(dateValue);
+            if (lessonDate < new Date(currentJournalDates.start) || lessonDate > new Date(currentJournalDates.end)) {
+                showError(`Дата урока должна быть в пределах периода журнала (${formatDate(currentJournalDates.start)} - ${formatDate(currentJournalDates.end)})`);
+                return;
+            }
+
             try {
                 addLessonModal.hide();
                 showLoading('Добавление урока...');
@@ -1323,7 +1400,18 @@
 
             } catch (error) {
                 console.error('Ошибка при добавлении урока:', error);
-                showError('Не удалось добавить урок: ' + error.message);
+                showError('Не удалось добавить урок: ' + (error.message || 'неизвестная ошибка'));
+
+                // Восстанавливаем предыдущее состояние
+                if (currentGroupId && currentJournalId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1336,6 +1424,7 @@
             const lessonId = element.dataset.lessonId;
             const value = element.value || null;
             const cell = element.closest('td');
+            const originalValue = element.dataset.originalValue;
 
             try {
                 cell.classList.add('updating');
@@ -1356,7 +1445,10 @@
                         })
                       });
 
-                if (!response.ok) throw new Error(await response.text());
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Не удалось обновить статус');
+                }
 
                 const result = await response.json();
 
@@ -1365,12 +1457,21 @@
                     element.dataset.visitId = result.idVisit;
                 }
 
+                // Обновляем оригинальное значение
+                element.dataset.originalValue = value;
+
                 // Обновляем класс ячейки
                 cell.className = 'text-center status-cell ' + getStatusClass(value);
 
             } catch (error) {
                 console.error('Ошибка:', error);
-                showError('Не удалось сохранить статус: ' + error.message);
+
+                // Восстанавливаем предыдущее значение
+                if (originalValue) {
+                    element.value = originalValue;
+                }
+
+                showError('Не удалось сохранить статус: ' + (error.message || 'неизвестная ошибка'));
             } finally {
                 cell.classList.remove('updating');
             }
@@ -1494,15 +1595,6 @@
             return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
-        // Форматирование даты
-        function formatDate(date, short = false) {
-            if (!date) return '';
-            const d = new Date(date);
-            return short
-                ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
-                : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-
         // Определение класса для статуса
         function getStatusClass(status) {
             if (status === null) return 'table-success';
@@ -1515,15 +1607,21 @@
             }
         }
 
+        // Скрыть индикатор загрузки
+        function hideLoading() {
+            const loadingElements = document.querySelectorAll('.spinner-border, .loading-text');
+            loadingElements.forEach(el => el.remove());
+        }
+
         // Показать индикатор загрузки
         function showLoading(message = 'Загрузка...') {
-            const container = document.getElementById('journalContainer');
+            const container = document.getElementById('journalContainer') || document.body;
             container.innerHTML = `
                 <div class="text-center my-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Загрузка...</span>
                     </div>
-                    <p>${message}</p>
+                    <p class="loading-text mt-2">${message}</p>
                 </div>
             `;
         }
@@ -1539,5 +1637,50 @@
             // Автоматическое скрытие через 5 секунд
             setTimeout(() => alert.remove(), 5000);
         }
+
+        // Показать ошибку
+        function showError(message) {
+            hideLoading(); // Скрываем индикатор загрузки при ошибке
+
+            const container = document.getElementById('journalContainer') || document.body;
+
+            // Удаляем предыдущие ошибки
+            const oldAlerts = container.querySelectorAll('.alert.alert-danger');
+            oldAlerts.forEach(alert => alert.remove());
+
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+            container.appendChild(alert);
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                alert.classList.add('fade-out');
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
     });
+
+    // Добавляем стиль для плавного исчезновения ошибок
+    const style = document.createElement('style');
+    style.textContent = `
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        /* Для мобильных устройств показываем текст кнопок */
+    @@media (max-width: 767.98px) {
+            .btn-text {
+                display: inline !important;
+                margin-left: 5px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
