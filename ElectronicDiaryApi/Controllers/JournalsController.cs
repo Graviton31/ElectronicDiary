@@ -206,6 +206,10 @@ namespace ElectronicDiaryApi.Controllers
                         })
                 }).ToList();
 
+            var absentCount = journal.Lessons
+            .SelectMany(l => l.Visits)
+            .Count(v => v.UnvisitedStatuses == "н");
+
             return Ok(new JournalLessonsResponse
             {
                 Students = studentDtos,
@@ -215,7 +219,9 @@ namespace ElectronicDiaryApi.Controllers
                     IdJournal = journal.IdJournal,
                     StartDate = journal.StartDate,
                     EndDate = journal.EndDate,
-                    LessonsCount = journal.LessonsCount
+                    LessonsCount = journal.LessonsCount,
+                    CompletedLessons = journal.Lessons.Count,
+                    AbsentCount = absentCount
                 }
             });
         }

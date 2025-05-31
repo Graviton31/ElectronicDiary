@@ -79,6 +79,44 @@
     </div>
 </div>
 
+<div class="journal-stats mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <i class="bi bi-journal-bookmark"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalLessonsStat">0</div>
+                    <div class="stat-label">Всего уроков</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-completed">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="completedLessonsStat">0</div>
+                    <div class="stat-label">Проведено</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-absent">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="absentStat">0</div>
+                    <div class="stat-label">Прогулов (н)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Модальное окно добавления урока -->
 <div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -244,6 +282,78 @@
 
     .status-select {
         padding: 4px;
+    }
+
+    /* Стили для блока статистики */
+    .journal-stats {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 15px;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        height: 100%;
+    }
+
+    .stat-icon {
+        font-size: 1.8rem;
+        margin-right: 15px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    /* Цвета для разных типов статистики */
+    .stat-total .stat-icon {
+        color: #4361ee;
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .stat-completed .stat-icon {
+        color: #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    .stat-absent .stat-icon {
+        color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    @@media (max-width: 767.98px) {
+        .stat-card
+
+    {
+        margin-bottom: 15px;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
     }
 
     /* Макет */
@@ -1079,6 +1189,8 @@
             showCreateJournalBtn.style.display = 'block';
             journalSelector.style.display = availableJournals.length > 0 ? 'block' : 'none';
 
+            document.querySelector('.journal-stats').style.display = (data.message || !data.lessons) ? 'none' : 'block';
+
             if (data.message) {
                 console.log('Showing message:', data.message);
                 const template = document.getElementById('noJournalTemplate').innerHTML;
@@ -1227,8 +1339,26 @@
                     showCommentModal(visitId, studentId, lessonId, comment);
                 });
             });
-
+            calculateAndDisplayStats(lessons, journalInfo, students);
             console.log('--- displayJournal completed ---');
+        }
+
+
+        // Функция расчёта статистики
+        function calculateAndDisplayStats(lessons, journalInfo, students) {
+            // Используем данные из journalInfo
+            const totalLessons = journalInfo?.lessonsCount || 0;
+            const completedLessons = journalInfo?.completedLessons || 0;
+            const absentCount = journalInfo?.absentCount || 0;
+
+            // Обновляем DOM
+            document.getElementById('totalLessonsStat').textContent = totalLessons;
+            document.getElementById('completedLessonsStat').textContent =
+                `${completedLessons} (${totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%)`;
+            document.getElementById('absentStat').textContent = absentCount;
+
+            // Показываем блок статистики
+            document.querySelector('.journal-stats').style.display = 'block';
         }
 
         // ==================== РАБОТА С ЖУРНАЛАМИ ====================
