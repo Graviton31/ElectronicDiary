@@ -99,3 +99,21 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+<script>
+    // Сохраняем URL предыдущей страницы при загрузке любой страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Не сохраняем URL, если мы перешли с той же страницы (например, обновление)
+        if (document.referrer && !document.referrer.includes(window.location.pathname)) {
+            sessionStorage.setItem('returnUrl', document.referrer);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Если нет сохранённого returnUrl и referrer не пустой
+        if (!sessionStorage.getItem('returnUrl') && document.referrer &&
+            document.referrer !== window.location.href) {
+            sessionStorage.setItem('returnUrl', document.referrer);
+        }
+    });
+</script>

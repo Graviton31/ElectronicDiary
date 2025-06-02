@@ -20,9 +20,6 @@
                 <dt class="col-sm-3">Дата рождения:</dt>
                 <dd class="col-sm-9">@(Model.BirthDate)</dd>
 
-                <dt class="col-sm-3">Кем приходится:</dt>
-                <dd class="col-sm-9">@(Model.ParentRole)</dd>
-
                 <dt class="col-sm-3">Логин:</dt>
                 <dd class="col-sm-9">@Model.Login</dd>
             </dl>
@@ -46,8 +43,10 @@
                                     <h5 class="card-title">@student.FullName</h5>
                                     <dl class="row mb-0">
                                         <dt class="col-sm-5">Телефон:</dt>
-                                        <dd class="col-sm-7">@(student.Phone ?? "не указан")</dd>
+                                        <dd class="col-sm-7">@(student.Phone ?? "не указан")</dd>                                     
                                     </dl>
+                                    <dt class="col-sm-3">Кем приходится ребёнку:</dt>
+                                    <dd class="col-sm-9">@(student.ParentRole)</dd>
                                 </div>
                             </div>
                         </div>
@@ -106,8 +105,26 @@
     }
 
     <div class="mb-4">
-        <button class="btn btn-outline-secondary" onclick="goBack()">
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
             ← Назад
-        </button>
+        </a>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                // 1. Попробуем использовать сохранённый URL из sessionStorage
+                const returnUrl = sessionStorage.getItem('returnUrl');
+
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                } else {
+                    // 2. Если нет сохранённого URL, используем history.back()
+                    window.history.back();
+                }
+            });
+        });
+    </script>
+}

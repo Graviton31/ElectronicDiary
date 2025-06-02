@@ -65,7 +65,9 @@ namespace ElectronicDiaryApi.Controllers
         {
             var parent = await _context.Parents
                 .Include(p => p.EnrollmentRequests)
-                .Include(p => p.IdStudents)
+                    .ThenInclude(er => er.IdStudentNavigation)
+                .Include(p => p.StudentsHasParents)
+                    .ThenInclude(shp => shp.IdStudentNavigation)
                 .FirstOrDefaultAsync(p => p.IdParent == id);
 
             if (parent == null)
@@ -84,29 +86,33 @@ namespace ElectronicDiaryApi.Controllers
                 BirthDate = parent.BirthDate,
                 Phone = parent.Phone,
                 Login = parent.Login,
-                ParentRole = parent.ParentRole,
-                Students = parent.IdStudents?.Select(s => new StudentDto
+                // ParentRole removed as it's now per child
+                Students = parent.StudentsHasParents.Select(shp => new StudentDto
                 {
-                    IdStudent = s.IdStudent,
+                    IdStudent = shp.IdStudentNavigation.IdStudent,
                     FullName = string.Join(" ",
-                        new[] { s.Surname, s.Name, s.Patronymic }
+                        new[] { shp.IdStudentNavigation.Surname,
+                         shp.IdStudentNavigation.Name,
+                         shp.IdStudentNavigation.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p))),
-                    Phone = s.Phone
-                }).ToList() ?? new List<StudentDto>(), // Обработка null
+                    Phone = shp.IdStudentNavigation.Phone,
+                    ParentRole = shp.ParentRole 
+                }).ToList(),
 
-                EnrollmentRequests = parent.EnrollmentRequests?.Select(er => new EnrollmentRequestDto
+                EnrollmentRequests = parent.EnrollmentRequests.Select(er => new EnrollmentRequestDto
                 {
                     IdRequest = er.IdRequests,
                     RequestDate = er.RequestDate,
                     Status = er.Status,
                     StudentFullName = string.Join(" ",
                         new[] { er.IdStudentNavigation?.Surname,
-                                 er.IdStudentNavigation?.Name,
-                                 er.IdStudentNavigation?.Patronymic }
+                         er.IdStudentNavigation?.Name,
+                         er.IdStudentNavigation?.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p))),
                     IdStudent = er.IdStudent
-                }).ToList() ?? new List<EnrollmentRequestDto>() // Обработка null
+                }).ToList()
             };
+
             return Ok(result);
         }
 

@@ -21,11 +21,9 @@ public partial class Parent
 
     public string Password { get; set; } = null!;
 
-    public string ParentRole { get; set; } = null!;
-
     public bool? IsDelete { get; set; }
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();
 
-    public virtual ICollection<Student> IdStudents { get; set; } = new List<Student>();
+    public virtual ICollection<StudentsHasParent> StudentsHasParents { get; set; } = new List<StudentsHasParent>();
 }

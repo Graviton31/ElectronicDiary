@@ -77,9 +77,10 @@ namespace ElectronicDiaryApi.Controllers
                             .ThenInclude(g => g.IdSubjectNavigation)
                     .Include(s => s.IdGroups)
                         .ThenInclude(g => g.IdSubjectNavigation)
-                    .Include(s => s.IdParents)
+                    .Include(s => s.StudentsHasParents)  // Изменили с IdParents на StudentsHasParents
+                        .ThenInclude(shp => shp.IdParentNavigation) // Добавили загрузку родителя
                     .Include(s => s.EnrollmentRequests)
-                        .ThenInclude(er => er.IdParentNavigation) // Загружаем родителя для каждой заявки
+                        .ThenInclude(er => er.IdParentNavigation)
                     .FirstOrDefaultAsync(s => s.IdStudent == id);
 
                 if (student == null)
@@ -98,27 +99,30 @@ namespace ElectronicDiaryApi.Controllers
                     Phone = student.Phone ?? "Не указан",
                     Login = student.Login,
                     EducationName = student.EducationName,
-                    Parents = student.IdParents?.Select(p => new ParentDto
+                    Parents = student.StudentsHasParents.Select(shp => new ParentDto
                     {
+                        IdParent = shp.IdParentNavigation.IdParent,
                         FullName = string.Join(" ",
-                            new[] { p.Surname, p.Name, p.Patronymic }
+                            new[] { shp.IdParentNavigation.Surname,
+                           shp.IdParentNavigation.Name,
+                           shp.IdParentNavigation.Patronymic }
                                 .Where(n => !string.IsNullOrEmpty(n))),
-                        Phone = p.Phone ?? "Не указан",
-                        BirthDate = p.BirthDate,
-                        ParentRole = p.ParentRole,
-                    }).ToList() ?? new List<ParentDto>(), // Обработка null
-                    EnrollmentRequests = student.EnrollmentRequests?.Select(er => new EnrollmentRequestDto
+                        Phone = shp.IdParentNavigation.Phone ?? "Не указан",
+                        BirthDate = shp.IdParentNavigation.BirthDate,
+                        ParentRole = shp.ParentRole, // Теперь роль берется из связи, а не из родителя
+                    }).ToList(),
+                    EnrollmentRequests = student.EnrollmentRequests.Select(er => new EnrollmentRequestDto
                     {
                         IdRequest = er.IdRequests,
                         RequestDate = er.RequestDate,
                         Status = er.Status ?? "Нет статуса",
                         GroupName = er.IdGroupNavigation?.Name ?? "Неизвестная группа",
                         SubjectName = er.IdGroupNavigation?.IdSubjectNavigation?.Name ?? "Без предмета",
-                        ParentFullName = string.Join(" ", new[] 
-                                { er.IdParentNavigation.Surname, er.IdParentNavigation.Name, er.IdParentNavigation.Patronymic }),
+                        ParentFullName = string.Join(" ", new[]
+                            { er.IdParentNavigation.Surname, er.IdParentNavigation.Name, er.IdParentNavigation.Patronymic }),
                         IdParent = er.IdParentNavigation.IdParent,
                         Comment = er.Comment
-                    }).ToList() ?? new List<EnrollmentRequestDto>(), // Обработка null
+                    }).ToList(),
                     Subjects = student.IdGroups
                         .GroupBy(g => g.IdSubjectNavigation)
                         .Select(g => new SubjectWithGroupsDto
@@ -138,7 +142,6 @@ namespace ElectronicDiaryApi.Controllers
             }
             catch (Exception ex)
             {
-                // Логирование исключения
                 _logger.LogError(ex, "Ошибка при получении деталей студента с ID {Id}", id);
                 return StatusCode(500, "Внутренняя ошибка сервера");
             }

@@ -4,125 +4,150 @@
     ViewData["Title"] = "Электронный журнал";
 }
 
+<link rel="stylesheet" href="~/css/journal.css" asp-append-version="true" />
+
 <div class="e-journal-container">
     <!-- Заголовок с иконкой -->
-    <header class="journal-header mb-4">
+    <header class="page-header mb-4">
         <div class="d-flex align-items-center">
-            <i class="bi bi-journal-bookmark-fill journal-icon me-3"></i>
-            <h1 class="journal-title">Электронный журнал</h1>
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-journal-bookmark-fill header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Электронный журнал</h1>
+                <p class="page-subtitle">Просмотр успеваемости и посещаемости</p>
+            </div>
         </div>
-        <hr class="header-divider">
+        <div class="header-divider"></div>
     </header>
 
-    <div class="journal-layout">
-        <!-- Боковая панель с предметами -->
-        <aside class="journal-sidebar">
-            <div class="sidebar-card">
-                <h3 class="sidebar-title">
-                    <i class="bi bi-book-half me-2"></i>Предметы
-                </h3>
-                <ul id="subjectList" class="subject-list">
-                    @foreach (var subject in Model)
-                    {
-                        <li class="subject-item">
-                            <a href="#" class="subject-link" data-id="@subject.IdSubject">
-                                <i class="bi bi-journal-text subject-icon"></i>
-                                <span class="subject-name">@subject.Name</span>
-                                <i class="bi bi-chevron-down toggle-icon"></i>
-                            </a>
-                            <ul class="group-list" id="groups-@subject.IdSubject" style="display:none;"></ul>
-                        </li>
-                    }
-                </ul>
+    <!-- Основной контент -->
+    <div class="journal-content">
+        <!-- Блок выбора предмета и группы -->
+        <div class="journal-selectors mb-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="selector-card shadow-sm">
+                        <label for="subjectSelector" class="form-label selector-label">
+                            <i class="bi bi-book-half me-2"></i>Предмет
+                        </label>
+                        <select id="subjectSelector" class="form-select selector-input">
+                            <option value="">Выберите предмет</option>
+                            @foreach (var subject in Model)
+                            {
+                                <option value="@subject.IdSubject">@subject.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="selector-card shadow-sm">
+                        <label for="groupSelector" class="form-label selector-label">
+                            <i class="bi bi-people-fill me-2"></i>Группа
+                        </label>
+                        <select id="groupSelector" class="form-select selector-input" disabled>
+                            <option value="">Сначала выберите предмет</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-        </aside>
+        </div>
 
-        <!-- Основное содержимое -->
-        <main class="journal-content">
-            <!-- Панель управления журналом -->
-            <div class="journal-controls mb-4">
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <div class="journal-selector" style="display: none;">
-                            <label for="journalSelector" class="form-label">
-                                <i class="bi bi-journals"></i> Выбор журнала
+        <!-- Блок информации и управления -->
+        <div class="journal-info-section mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="journal-selector" id="journalSelectorWrapper" style="display: none;">
+                        <div class="selector-card shadow-sm">
+                            <label for="journalSelector" class="form-label selector-label">
+                                <i class="bi bi-journals me-2"></i>Период
                             </label>
-                            <select id="journalSelector" class="form-select">
-                                <option value="">Выберите журнал</option>
+                            <select id="journalSelector" class="form-select selector-input">
+                                <option value="">Выберите период</option>
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-md-end gap-2">
-                            <button class="btn btn-primary" id="showAddLessonModal" style="display: none;">
-                                <i class="bi bi-plus-lg"></i> <span class="btn-text">Добавить урок</span>
-                            </button>
-                            <button class="btn btn-success" id="showCreateJournalModalBtn" style="display: none;">
-                                <i class="bi bi-journal-plus"></i> <span class="btn-text">Создать журнал</span>
-                            </button>
+                </div>
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-end gap-3">
+                        <button class="btn btn-outline-primary btn-action" id="showCreateJournalModalBtn" style="display: none;">
+                            <i class="bi bi-journal-plus"></i> <span class="btn-text">Новый журнал</span>
+                        </button>
+                        <button class="btn btn-primary btn-action" id="showAddLessonModal" style="display: none;">
+                            <i class="bi bi-plus-lg"></i> <span class="btn-text">Добавить урок</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок статистики -->
+        <div class="journal-stats mb-4" style="display: none;">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <div class="stat-card stat-total shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-journal-bookmark"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalLessonsStat">0</div>
+                            <div class="stat-label">Всего уроков</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-completed shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="completedLessonsStat">0</div>
+                            <div class="stat-label">Проведено</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-absent shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="absentStat">0</div>
+                            <div class="stat-label">Прогулов (н)</div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Контейнер журнала -->
-            <div class="journal-card">
+        <!-- Контейнер журнала -->
+        <div class="journal-card shadow">
+            <div class="journal-table-container">
+                <!-- Добавлен контейнер для скролла -->
                 <div id="journalContainer">
-                    <div class="empty-state">
-                        <i class="bi bi-journal empty-icon"></i>
-                        <h4 class="empty-title">Выберите группу</h4>
-                        <p class="empty-text">Для отображения журнала выберите группу из списка</p>
+                    <div class="empty-state text-center py-5" id="emptyStateMessage">
+                        <div class="empty-icon-wrapper mb-3">
+                            <i class="bi bi-journal-text empty-icon"></i>
+                        </div>
+                        <h4 class="empty-title mb-2">Выберите группу</h4>
+                        <p class="empty-text mb-4">Для отображения журнала выберите группу из списка</p>
+                        <div class="empty-arrow">
+                            <i class="bi bi-arrow-up"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
-</div>
-
-<div class="journal-stats mb-4">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="stat-card stat-total">
-                <div class="stat-icon">
-                    <i class="bi bi-journal-bookmark"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value" id="totalLessonsStat">0</div>
-                    <div class="stat-label">Всего уроков</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card stat-completed">
-                <div class="stat-icon">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value" id="completedLessonsStat">0</div>
-                    <div class="stat-label">Проведено</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card stat-absent">
-                <div class="stat-icon">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value" id="absentStat">0</div>
-                    <div class="stat-label">Прогулов (н)</div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
+<!-- Модальные окна -->
 <!-- Модальное окно добавления урока -->
 <div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Добавить новый урок</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Добавить урок</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -130,10 +155,15 @@
                     <label for="lessonDateInput" class="form-label">Дата урока</label>
                     <input type="date" class="form-control" id="lessonDateInput">
                 </div>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i> Дата должна быть в пределах выбранного периода журнала
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="confirmAddLesson">Добавить</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmAddLesson">
+                    <i class="bi bi-check-lg me-1"></i> Добавить
+                </button>
             </div>
         </div>
     </div>
@@ -144,15 +174,18 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-light">
-                <h5 class="modal-title">Комментарий для родителей</h5>
+                <h5 class="modal-title"><i class="bi bi-chat-square-text me-2"></i>Комментарий</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="form-floating">
+                <div class="form-floating mb-3">
                     <textarea class="form-control" id="commentTextarea"
                               placeholder="Введите комментарий"
                               style="height: 120px"></textarea>
-                    <label for="commentTextarea">Комментарий</label>
+                    <label for="commentTextarea">Комментарий для родителей</label>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Этот комментарий будет виден родителям студента
                 </div>
                 <input type="hidden" id="commentVisitId">
                 <input type="hidden" id="commentStudentId">
@@ -160,13 +193,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-danger" id="clearCommentBtn">
-                    <i class="bi bi-trash"></i> Очистить
+                    <i class="bi bi-trash me-1"></i> Очистить
                 </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg"></i> Отмена
+                    <i class="bi bi-x-lg me-1"></i> Отмена
                 </button>
                 <button type="button" class="btn btn-primary" id="saveCommentBtn">
-                    <i class="bi bi-save"></i> Сохранить
+                    <i class="bi bi-save me-1"></i> Сохранить
                 </button>
             </div>
         </div>
@@ -175,10 +208,12 @@
 
 <!-- Модальное окно создания журнала -->
 <div class="modal fade" id="createJournalModal" tabindex="-1" aria-labelledby="createJournalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createJournalModalLabel">Создать новый журнал</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="createJournalModalLabel">
+                    <i class="bi bi-journal-plus me-2"></i>Создать журнал
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -192,12 +227,17 @@
                 </div>
                 <div class="mb-3">
                     <label for="lessonsCount" class="form-label">Количество уроков</label>
-                    <input type="number" class="form-control" id="lessonsCount" min="1" value="1">
+                    <input type="number" class="form-control" id="lessonsCount" min="1" value="36">
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> Рекомендуемое количество уроков - 36 (1 учебный год)
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="confirmCreateJournal">Создать</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmCreateJournal">
+                    <i class="bi bi-check-lg me-1"></i> Создать
+                </button>
             </div>
         </div>
     </div>
@@ -205,773 +245,90 @@
 
 <!-- Шаблоны -->
 <div id="noJournalTemplate" style="display: none;">
-    <div class="alert alert-warning d-flex align-items-center">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <div>
-            {message}
-            <button class="btn btn-primary mt-2" id="createJournalBtn">
-                <i class="bi bi-journal-plus"></i> Создать журнал
-            </button>
+    <div class="empty-state text-center py-5">
+        <div class="empty-icon-wrapper mb-3 text-warning">
+            <i class="bi bi-exclamation-triangle-fill empty-icon"></i>
         </div>
+        <h4 class="empty-title mb-3">{message}</h4>
+        <button class="btn btn-primary btn-lg" id="createJournalBtn">
+            <i class="bi bi-journal-plus me-2"></i> Создать журнал
+        </button>
     </div>
 </div>
 
 <div id="noLessonsTemplate" style="display: none;">
-    <div class="alert alert-info d-flex align-items-center">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        <div>Журнал создан, но уроки еще не добавлены</div>
+    <div class="empty-state text-center py-5">
+        <div class="empty-icon-wrapper mb-3 text-info">
+            <i class="bi bi-info-circle-fill empty-icon"></i>
+        </div>
+        <h4 class="empty-title mb-2">Журнал создан</h4>
+        <p class="empty-text mb-4">Уроки еще не добавлены</p>
+        <button class="btn btn-primary" id="addFirstLessonBtn">
+            <i class="bi bi-plus-lg me-1"></i> Добавить первый урок
+        </button>
     </div>
 </div>
 
-<style>
-    :root {
-        --primary-color: #4361ee;
-        --secondary-color: #3f37c9;
-        --success-color: #4cc9f0;
-        --info-color: #4895ef;
-        --warning-color: #f8961e;
-        --danger-color: #f72585;
-        --light-color: #f8f9fa;
-        --dark-color: #212529;
-        --sidebar-width: 280px;
-        --sidebar-collapsed-width: 80px;
-        --header-height: 80px;
-        --transition-speed: 0.3s;
-    }
-
-    /* Общие стили */
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f7fa;
-        color: #333;
-        line-height: 1.6;
-    }
-
-    .e-journal-container {
-        padding: 20px;
-        max-width: 100%;
-        margin: 0 auto;
-    }
-
-    /* Заголовок */
-    .journal-header {
-        padding: 15px 0;
-    }
-
-    .journal-icon {
-        font-size: 2rem;
-        color: var(--primary-color);
-    }
-
-    .journal-title {
-        font-weight: 700;
-        color: var(--dark-color);
-        margin: 0;
-        font-size: 1.8rem;
-    }
-
-    .header-divider {
-        border-top: 2px solid var(--primary-color);
-        opacity: 0.2;
-        margin: 10px 0;
-    }
-
-    .status-cell {
-        min-width: 60px;
-    }
-
-    .status-select {
-        padding: 4px;
-    }
-
-    /* Стили для блока статистики */
-    .journal-stats {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        padding: 15px;
-    }
-
-    .stat-card {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-        height: 100%;
-    }
-
-    .stat-icon {
-        font-size: 1.8rem;
-        margin-right: 15px;
-        width: 50px;
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-    }
-
-    .stat-content {
-        flex: 1;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    /* Цвета для разных типов статистики */
-    .stat-total .stat-icon {
-        color: #4361ee;
-        background-color: rgba(67, 97, 238, 0.1);
-    }
-
-    .stat-completed .stat-icon {
-        color: #28a745;
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-
-    .stat-absent .stat-icon {
-        color: #dc3545;
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-
-    @@media (max-width: 767.98px) {
-        .stat-card
-
-    {
-        margin-bottom: 15px;
-    }
-
-    .stat-value {
-        font-size: 1.3rem;
-    }
-
-    }
-
-    /* Макет */
-    .journal-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    /* Боковая панель */
-    .journal-sidebar {
-        flex: 0 0 var(--sidebar-width);
-        transition: all var(--transition-speed) ease;
-    }
-
-    .sidebar-card {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        padding: 20px;
-        height: 100%;
-    }
-
-    .sidebar-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--dark-color);
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-    }
-
-    .subject-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .subject-item {
-        margin-bottom: 5px;
-    }
-
-    .subject-link {
-        display: flex;
-        align-items: center;
-        padding: 10px 15px;
-        color: var(--dark-color);
-        text-decoration: none;
-        border-radius: 8px;
-        transition: all 0.2s;
-    }
-
-        .subject-link:hover {
-            background-color: rgba(67, 97, 238, 0.1);
-            color: var(--primary-color);
-        }
-
-    .subject-icon {
-        margin-right: 10px;
-        font-size: 1.1rem;
-        color: var(--primary-color);
-    }
-
-    .subject-name {
-        flex: 1;
-        font-weight: 500;
-    }
-
-    .toggle-icon {
-        transition: transform 0.2s;
-    }
-
-    .subject-link.collapsed .toggle-icon {
-        transform: rotate(-90deg);
-    }
-
-    .group-list {
-        list-style: none;
-        padding-left: 20px;
-        margin-top: 5px;
-    }
-
-        .group-list .list-group-item {
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-        }
-
-        .group-list .group-link {
-            color: #555;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-        }
-
-            .group-list .group-link:hover {
-                color: var(--primary-color);
-            }
-
-        .group-list .bi {
-            margin-right: 8px;
-            font-size: 0.9rem;
-        }
-
-    /* Основное содержимое */
-    .journal-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .journal-card {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        padding: 20px;
-        min-height: 300px;
-    }
-
-    /* Элементы управления */
-    .journal-controls {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-
-    .journal-selector {
-        margin-bottom: 15px;
-    }
-
-        .journal-selector .form-label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            font-size: 0.95rem;
-        }
-
-        .journal-selector .bi {
-            margin-right: 8px;
-            font-size: 1rem;
-        }
-
-        .journal-selector .form-select {
-            font-size: 0.95rem;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            height: auto;
-        }
-
-    /* Состояние пустого журнала */
-    .empty-state {
-        text-align: center;
-        padding: 40px 20px;
-        color: #6c757d;
-    }
-
-    .empty-icon {
-        font-size: 3rem;
-        color: #dee2e6;
-        margin-bottom: 15px;
-    }
-
-    .empty-title {
-        font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 1.2rem;
-    }
-
-    .empty-text {
-        font-size: 0.95rem;
-    }
-
-    /* Таблица журнала */
-    .journal-container {
-        position: relative;
-        overflow-x: auto;
-        width: 100%;
-        margin-bottom: 1rem;
-        -webkit-overflow-scrolling: touch;
-        border-radius: 8px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .journal-table {
-        table-layout: auto; /* Изменено с fixed на auto для автоматической ширины */
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: 0.95rem;
-    }
-
-        .journal-table th {
-            background-color: #f8f9fa;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            font-weight: 500;
-            text-align: center;
-            vertical-align: middle;
-            height: 50px;
-            padding: 12px 8px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-            .journal-table th:first-child,
-            .journal-table td:first-child {
-                position: sticky;
-                left: 0;
-                z-index: 3;
-                background-color: white;
-                min-width: 150px;
-                width: 150px;
-            }
-
-            .journal-table th:first-child {
-                z-index: 4;
-                background-color: #f8f9fa;
-            }
-
-        .journal-table td {
-            padding: 12px 8px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f1f1;
-        }
-
-    /* Ячейки статусов */
-    .status-cell {
-        height: 80px;
-        min-width: 80px;
-        position: relative;
-        padding: 8px;
-        text-align: center;
-    }
-
-    .status-select {
-        width: 100%;
-        font-size: 0.9rem;
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #dee2e6;
-        background-color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-        .status-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-        }
-
-        .status-select option {
-            padding: 8px;
-            font-size: 0.9rem;
-        }
-
-    .student-name-cell {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        padding: 8px 12px;
-        font-weight: 500;
-        position: relative;
-    }
-
-    /* Кнопка комментария */
-    .comment-btn {
-        position: absolute;
-        bottom: 5px;
-        right: 5px;
-        width: 26px;
-        height: 26px;
-        padding: 0;
-        font-size: 12px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.8;
-        transition: all 0.2s;
-        background-color: white;
-        border: 1px solid #dee2e6;
-    }
-
-        .comment-btn:hover {
-            opacity: 1;
-            background-color: #f8f9fa;
-            transform: scale(1.1);
-        }
-
-        .comment-btn .bi {
-            font-size: 0.9rem;
-        }
-
-    .has-comment {
-        color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-
-    /* Стили статусов */
-    .table-success {
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-
-    .table-danger {
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-
-    .table-warning {
-        background-color: rgba(255, 193, 7, 0.1);
-    }
-
-    .table-info {
-        background-color: rgba(23, 162, 184, 0.1);
-    }
-
-    .table-secondary {
-        background-color: rgba(108, 117, 125, 0.1);
-    }
-
-    /* Пустые уроки */
-    .empty-lesson {
-        background-color: #f8f9fa;
-        border: 1px dashed #dee2e6;
-    }
-
-    /* Анимации */
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    /* Кнопки */
-    .btn {
-        padding: 8px 16px;
-        font-size: 0.9rem;
-        border-radius: 6px;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-sm {
-        padding: 6px 12px;
-        font-size: 0.85rem;
-    }
-
-    .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-    /* Адаптация для мобильных устройств */
-    @@media (min-width: 992px) {
-        .journal-layout {
-            flex-direction: row;
-        }
-    }
-
-    @@media (max-width: 991.98px) {
-        .journal-layout {
-            flex-direction: column;
-        }
-
-        .journal-sidebar {
-            flex: 0 0 auto;
-            width: 100%;
-        }
-
-        .sidebar-card {
-            padding: 15px;
-        }
-
-        .journal-title {
-            font-size: 1.5rem;
-        }
-
-        .btn-text {
-            display: none;
-        }
-
-        .journal-controls {
-            padding: 10px;
-        }
-
-        .journal-selector .form-label {
-            font-size: 0.9rem;
-        }
-    }
-
-    @@media (max-width: 767.98px) {
-        .e-journal-container {
-            padding: 15px;
-        }
-
-        .journal-header {
-            padding: 10px 0;
-        }
-
-        .journal-icon {
-            font-size: 1.5rem;
-        }
-
-        .journal-title {
-            font-size: 1.3rem;
-        }
-
-        .journal-table th:first-child,
-        .journal-table td:first-child {
-            min-width: 120px;
-            width: 120px;
-        }
-
-        .journal-table th:not(:first-child),
-        .journal-table td:not(:first-child) {
-            min-width: 70px;
-            width: 70px;
-            padding: 2px;
-        }
-
-        .status-cell {
-            height: 70px;
-            min-width: 70px;
-        }
-
-        .status-select {
-            font-size: 0.8rem;
-            padding: 4px;
-        }
-
-        .student-name-cell {
-            font-size: 0.8rem;
-            padding: 8px;
-        }
-
-        .comment-btn {
-            width: 24px;
-            height: 24px;
-        }
-    }
-
-    @@media (max-width: 575.98px) {
-        .journal-table th:first-child,
-        .journal-table td:first-child {
-            min-width: 100px;
-            width: 100px;
-        }
-
-        .journal-table th:not(:first-child),
-        .journal-table td:not(:first-child) {
-            min-width: 55px;
-            width: 55px;
-        }
-
-        .status-cell {
-            height: 55px;
-            min-width: 50px;
-        }
-
-        .status-select {
-            font-size: 0.75rem;
-        }
-
-        .comment-btn {
-            width: 22px;
-            height: 22px;
-        }
-
-        .empty-icon {
-            font-size: 2.5rem;
-        }
-
-        .empty-title {
-            font-size: 1.1rem;
-        }
-    }
-
-    /* Улучшения для выпадающего списка журналов */
-    .journal-selector {
-        transition: all 0.3s ease;
-    }
-
-        .journal-selector .form-select {
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-            .journal-selector .form-select:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-            }
-
-    /* Индикатор загрузки */
-    .loading-spinner {
-        display: inline-block;
-        width: 2rem;
-        height: 2rem;
-        vertical-align: text-bottom;
-        border: 0.25em solid currentColor;
-        border-right-color: transparent;
-        border-radius: 50%;
-        animation: spinner-border 0.75s linear infinite;
-    }
-
-    @@keyframes spinner-border {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* Сообщения об ошибках */
-    .alert {
-        padding: 0.75rem 1.25rem;
-        margin-bottom: 1rem;
-        border: 1px solid transparent;
-        border-radius: 0.375rem;
-    }
-
-    .alert-danger {
-        color: #721c24;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-    }
-
-    /* Улучшения для модальных окон */
-    .modal-content {
-        border-radius: 0.5rem;
-        border: none;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-header {
-        border-bottom: 1px solid #e9ecef;
-        padding: 1rem 1.5rem;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #e9ecef;
-        padding: 1rem 1.5rem;
-    }
-
-    .modal-body {
-        padding: 1.5rem;
-    }
-
-    /* Дополнительные улучшения UX */
-    [data-bs-toggle="collapse"] {
-        cursor: pointer;
-    }
-
-    .tooltip {
-        font-size: 0.85rem;
-    }
-
-    /* Плавные переходы */
-    * {
-        transition: background-color 0.2s ease, border-color 0.2s ease;
-    }
-</style>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const baseUrl = 'https://localhost:7123/api/Journals';
-        let currentGroupId = null;
-        let currentSubjectId = null;
-        let currentJournalId = null;
-        let currentJournalDates = { start: null, end: null };
-        let availableJournals = [];
+         const baseUrl = 'https://localhost:7123/api/Journals';
+         let currentGroupId = null;
+         let currentSubjectId = null;
+         let currentJournalId = null;
+         let currentJournalDates = { start: null, end: null };
+         let availableJournals = [];
 
-        // Инициализация модальных окон
-        const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
-        const createJournalModal = new bootstrap.Modal(document.getElementById('createJournalModal'));
-        const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+         // Инициализация модальных окон
+         const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
+         const createJournalModal = new bootstrap.Modal(document.getElementById('createJournalModal'));
+         const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
 
-        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+         // Элементы DOM
+         const subjectSelector = document.getElementById('subjectSelector');
+         const groupSelector = document.getElementById('groupSelector');
+         const groupSelectorContainer = document.getElementById('groupSelectorContainer');
+         const journalStats = document.querySelector('.journal-stats');
 
-        // Обработчик клика по предмету
-        document.querySelectorAll('.subject-link').forEach(link => {
-            link.addEventListener('click', async function(e) {
-                e.preventDefault();
-                currentSubjectId = this.dataset.id;
-                const groupList = document.getElementById(`groups-${currentSubjectId}`);
+         // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
 
-                // Переключение видимости списка групп
-                groupList.style.display = groupList.style.display === 'none' ? 'block' : 'none';
+         // Обработчик выбора предмета
+        subjectSelector.addEventListener('change', async function() {
+            const subjectId = this.value;
+            const groupSelector = document.getElementById('groupSelector');
 
-                // Загрузка групп, если еще не загружены
-                if (groupList.children.length === 0) {
-                    await loadGroupsForSubject(currentSubjectId, groupList);
-                }
-            });
+            if (!subjectId) {
+                groupSelector.disabled = true;
+                groupSelector.innerHTML = '<option value="">Сначала выберите предмет</option>';
+                return;
+            }
+
+            currentSubjectId = subjectId;
+            groupSelector.disabled = false; // Разблокируем после выбора предмета
+            await loadGroupsForSubject(subjectId);
         });
 
-        // Обработчик клика по группе
-        document.addEventListener('click', async function(e) {
-            if (e.target.classList.contains('group-link')) {
-                e.preventDefault();
-                currentGroupId = e.target.dataset.id;
-                // Загружаем журнал без указания конкретного ID, чтобы выбрать первый доступный
-                await loadGroupJournal(currentGroupId);
+         // Обработчик выбора группы
+        groupSelector.addEventListener('change', async function() {
+            const groupId = this.value;
+            const emptyStateMessage = document.getElementById('emptyStateMessage');
+
+            if (!groupId) {
+                // Если группа не выбрана, показываем сообщение
+                if (emptyStateMessage) {
+                    emptyStateMessage.style.display = 'block';
+                }
+                return;
             }
+
+            currentGroupId = groupId;
+
+            // Скрываем сообщение только при выборе группы
+            if (emptyStateMessage) {
+                emptyStateMessage.style.display = 'none';
+            }
+
+            await loadGroupJournal(groupId);
+            journalStats.style.display = 'block';
         });
 
         // Обработчик кнопки создания журнала
@@ -1033,7 +390,7 @@
         // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
 
         // Загрузка групп для предмета
-        async function loadGroupsForSubject(subjectId, groupList) {
+        async function loadGroupsForSubject(subjectId) {
             try {
                 showLoading('Загрузка групп...');
                 const response = await fetch(`${baseUrl}/${subjectId}/Groups`);
@@ -1043,13 +400,10 @@
                 }
 
                 const groups = await response.json();
-                groupList.innerHTML = groups.map(group => `
-                    <li class="list-group-item">
-                        <a href="#" class="group-link" data-id="${group.idGroup}">
-                            ${group.name}
-                        </a>
-                    </li>
-                `).join('');
+                groupSelector.innerHTML = '<option value="">Выберите группу</option>' +
+                    groups.map(group => `
+                        <option value="${group.idGroup}">${group.name}</option>
+                    `).join('');
             } catch (error) {
                 console.error('Ошибка загрузки групп:', error);
                 showError('Ошибка загрузки групп: ' + (error.message || 'неизвестная ошибка'));
@@ -1276,7 +630,7 @@
 
             // Строки с студентами
             students.forEach(student => {
-                html += `<tr><td class="student-name-cell">${student.fullName}</td>`;
+                html += `<tr><td class="student-name-cell">${shortenName(student.fullName)}</td>`;
 
                 // Ячейки с посещениями (реальные и пустые)
                 allLessons.forEach(lesson => {
@@ -1723,6 +1077,16 @@
                 return `${day}.${month}`;
             }
             return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Функция для сокращения ФИО до фамилии с инициалами
+        function shortenName(fullName) {
+            if (window.innerWidth > 576) return fullName;
+
+            const parts = fullName.split(' ');
+            if (parts.length < 3) return fullName;
+
+            return `${parts[0]} ${parts[1][0]}.${parts[2][0]}.`;
         }
 
         // Определение класса для статуса

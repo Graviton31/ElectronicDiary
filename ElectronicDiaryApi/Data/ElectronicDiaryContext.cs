@@ -43,6 +43,8 @@ public partial class ElectronicDiaryContext : DbContext
 
     public virtual DbSet<Student> Students { get; set; }
 
+    public virtual DbSet<StudentsHasParent> StudentsHasParents { get; set; }
+
     public virtual DbSet<Subject> Subjects { get; set; }
 
     public virtual DbSet<Visit> Visits { get; set; }
@@ -340,9 +342,6 @@ public partial class ElectronicDiaryContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(45)
                 .HasColumnName("name");
-            entity.Property(e => e.ParentRole)
-                .HasColumnType("enum('отец','мать','отчим','мачеха','опекун','другое')")
-                .HasColumnName("parent_role");
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
                 .HasColumnName("password");
@@ -471,29 +470,35 @@ public partial class ElectronicDiaryContext : DbContext
             entity.Property(e => e.Surname)
                 .HasMaxLength(45)
                 .HasColumnName("surname");
+        });
 
-            entity.HasMany(d => d.IdParents).WithMany(p => p.IdStudents)
-                .UsingEntity<Dictionary<string, object>>(
-                    "StudentsHasParent",
-                    r => r.HasOne<Parent>().WithMany()
-                        .HasForeignKey("IdParent")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("fk_students_has_parents_parents1"),
-                    l => l.HasOne<Student>().WithMany()
-                        .HasForeignKey("IdStudent")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("fk_students_has_parents_students1"),
-                    j =>
-                    {
-                        j.HasKey("IdStudent", "IdParent")
-                            .HasName("PRIMARY")
-                            .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
-                        j.ToTable("students_has_parents");
-                        j.HasIndex(new[] { "IdParent" }, "fk_students_has_parents_parents1_idx");
-                        j.HasIndex(new[] { "IdStudent" }, "fk_students_has_parents_students1_idx");
-                        j.IndexerProperty<int>("IdStudent").HasColumnName("id_student");
-                        j.IndexerProperty<int>("IdParent").HasColumnName("id_parent");
-                    });
+        modelBuilder.Entity<StudentsHasParent>(entity =>
+        {
+            entity.HasKey(e => new { e.IdStudent, e.IdParent })
+                .HasName("PRIMARY")
+                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+            entity.ToTable("students_has_parents");
+
+            entity.HasIndex(e => e.IdParent, "fk_students_has_parents_parents1_idx");
+
+            entity.HasIndex(e => e.IdStudent, "fk_students_has_parents_students1_idx");
+
+            entity.Property(e => e.IdStudent).HasColumnName("id_student");
+            entity.Property(e => e.IdParent).HasColumnName("id_parent");
+            entity.Property(e => e.ParentRole)
+                .HasColumnType("enum('отец','мать','бабушка','дедушка','опекун','другое')")
+                .HasColumnName("parent_role");
+
+            entity.HasOne(d => d.IdParentNavigation).WithMany(p => p.StudentsHasParents)
+                .HasForeignKey(d => d.IdParent)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_students_has_parents_parents1");
+
+            entity.HasOne(d => d.IdStudentNavigation).WithMany(p => p.StudentsHasParents)
+                .HasForeignKey(d => d.IdStudent)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_students_has_parents_students1");
         });
 
         modelBuilder.Entity<Subject>(entity =>
