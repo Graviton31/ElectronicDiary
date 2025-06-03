@@ -1,0 +1,1180 @@
+﻿@model List<ElectronicDiaryApi.ModelsDto.Subject.SubjectDto>
+
+@{
+    ViewData["Title"] = "Электронный журнал";
+}
+
+<link rel="stylesheet" href="~/css/journal.css" asp-append-version="true" />
+
+<div class="e-journal-container">
+    <!-- Заголовок с иконкой -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-journal-bookmark-fill header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Электронный журнал</h1>
+                <p class="page-subtitle">Просмотр успеваемости и посещаемости</p>
+            </div>
+        </div>
+        <div class="header-divider"></div>
+    </header>
+
+    <!-- Основной контент -->
+    <div class="journal-content">
+        <!-- Блок выбора предмета и группы -->
+        <div class="journal-selectors mb-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="selector-card shadow-sm">
+                        <label for="subjectSelector" class="form-label selector-label">
+                            <i class="bi bi-book-half me-2"></i>Предмет
+                        </label>
+                        <select id="subjectSelector" class="form-select selector-input">
+                            <option value="">Выберите предмет</option>
+                            @foreach (var subject in Model)
+                            {
+                                <option value="@subject.IdSubject">@subject.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="selector-card shadow-sm">
+                        <label for="groupSelector" class="form-label selector-label">
+                            <i class="bi bi-people-fill me-2"></i>Группа
+                        </label>
+                        <select id="groupSelector" class="form-select selector-input" disabled>
+                            <option value="">Сначала выберите предмет</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок информации и управления -->
+        <div class="journal-info-section mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="journal-selector" id="journalSelectorWrapper" style="display: none;">
+                        <div class="selector-card shadow-sm">
+                            <label for="journalSelector" class="form-label selector-label">
+                                <i class="bi bi-journals me-2"></i>Период
+                            </label>
+                            <select id="journalSelector" class="form-select selector-input">
+                                <option value="">Выберите период</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-end gap-3">
+                        <button class="btn btn-outline-primary btn-action" id="showCreateJournalModalBtn" style="display: none;">
+                            <i class="bi bi-journal-plus"></i> <span class="btn-text">Новый журнал</span>
+                        </button>
+                        <button class="btn btn-primary btn-action" id="showAddLessonModal" style="display: none;">
+                            <i class="bi bi-plus-lg"></i> <span class="btn-text">Добавить урок</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок статистики -->
+        <div class="journal-stats mb-4" style="display: none;">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <div class="stat-card stat-total shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-journal-bookmark"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalLessonsStat">0</div>
+                            <div class="stat-label">Всего уроков</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-completed shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="completedLessonsStat">0</div>
+                            <div class="stat-label">Проведено</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-absent shadow-sm p-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="absentStat">0</div>
+                            <div class="stat-label">Прогулов (н)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Контейнер журнала -->
+        <div class="journal-card shadow">
+            <div class="journal-table-container">
+                <!-- Добавлен контейнер для скролла -->
+                <div id="journalContainer">
+                    <div class="empty-state text-center py-5" id="emptyStateMessage">
+                        <div class="empty-icon-wrapper mb-3">
+                            <i class="bi bi-journal-text empty-icon"></i>
+                        </div>
+                        <h4 class="empty-title mb-2">Выберите группу</h4>
+                        <p class="empty-text mb-4">Для отображения журнала выберите группу из списка</p>
+                        <div class="empty-arrow">
+                            <i class="bi bi-arrow-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна -->
+<!-- Модальное окно добавления урока -->
+<div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Добавить урок</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="lessonDateInput" class="form-label">Дата урока</label>
+                    <input type="date" class="form-control" id="lessonDateInput">
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i> Дата должна быть в пределах выбранного периода журнала
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmAddLesson">
+                    <i class="bi bi-check-lg me-1"></i> Добавить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно комментария -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-chat-square-text me-2"></i>Комментарий</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-floating mb-3">
+                    <textarea class="form-control" id="commentTextarea"
+                              placeholder="Введите комментарий"
+                              style="height: 120px"></textarea>
+                    <label for="commentTextarea">Комментарий для родителей</label>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Этот комментарий будет виден родителям студента
+                </div>
+                <input type="hidden" id="commentVisitId">
+                <input type="hidden" id="commentStudentId">
+                <input type="hidden" id="commentLessonId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="clearCommentBtn">
+                    <i class="bi bi-trash me-1"></i> Очистить
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i> Отмена
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCommentBtn">
+                    <i class="bi bi-save me-1"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создания журнала -->
+<div class="modal fade" id="createJournalModal" tabindex="-1" aria-labelledby="createJournalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="createJournalModalLabel">
+                    <i class="bi bi-journal-plus me-2"></i>Создать журнал
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="journalStartDate" class="form-label">Дата начала</label>
+                    <input type="date" class="form-control" id="journalStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="journalEndDate" class="form-label">Дата окончания</label>
+                    <input type="date" class="form-control" id="journalEndDate">
+                </div>
+                <div class="mb-3">
+                    <label for="lessonsCount" class="form-label">Количество уроков</label>
+                    <input type="number" class="form-control" id="lessonsCount" min="1" value="36">
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> Рекомендуемое количество уроков - 36 (1 учебный год)
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmCreateJournal">
+                    <i class="bi bi-check-lg me-1"></i> Создать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Шаблоны -->
+<div id="noJournalTemplate" style="display: none;">
+    <div class="empty-state text-center py-5">
+        <div class="empty-icon-wrapper mb-3 text-warning">
+            <i class="bi bi-exclamation-triangle-fill empty-icon"></i>
+        </div>
+        <h4 class="empty-title mb-3">{message}</h4>
+        <button class="btn btn-primary btn-lg" id="createJournalBtn">
+            <i class="bi bi-journal-plus me-2"></i> Создать журнал
+        </button>
+    </div>
+</div>
+
+<div id="noLessonsTemplate" style="display: none;">
+    <div class="empty-state text-center py-5">
+        <div class="empty-icon-wrapper mb-3 text-info">
+            <i class="bi bi-info-circle-fill empty-icon"></i>
+        </div>
+        <h4 class="empty-title mb-2">Журнал создан</h4>
+        <p class="empty-text mb-4">Уроки еще не добавлены</p>
+        <button class="btn btn-primary" id="addFirstLessonBtn">
+            <i class="bi bi-plus-lg me-1"></i> Добавить первый урок
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+         const baseUrl = 'https://localhost:7123/api/Journals';
+         let currentGroupId = null;
+         let currentSubjectId = null;
+         let currentJournalId = null;
+         let currentJournalDates = { start: null, end: null };
+         let availableJournals = [];
+
+         // Инициализация модальных окон
+         const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
+         const createJournalModal = new bootstrap.Modal(document.getElementById('createJournalModal'));
+         const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+
+         // Элементы DOM
+         const subjectSelector = document.getElementById('subjectSelector');
+         const groupSelector = document.getElementById('groupSelector');
+         const groupSelectorContainer = document.getElementById('groupSelectorContainer');
+         const journalStats = document.querySelector('.journal-stats');
+
+         // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+
+         // Обработчик выбора предмета
+        subjectSelector.addEventListener('change', async function() {
+            const subjectId = this.value;
+            const groupSelector = document.getElementById('groupSelector');
+
+            if (!subjectId) {
+                groupSelector.disabled = true;
+                groupSelector.innerHTML = '<option value="">Сначала выберите предмет</option>';
+                return;
+            }
+
+            currentSubjectId = subjectId;
+            groupSelector.disabled = false; // Разблокируем после выбора предмета
+            await loadGroupsForSubject(subjectId);
+        });
+
+         // Обработчик выбора группы
+        groupSelector.addEventListener('change', async function() {
+            const groupId = this.value;
+            const emptyStateMessage = document.getElementById('emptyStateMessage');
+
+            if (!groupId) {
+                // Если группа не выбрана, показываем сообщение
+                if (emptyStateMessage) {
+                    emptyStateMessage.style.display = 'block';
+                }
+                return;
+            }
+
+            currentGroupId = groupId;
+
+            // Скрываем сообщение только при выборе группы
+            if (emptyStateMessage) {
+                emptyStateMessage.style.display = 'none';
+            }
+
+            await loadGroupJournal(groupId);
+            journalStats.style.display = 'block';
+        });
+
+        // Обработчик кнопки создания журнала
+        document.getElementById('showCreateJournalModalBtn').addEventListener('click', function() {
+            if (!currentGroupId) {
+                showError('Сначала выберите группу');
+                return;
+            }
+            showCreateJournalModal(currentGroupId);
+        });
+
+        // Обработчик кнопки добавления урока
+        document.getElementById('showAddLessonModal').addEventListener('click', function() {
+            if (!currentJournalId) {
+                showError('Сначала выберите журнал из списка');
+                return;
+            }
+            showAddLessonModal();
+        });
+
+        // Обработчик кнопки создания журнала (из шаблона)
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'createJournalBtn') {
+                e.preventDefault();
+                if (!currentGroupId) {
+                    showError('Не выбрана группа');
+                    return;
+                }
+                showCreateJournalModal(currentGroupId);
+            }
+        });
+
+        // Обработчик сохранения комментария
+        document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
+
+        // Очистка комментария
+        document.getElementById('clearCommentBtn').addEventListener('click', function() {
+            document.getElementById('commentTextarea').value = '';
+        });
+
+        // Обработчики модальных окон
+        document.getElementById('confirmAddLesson').addEventListener('click', addNewLesson);
+        document.getElementById('confirmCreateJournal').addEventListener('click', createNewJournalHandler);
+
+        // Обработчик изменения статуса
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('status-select')) {
+                handleVisitUpdate(e.target, true);
+            }
+        });
+
+        // Обработчик изменения выпадающего списка журналов
+        document.getElementById('journalSelector').addEventListener('change', async function(e) {
+            if (this.value && currentGroupId) {
+                await loadGroupJournal(currentGroupId, parseInt(this.value));
+            }
+        });
+
+        // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
+
+        // Загрузка групп для предмета
+        async function loadGroupsForSubject(subjectId) {
+            try {
+                showLoading('Загрузка групп...');
+                const response = await fetch(`${baseUrl}/${subjectId}/Groups`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Ошибка загрузки групп');
+                }
+
+                const groups = await response.json();
+                groupSelector.innerHTML = '<option value="">Выберите группу</option>' +
+                    groups.map(group => `
+                        <option value="${group.idGroup}">${group.name}</option>
+                    `).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки групп:', error);
+                showError('Ошибка загрузки групп: ' + (error.message || 'неизвестная ошибка'));
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Загрузка журнала группы
+        async function loadGroupJournal(groupId, journalId = null) {
+            try {
+                console.log(`Загрузка журнала для группы ${groupId}, journalId: ${journalId}`);
+                showLoading('Загрузка журнала...');
+
+                // 1. Загрузка списка журналов
+                const journalsUrl = `${baseUrl}/Groups/${groupId}/Journals`;
+                console.log(`Отправка запроса к: ${journalsUrl}`);
+
+                const journalsResponse = await fetch(journalsUrl);
+                if (!journalsResponse.ok) {
+                    const errorText = await journalsResponse.text();
+                    throw new Error(errorText || `HTTP error! status: ${journalsResponse.status}`);
+                }
+
+                availableJournals = await journalsResponse.json();
+                console.log('Получены журналы:', availableJournals);
+
+                if (availableJournals.length === 0) {
+                    console.log('Журналы не найдены');
+                    renderJournalContainer({ message: 'Для этой группы еще не создан журнал' });
+                    return;
+                }
+
+                // 2. Выбор журнала
+                const selectedJournalId = journalId || availableJournals[0].idJournal;
+                console.log(`Выбран журнал с ID: ${selectedJournalId}`);
+                currentJournalId = selectedJournalId;
+
+                // Находим выбранный журнал в списке
+                const selectedJournal = availableJournals.find(j => j.idJournal == selectedJournalId);
+                currentJournalDates = {
+                    start: selectedJournal.startDate,
+                    end: selectedJournal.endDate
+                };
+
+                // 3. Обновление селектора
+                updateJournalSelector(availableJournals, selectedJournalId);
+
+                // 4. Загрузка уроков
+                const lessonsUrl = `${baseUrl}/Journals/${selectedJournalId}/Lessons`;
+                console.log(`Отправка запроса к: ${lessonsUrl}`);
+
+                const lessonsResponse = await fetch(lessonsUrl);
+                if (!lessonsResponse.ok) {
+                    const errorText = await lessonsResponse.text();
+                    throw new Error(errorText || `HTTP error! status: ${lessonsResponse.status}`);
+                }
+
+                const data = await lessonsResponse.json();
+                console.log('Получены данные уроков:', data);
+
+                // Используем lessonsCount из ответа API
+                data.journalInfo = data.journalInfo || {
+                    lessonsCount: selectedJournal.lessonsCount || data.lessons?.length || 0,
+                    startDate: selectedJournal.startDate,
+                    endDate: selectedJournal.endDate
+                };
+
+                console.log('Prepared data for render:', {
+                    students: data.students,
+                    lessons: data.lessons,
+                    journalInfo: data.journalInfo,
+                    message: data.message
+                });
+
+                renderJournalContainer(data);
+
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                showError('Ошибка загрузки журнала: ' + (error.message || 'неизвестная ошибка'));
+
+                // Пытаемся восстановить предыдущее состояние
+                if (currentGroupId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Обновление выпадающего списка журналов
+        function updateJournalSelector(journals, selectedJournalId = null) {
+            const selector = document.getElementById('journalSelector');
+            const selectorContainer = selector.closest('.journal-selector');
+
+            selector.innerHTML = ''; // Убрали пункт "Выберите журнал"
+
+            if (!journals || journals.length === 0) {
+                selectorContainer.style.display = 'none';
+                return;
+            }
+
+            journals.forEach(journal => {
+                const option = document.createElement('option');
+                option.value = journal.idJournal;
+                option.textContent = `${formatDate(journal.startDate)} - ${formatDate(journal.endDate)}`;
+
+                if (selectedJournalId && journal.idJournal == selectedJournalId) {
+                    option.selected = true;
+                }
+
+                selector.appendChild(option);
+            });
+
+            selectorContainer.style.display = 'block';
+        }
+
+        // Отображение контейнера журнала
+        function renderJournalContainer(data) {
+            console.log('--- renderJournalContainer started ---');
+            console.log('Data received:', data);
+
+            const container = document.getElementById('journalContainer');
+            container.innerHTML = '';
+
+            const showAddLessonBtn = document.getElementById('showAddLessonModal');
+            const showCreateJournalBtn = document.getElementById('showCreateJournalModalBtn');
+            const journalSelector = document.getElementById('journalSelector');
+
+            // Показываем/скрываем элементы управления
+            const hasJournal = !data.message && data.lessons;
+            showAddLessonBtn.style.display = hasJournal ? 'block' : 'none';
+            showCreateJournalBtn.style.display = 'block';
+            journalSelector.style.display = availableJournals.length > 0 ? 'block' : 'none';
+
+            document.querySelector('.journal-stats').style.display = (data.message || !data.lessons) ? 'none' : 'block';
+
+            if (data.message) {
+                console.log('Showing message:', data.message);
+                const template = document.getElementById('noJournalTemplate').innerHTML;
+                container.insertAdjacentHTML('beforeend', template.replace('{message}', data.message));
+            } else if (data.lessons && data.lessons.length === 0) {
+                console.log('No lessons available');
+                container.insertAdjacentHTML('beforeend', document.getElementById('noLessonsTemplate').innerHTML);
+            } else if (data.students && data.lessons) {
+                console.log('Displaying journal with lessons');
+                displayJournal(data.students, data.lessons, data.journalInfo);
+            }
+
+            console.log('--- renderJournalContainer completed ---');
+        }
+
+        // Отображение таблицы журнала
+        function displayJournal(students, lessons, journalInfo) {
+            console.log('--- displayJournal started ---');
+            console.log('Journal Info:', journalInfo);
+            console.log('Students:', students);
+            console.log('Lessons:', lessons);
+
+            const container = document.getElementById('journalContainer');
+            container.innerHTML = '';
+
+            // Сортируем уроки по дате
+            const sortedLessons = [...lessons].sort((a, b) => {
+                return new Date(a.lessonDate) - new Date(b.lessonDate);
+            });
+
+            console.log('Sorted Lessons:', sortedLessons);
+
+            // Получаем общее количество уроков из информации о журнале
+            const totalLessons = journalInfo?.lessonsCount || 0;
+            console.log('Total Lessons (from journalInfo):', totalLessons);
+
+            // Создаем массив всех уроков (реальные + пустые)
+            const allLessons = [];
+
+            // Добавляем реальные уроки
+            sortedLessons.forEach(lesson => {
+                allLessons.push({
+                    ...lesson,
+                    isReal: true
+                });
+            });
+
+            console.log('Real lessons count:', allLessons.length);
+
+            // Добавляем пустые уроки до общего количества
+            for (let i = sortedLessons.length; i < totalLessons; i++) {
+                allLessons.push({
+                    idLesson: null,
+                    lessonDate: null,
+                    visits: {},
+                    isReal: false
+                });
+            }
+
+            console.log('All lessons (real + empty):', allLessons);
+            console.log('Total lessons after adding empty:', allLessons.length);
+
+            let html = `
+                <div class="journal-container">
+                    <table class="table table-bordered table-hover journal-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Студент</th>
+            `;
+
+            // Заголовки с датами уроков (реальные и пустые)
+            allLessons.forEach((lesson, index) => {
+                const date = lesson.isReal ? new Date(lesson.lessonDate) : null;
+                const classNames = lesson.isReal ? '' : 'empty-lesson';
+                const title = lesson.isReal ? formatDate(date, false) : `Урок ${index + 1}`;
+
+                html += `<th class="text-center ${classNames}" title="${title}">${
+                    lesson.isReal ? formatDate(date, true) : index + 1
+                }</th>`;
+            });
+
+            html += `</tr></thead><tbody>`;
+
+            // Строки с студентами
+            students.forEach(student => {
+                html += `<tr><td class="student-name-cell">${shortenName(student.fullName)}</td>`;
+
+                // Ячейки с посещениями (реальные и пустые)
+                allLessons.forEach(lesson => {
+                    if (lesson.isReal) {
+                        // Реальный урок
+                        const visit = lesson.visits[student.idStudent];
+                        const visitId = visit?.idVisit;
+                        const currentStatus = visit?.unvisitedStatuses || null;
+                        const comment = visit?.comment || '';
+
+                        html += `
+                            <td class="text-center status-cell ${getStatusClass(currentStatus)}">
+                                <select class="form-select status-select"
+                                        data-visit-id="${visitId || ''}"
+                                        data-student-id="${student.idStudent}"
+                                        data-lesson-id="${lesson.idLesson}">
+                                    <option value="" ${currentStatus === null ? 'selected' : ''}>✓</option>
+                                    <option value="н" ${currentStatus === 'н' ? 'selected' : ''}>н</option>
+                                    <option value="б" ${currentStatus === 'б' ? 'selected' : ''}>б</option>
+                                    <option value="у/п" ${currentStatus === 'у/п' ? 'selected' : ''}>у/п</option>
+                                    <option value="к" ${currentStatus === 'к' ? 'selected' : ''}>к</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary comment-btn ${comment ? 'has-comment' : ''}"
+                                        data-comment="${comment || ''}"
+                                        data-student-id="${student.idStudent}"
+                                        data-lesson-id="${lesson.idLesson}"
+                                        title="${comment || 'Добавить комментарий'}">
+                                    <i class="bi ${comment ? 'bi-chat-square-text-fill' : 'bi-chat-square-text'}"></i>
+                                </button>
+                            </td>
+                        `;
+                    } else {
+                        // Пустой урок
+                        html += `
+                            <td class="text-center empty-lesson">
+                                <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-muted">-</span>
+                                </div>
+                            </td>
+                        `;
+                    }
+                });
+
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.insertAdjacentHTML('beforeend', html);
+
+            console.log('--- HTML generated and inserted ---');
+
+            // Добавляем обработчики для кнопок комментариев
+            document.querySelectorAll('.comment-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const visitId = this.closest('td').querySelector('.status-select').dataset.visitId;
+                    const studentId = this.dataset.studentId;
+                    const lessonId = this.dataset.lessonId;
+                    const comment = this.dataset.comment || '';
+                    showCommentModal(visitId, studentId, lessonId, comment);
+                });
+            });
+            calculateAndDisplayStats(lessons, journalInfo, students);
+            console.log('--- displayJournal completed ---');
+        }
+
+
+        // Функция расчёта статистики
+        function calculateAndDisplayStats(lessons, journalInfo, students) {
+            // Используем данные из journalInfo
+            const totalLessons = journalInfo?.lessonsCount || 0;
+            const completedLessons = journalInfo?.completedLessons || 0;
+            const absentCount = journalInfo?.absentCount || 0;
+
+            // Обновляем DOM
+            document.getElementById('totalLessonsStat').textContent = totalLessons;
+            document.getElementById('completedLessonsStat').textContent =
+                `${completedLessons} (${totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%)`;
+            document.getElementById('absentStat').textContent = absentCount;
+
+            // Показываем блок статистики
+            document.querySelector('.journal-stats').style.display = 'block';
+        }
+
+        // ==================== РАБОТА С ЖУРНАЛАМИ ====================
+
+        // Показать модальное окно создания журнала
+        function showCreateJournalModal(groupId) {
+            // Проверяем существующие журналы для этой группы
+            const existingJournals = availableJournals.filter(j => j.idGroup == groupId);
+
+            // Устанавливаем разумные даты по умолчанию
+            let startDate, endDate;
+
+            if (existingJournals.length > 0) {
+                // Берем дату окончания последнего журнала + 1 день
+                const lastJournal = existingJournals.sort((a, b) => new Date(b.endDate) - new Date(a.endDate))[0];
+                startDate = new Date(lastJournal.endDate);
+                startDate.setDate(startDate.getDate() + 1);
+            } else {
+                // Если журналов нет, устанавливаем текущий учебный год
+                const now = new Date();
+                startDate = now.getMonth() >= 8 ?
+                    new Date(now.getFullYear(), 8, 1) : // 1 сентября текущего года
+                    new Date(now.getFullYear() - 1, 8, 1); // 1 сентября прошлого года
+            }
+
+            endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + 1);
+            endDate.setMonth(5); // Июнь
+            endDate.setDate(30); // 30 июня
+
+            document.getElementById('journalStartDate').valueAsDate = startDate;
+            document.getElementById('journalEndDate').valueAsDate = endDate;
+            document.getElementById('lessonsCount').value = 36; // Значение по умолчанию
+
+            createJournalModal.show();
+        }
+
+        // Создание нового журнала
+        async function createNewJournalHandler() {
+            const startDateInput = document.getElementById('journalStartDate');
+            const endDateInput = document.getElementById('journalEndDate');
+            const lessonsCountInput = document.getElementById('lessonsCount');
+
+            if (!startDateInput.value || !endDateInput.value) {
+                showError('Пожалуйста, заполните даты начала и окончания');
+                return;
+            }
+
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const lessonsCount = lessonsCountInput.value ? parseInt(lessonsCountInput.value) : null;
+
+            // Проверка на корректность дат
+            if (startDate >= endDate) {
+                showError('Дата окончания должна быть позже даты начала');
+                return;
+            }
+
+            if (lessonsCount <= 0) {
+                showError('Количество уроков должно быть больше 0');
+                return;
+            }
+
+            try {
+                createJournalModal.hide();
+                showLoading('Создание журнала...');
+
+                const response = await fetch(`${baseUrl}/Journals`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        GroupId: parseInt(currentGroupId),
+                        StartDate: startDateInput.value,
+                        EndDate: endDateInput.value,
+                        LessonsCount: lessonsCount
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+
+                    // Проверяем, содержит ли ошибка информацию о пересечении периодов
+                    if (errorText.includes("Журнал на этот период уже существует")) {
+                        showError('Не удалось создать журнал: уже существует журнал на этот период. Пожалуйста, выберите другой период.');
+                    } else {
+                        throw new Error(errorText || 'Не удалось создать журнал');
+                    }
+                    return;
+                }
+
+                // После успешного создания перезагружаем журнал
+                await loadGroupJournal(currentGroupId);
+
+            } catch (error) {
+                console.error('Ошибка создания журнала:', error);
+
+                // Улучшенное сообщение об ошибке
+                let errorMessage = 'Не удалось создать журнал';
+                if (error.message.includes("Журнал на этот период уже существует")) {
+                    errorMessage = 'Не удалось создать журнал: уже существует журнал на этот период. Пожалуйста, выберите другой период.';
+                } else {
+                    errorMessage += ': ' + (error.message || 'неизвестная ошибка');
+                }
+
+                showError(errorMessage);
+
+                // Восстанавливаем предыдущее состояние
+                if (currentGroupId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== РАБОТА С УРОКАМИ ====================
+
+        // Показать модальное окно добавления урока
+        function showAddLessonModal() {
+            document.getElementById('lessonDateInput').valueAsDate = new Date();
+            addLessonModal.show();
+        }
+
+        // Добавление нового урока
+        async function addNewLesson() {
+            if (!currentJournalId) {
+                showError('Не выбран журнал для добавления урока');
+                return;
+            }
+
+            const dateInput = document.getElementById('lessonDateInput');
+            const dateValue = dateInput.value;
+
+            if (!dateValue) {
+                showError('Пожалуйста, выберите дату');
+                return;
+            }
+
+            const lessonDate = new Date(dateValue);
+            if (lessonDate < new Date(currentJournalDates.start) || lessonDate > new Date(currentJournalDates.end)) {
+                showError(`Дата урока должна быть в пределах периода журнала (${formatDate(currentJournalDates.start)} - ${formatDate(currentJournalDates.end)})`);
+                return;
+            }
+
+            try {
+                addLessonModal.hide();
+                showLoading('Добавление урока...');
+
+                const response = await fetch(`${baseUrl}/Journals/${currentJournalId}/Lessons`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dateValue)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.title || errorData.message || 'Не удалось добавить урок');
+                }
+
+                // Перезагружаем текущий журнал
+                await loadGroupJournal(currentGroupId, currentJournalId);
+
+            } catch (error) {
+                console.error('Ошибка при добавлении урока:', error);
+                showError('Не удалось добавить урок: ' + (error.message || 'неизвестная ошибка'));
+
+                // Восстанавливаем предыдущее состояние
+                if (currentGroupId && currentJournalId) {
+                    try {
+                        await loadGroupJournal(currentGroupId, currentJournalId);
+                    } catch (e) {
+                        console.error('Не удалось восстановить журнал:', e);
+                    }
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== РАБОТА С ПОСЕЩЕНИЯМИ ====================
+
+        // Обновление статуса посещения
+        async function handleVisitUpdate(element, isStatusUpdate) {
+            const visitId = element.dataset.visitId;
+            const studentId = element.dataset.studentId;
+            const lessonId = element.dataset.lessonId;
+            const value = element.value || null;
+            const cell = element.closest('td');
+            const originalValue = element.dataset.originalValue;
+
+            try {
+                cell.classList.add('updating');
+
+                const response = visitId
+                    ? await fetch(`${baseUrl}/Visits/${visitId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ UnvisitedStatuses: value })
+                      })
+                    : await fetch(`${baseUrl}/Visits`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            IdStudent: parseInt(studentId),
+                            IdLesson: parseInt(lessonId),
+                            UnvisitedStatuses: value
+                        })
+                      });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Не удалось обновить статус');
+                }
+
+                const result = await response.json();
+
+                // Обновляем ID посещения, если оно было создано
+                if (!visitId && result.idVisit) {
+                    element.dataset.visitId = result.idVisit;
+                }
+
+                // Обновляем оригинальное значение
+                element.dataset.originalValue = value;
+
+                // Обновляем класс ячейки
+                cell.className = 'text-center status-cell ' + getStatusClass(value);
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+
+                // Восстанавливаем предыдущее значение
+                if (originalValue) {
+                    element.value = originalValue;
+                }
+
+                showError('Не удалось сохранить статус: ' + (error.message || 'неизвестная ошибка'));
+            } finally {
+                cell.classList.remove('updating');
+            }
+        }
+
+        // ==================== РАБОТА С КОММЕНТАРИЯМИ ====================
+
+        // Показать модальное окно комментария
+        function showCommentModal(visitId, studentId, lessonId, comment) {
+            document.getElementById('commentTextarea').value = comment || '';
+            document.getElementById('commentVisitId').value = visitId || '';
+            document.getElementById('commentStudentId').value = studentId;
+            document.getElementById('commentLessonId').value = lessonId;
+            commentModal.show();
+        }
+
+        // Сохранить комментарий
+        async function saveComment() {
+            const modal = document.getElementById('commentModal');
+            const textarea = modal.querySelector('#commentTextarea');
+            const visitId = modal.querySelector('#commentVisitId').value;
+            const studentId = modal.querySelector('#commentStudentId').value;
+            const lessonId = modal.querySelector('#commentLessonId').value;
+            const comment = textarea.value.trim();
+
+            try {
+                // Определяем URL и метод
+                const url = visitId
+                    ? `${baseUrl}/Visits/${visitId}`
+                    : `${baseUrl}/Visits`;
+
+                const method = visitId ? 'PUT' : 'POST';
+
+                const body = visitId
+                    ? { Comment: comment }
+                    : {
+                        IdStudent: parseInt(studentId),
+                        IdLesson: parseInt(lessonId),
+                        Comment: comment,
+                        UnvisitedStatuses: null
+                    };
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+
+                const result = await response.json();
+
+                // Обновляем данные в таблице
+                updateVisitInTable(studentId, lessonId, {
+                    idVisit: result.idVisit || visitId,
+                    comment: comment,
+                    unvisitedStatuses: null
+                });
+
+                // Закрываем модальное окно
+                commentModal.hide();
+
+                // Обновляем кнопку комментария в таблице
+                const commentBtn = document.querySelector(`button[data-student-id="${studentId}"][data-lesson-id="${lessonId}"]`);
+                if (commentBtn) {
+                    commentBtn.dataset.comment = comment;
+                    commentBtn.title = comment || 'Добавить комментарий';
+                    commentBtn.classList.toggle('has-comment', !!comment);
+
+                    const icon = commentBtn.querySelector('i');
+                    if (icon) {
+                        icon.className = comment ? 'bi bi-chat-square-text-fill' : 'bi bi-chat-square-text';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Ошибка сохранения комментария:', error);
+                showError('Не удалось сохранить комментарий: ' + error.message);
+            }
+        }
+
+        // Обновить данные посещения в таблице
+        function updateVisitInTable(studentId, lessonId, visitData) {
+            const cell = document.querySelector(`td[data-student-id="${studentId}"][data-lesson-id="${lessonId}"]`);
+            if (!cell) return;
+
+            // Обновляем кнопку комментария
+            const btn = cell.querySelector('.comment-btn');
+            if (btn) {
+                btn.dataset.comment = visitData.comment || '';
+                btn.title = visitData.comment || 'Добавить комментарий';
+                btn.classList.toggle('has-comment', !!visitData.comment);
+
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = visitData.comment ? 'bi bi-chat-square-text-fill' : 'bi bi-chat-square-text';
+                }
+            }
+
+            // Обновляем select, если visitId изменился
+            const select = cell.querySelector('.status-select');
+            if (select && visitData.idVisit) {
+                select.dataset.visitId = visitData.idVisit;
+            }
+        }
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+        // Форматирование даты
+        function formatDate(date, short = false) {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+
+            if (short) {
+                // Формат ДД.ММ
+                const day = d.getDate().toString().padStart(2, '0');
+                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                return `${day}.${month}`;
+            }
+            return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Функция для сокращения ФИО до фамилии с инициалами
+        function shortenName(fullName) {
+            if (window.innerWidth > 576) return fullName;
+
+            const parts = fullName.split(' ');
+            if (parts.length < 3) return fullName;
+
+            return `${parts[0]} ${parts[1][0]}.${parts[2][0]}.`;
+        }
+
+        // Определение класса для статуса
+        function getStatusClass(status) {
+            if (status === null) return 'table-success';
+            switch(status) {
+                case 'н': return 'table-danger';
+                case 'б': return 'table-warning';
+                case 'у/п': return 'table-info';
+                case 'к': return 'table-secondary';
+                default: return '';
+            }
+        }
+
+        // Скрыть индикатор загрузки
+        function hideLoading() {
+            const loadingElements = document.querySelectorAll('.spinner-border, .loading-text');
+            loadingElements.forEach(el => el.remove());
+        }
+
+        // Показать индикатор загрузки
+        function showLoading(message = 'Загрузка...') {
+            const container = document.getElementById('journalContainer') || document.body;
+            container.innerHTML = `
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="loading-text mt-2">${message}</p>
+                </div>
+            `;
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            const container = document.getElementById('journalContainer') || document.body;
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            hideLoading(); // Скрываем индикатор загрузки при ошибке
+
+            const container = document.getElementById('journalContainer') || document.body;
+
+            // Удаляем предыдущие ошибки
+            const oldAlerts = container.querySelectorAll('.alert.alert-danger');
+            oldAlerts.forEach(alert => alert.remove());
+
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+            container.appendChild(alert);
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                alert.classList.add('fade-out');
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+    });
+
+    // Добавляем стиль для плавного исчезновения ошибок
+    const style = document.createElement('style');
+    style.textContent = `
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        /* Для мобильных устройств показываем текст кнопок */
+    @@media (max-width: 767.98px) {
+            .btn-text {
+                display: inline !important;
+                margin-left: 5px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
