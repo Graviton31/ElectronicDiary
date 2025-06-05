@@ -9,7 +9,7 @@ public partial class Location
 
     public string? Name { get; set; }
 
-    public string Addres { get; set; } = null!;
+    public string Address { get; set; } = null!;
 
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
 }

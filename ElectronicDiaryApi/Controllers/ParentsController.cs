@@ -31,6 +31,7 @@ namespace ElectronicDiaryApi.Controllers
             try
             {
                 var query = _context.Parents
+                    .Include(p => p.IdParentNavigation) // Добавляем загрузку связанного пользователя
                     .AsQueryable();
 
                 var totalCount = await query.CountAsync();
@@ -38,9 +39,12 @@ namespace ElectronicDiaryApi.Controllers
                     .Select(p => new ParentDto
                     {
                         IdParent = p.IdParent,
-                        FullName = p.Surname + " " + p.Name + " " + p.Patronymic,
-                        Login = p.Login,
-                        Phone = p.Phone,
+                        FullName = p.IdParentNavigation.Surname + " " +
+                                 p.IdParentNavigation.Name + " " +
+                                 p.IdParentNavigation.Patronymic,
+                        Login = p.IdParentNavigation.Login,
+                        Phone = p.IdParentNavigation.Phone,
+                        Workplace = p.Workplace
                     })
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -64,10 +68,13 @@ namespace ElectronicDiaryApi.Controllers
         public async Task<ActionResult<ParentDto>> GetParentDetails(int id)
         {
             var parent = await _context.Parents
+                .Include(p => p.IdParentNavigation) // Загружаем данные пользователя
                 .Include(p => p.EnrollmentRequests)
                     .ThenInclude(er => er.IdStudentNavigation)
+                        .ThenInclude(s => s.IdStudentNavigation) // Загружаем пользователя студента
                 .Include(p => p.StudentsHasParents)
                     .ThenInclude(shp => shp.IdStudentNavigation)
+                        .ThenInclude(s => s.IdStudentNavigation) // Загружаем пользователя студента
                 .FirstOrDefaultAsync(p => p.IdParent == id);
 
             if (parent == null)
@@ -76,27 +83,30 @@ namespace ElectronicDiaryApi.Controllers
             }
 
             var fullName = string.Join(" ",
-                new[] { parent.Surname, parent.Name, parent.Patronymic }
+                new[] { parent.IdParentNavigation.Surname,
+                       parent.IdParentNavigation.Name,
+                       parent.IdParentNavigation.Patronymic }
                     .Where(p => !string.IsNullOrEmpty(p)));
 
             var result = new ParentDto
             {
                 IdParent = parent.IdParent,
                 FullName = fullName,
-                BirthDate = parent.BirthDate,
-                Phone = parent.Phone,
-                Login = parent.Login,
-                // ParentRole removed as it's now per child
+                BirthDate = parent.IdParentNavigation.BirthDate,
+                Phone = parent.IdParentNavigation.Phone,
+                Login = parent.IdParentNavigation.Login,
+                Workplace = parent.Workplace,
                 Students = parent.StudentsHasParents.Select(shp => new StudentDto
                 {
                     IdStudent = shp.IdStudentNavigation.IdStudent,
                     FullName = string.Join(" ",
-                        new[] { shp.IdStudentNavigation.Surname,
-                         shp.IdStudentNavigation.Name,
-                         shp.IdStudentNavigation.Patronymic }
+                        new[] { shp.IdStudentNavigation.IdStudentNavigation.Surname,
+                               shp.IdStudentNavigation.IdStudentNavigation.Name,
+                               shp.IdStudentNavigation.IdStudentNavigation.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p))),
-                    Phone = shp.IdStudentNavigation.Phone,
-                    ParentRole = shp.ParentRole 
+                    Phone = shp.IdStudentNavigation.IdStudentNavigation.Phone,
+                    ParentRole = shp.ParentRole,
+                    EducationName = shp.IdStudentNavigation.EducationName
                 }).ToList(),
 
                 EnrollmentRequests = parent.EnrollmentRequests.Select(er => new EnrollmentRequestDto
@@ -105,9 +115,9 @@ namespace ElectronicDiaryApi.Controllers
                     RequestDate = er.RequestDate,
                     Status = er.Status,
                     StudentFullName = string.Join(" ",
-                        new[] { er.IdStudentNavigation?.Surname,
-                         er.IdStudentNavigation?.Name,
-                         er.IdStudentNavigation?.Patronymic }
+                        new[] { er.IdStudentNavigation?.IdStudentNavigation?.Surname,
+                               er.IdStudentNavigation?.IdStudentNavigation?.Name,
+                               er.IdStudentNavigation?.IdStudentNavigation?.Patronymic }
                             .Where(p => !string.IsNullOrEmpty(p))),
                     IdStudent = er.IdStudent
                 }).ToList()
@@ -120,7 +130,9 @@ namespace ElectronicDiaryApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Parent>> GetParent(int id)
         {
-            var parent = await _context.Parents.FindAsync(id);
+            var parent = await _context.Parents
+                .Include(p => p.IdParentNavigation) // Добавляем загрузку пользователя
+                .FirstOrDefaultAsync(p => p.IdParent == id);
 
             if (parent == null)
             {
@@ -131,7 +143,6 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         // PUT: api/Parents/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutParent(int id, Parent parent)
         {
@@ -162,7 +173,6 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         // POST: api/Parents
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Parent>> PostParent(Parent parent)
         {

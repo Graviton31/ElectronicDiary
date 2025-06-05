@@ -10,6 +10,7 @@ namespace ElectronicDiaryApi.ModelsDto.UsersView
         public DateOnly BirthDate { get; set; }
         public string Phone { get; set; }
         public string Login { get; set; }
+        public string? Workplace { get; set; }
         public string ParentRole { get; set; }
         public List<StudentDto> Students { get; set; } = new();
         public List<EnrollmentRequestDto> EnrollmentRequests { get; set; } = new();

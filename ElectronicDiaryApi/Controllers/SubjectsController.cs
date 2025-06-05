@@ -46,6 +46,7 @@ namespace ElectronicDiaryApi.Controllers
         {
             var subject = await _context.Subjects
                 .Include(s => s.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation) // Добавляем загрузку данных пользователя
                 .FirstOrDefaultAsync(s => s.IdSubject == id);
 
             if (subject == null) return NotFound();
@@ -62,9 +63,9 @@ namespace ElectronicDiaryApi.Controllers
                 Teachers = subject.IdEmployees.Select(t => new EmployeeDto
                 {
                     IdEmployee = t.IdEmployee,
-                    FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
-                    Phone = t.Phone,
-                    Login = t.Login
+                    FullName = $"{t.IdEmployeeNavigation.Surname} {t.IdEmployeeNavigation.Name} {t.IdEmployeeNavigation.Patronymic}".Trim(),
+                    Phone = t.IdEmployeeNavigation.Phone,
+                    Login = t.IdEmployeeNavigation.Login
                 }).ToList()
             };
         }
@@ -73,10 +74,12 @@ namespace ElectronicDiaryApi.Controllers
         public async Task<ActionResult<List<GroupDto>>> GetSubjectGroups(int id)
         {
             return await _context.Groups
-                .Where(g => g.IdSubject == id && g.IsDelete != true) // Добавляем проверку на удаление
+                .Where(g => g.IdSubject == id && g.IsDelete != true)
                 .Include(g => g.IdLocationNavigation)
                 .Include(g => g.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation) // Добавляем загрузку данных пользователя
                 .Include(g => g.IdStudents)
+                    .ThenInclude(s => s.IdStudentNavigation) // Добавляем загрузку данных пользователя
                 .Select(g => new GroupDto
                 {
                     IdGroup = g.IdGroup,
@@ -87,12 +90,12 @@ namespace ElectronicDiaryApi.Controllers
                     {
                         IdLocation = g.IdLocationNavigation.IdLocation,
                         Name = g.IdLocationNavigation.Name,
-                        Address = g.IdLocationNavigation.Addres
+                        Address = g.IdLocationNavigation.Address
                     },
                     Teachers = g.IdEmployees.Select(t => new EmployeeDto
                     {
                         IdEmployee = t.IdEmployee,
-                        FullName = $"{t.Surname} {t.Name} {t.Patronymic}".Trim(),
+                        FullName = $"{t.IdEmployeeNavigation.Surname} {t.IdEmployeeNavigation.Name} {t.IdEmployeeNavigation.Patronymic}".Trim(),
                     }).ToList(),
                     MaxStudentCount = g.MaxStudentCount,
                     CurrentStudents = g.IdStudents.Count,

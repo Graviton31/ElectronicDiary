@@ -35,6 +35,7 @@ namespace ElectronicDiaryApi.Controllers
             try
             {
                 var query = _context.Students
+                    .Include(s => s.IdStudentNavigation) // Добавляем загрузку связанного пользователя
                     .AsQueryable();
 
                 var totalCount = await query.CountAsync();
@@ -42,9 +43,11 @@ namespace ElectronicDiaryApi.Controllers
                     .Select(s => new StudentDto
                     {
                         IdStudent = s.IdStudent,
-                        FullName = s.Surname + " " + s.Name + " " + s.Patronymic,
-                        Login = s.Login,
-                        Phone = s.Phone,
+                        FullName = s.IdStudentNavigation.Surname + " " +
+                                  s.IdStudentNavigation.Name + " " +
+                                  s.IdStudentNavigation.Patronymic,
+                        Login = s.IdStudentNavigation.Login,
+                        Phone = s.IdStudentNavigation.Phone,
                         EducationName = s.EducationName
                     })
                     .Skip((page - 1) * pageSize)
@@ -65,22 +68,24 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
-        // API Controller (StudentsController.cs)
         [HttpGet("Details/{id}")]
         public async Task<ActionResult<StudentDto>> GetStudentDetails(int id)
         {
             try
             {
                 var student = await _context.Students
+                    .Include(s => s.IdStudentNavigation) // Добавляем загрузку пользователя
                     .Include(s => s.EnrollmentRequests)
                         .ThenInclude(er => er.IdGroupNavigation)
                             .ThenInclude(g => g.IdSubjectNavigation)
                     .Include(s => s.IdGroups)
                         .ThenInclude(g => g.IdSubjectNavigation)
-                    .Include(s => s.StudentsHasParents)  // Изменили с IdParents на StudentsHasParents
-                        .ThenInclude(shp => shp.IdParentNavigation) // Добавили загрузку родителя
+                    .Include(s => s.StudentsHasParents)
+                        .ThenInclude(shp => shp.IdParentNavigation)
+                            .ThenInclude(p => p.IdParentNavigation) // Загружаем пользователя для родителя
                     .Include(s => s.EnrollmentRequests)
                         .ThenInclude(er => er.IdParentNavigation)
+                            .ThenInclude(p => p.IdParentNavigation) // Загружаем пользователя для родителя в заявках
                     .FirstOrDefaultAsync(s => s.IdStudent == id);
 
                 if (student == null)
@@ -89,27 +94,29 @@ namespace ElectronicDiaryApi.Controllers
                 }
 
                 var fullName = string.Join(" ",
-                    new[] { student.Surname, student.Name, student.Patronymic }
+                    new[] { student.IdStudentNavigation.Surname,
+                           student.IdStudentNavigation.Name,
+                           student.IdStudentNavigation.Patronymic }
                         .Where(p => !string.IsNullOrEmpty(p)));
 
                 var result = new StudentDto
                 {
                     IdStudent = student.IdStudent,
                     FullName = fullName,
-                    Phone = student.Phone ?? "Не указан",
-                    Login = student.Login,
+                    Phone = student.IdStudentNavigation.Phone ?? "Не указан",
+                    Login = student.IdStudentNavigation.Login,
                     EducationName = student.EducationName,
                     Parents = student.StudentsHasParents.Select(shp => new ParentDto
                     {
                         IdParent = shp.IdParentNavigation.IdParent,
                         FullName = string.Join(" ",
-                            new[] { shp.IdParentNavigation.Surname,
-                           shp.IdParentNavigation.Name,
-                           shp.IdParentNavigation.Patronymic }
+                            new[] { shp.IdParentNavigation.IdParentNavigation.Surname,
+                                   shp.IdParentNavigation.IdParentNavigation.Name,
+                                   shp.IdParentNavigation.IdParentNavigation.Patronymic }
                                 .Where(n => !string.IsNullOrEmpty(n))),
-                        Phone = shp.IdParentNavigation.Phone ?? "Не указан",
-                        BirthDate = shp.IdParentNavigation.BirthDate,
-                        ParentRole = shp.ParentRole, // Теперь роль берется из связи, а не из родителя
+                        Phone = shp.IdParentNavigation.IdParentNavigation.Phone ?? "Не указан",
+                        BirthDate = shp.IdParentNavigation.IdParentNavigation.BirthDate,
+                        ParentRole = shp.ParentRole,
                     }).ToList(),
                     EnrollmentRequests = student.EnrollmentRequests.Select(er => new EnrollmentRequestDto
                     {
@@ -119,7 +126,11 @@ namespace ElectronicDiaryApi.Controllers
                         GroupName = er.IdGroupNavigation?.Name ?? "Неизвестная группа",
                         SubjectName = er.IdGroupNavigation?.IdSubjectNavigation?.Name ?? "Без предмета",
                         ParentFullName = string.Join(" ", new[]
-                            { er.IdParentNavigation.Surname, er.IdParentNavigation.Name, er.IdParentNavigation.Patronymic }),
+                            {
+                                er.IdParentNavigation.IdParentNavigation.Surname,
+                                er.IdParentNavigation.IdParentNavigation.Name,
+                                er.IdParentNavigation.IdParentNavigation.Patronymic
+                            }),
                         IdParent = er.IdParentNavigation.IdParent,
                         Comment = er.Comment
                     }).ToList(),
@@ -151,7 +162,9 @@ namespace ElectronicDiaryApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> GetStudent(int id)
         {
-            var student = await _context.Students.FindAsync(id);
+            var student = await _context.Students
+                .Include(s => s.IdStudentNavigation) // Добавляем загрузку пользователя
+                .FirstOrDefaultAsync(s => s.IdStudent == id);
 
             if (student == null)
             {
@@ -162,7 +175,6 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         // PUT: api/Students/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStudent(int id, Student student)
         {
@@ -193,7 +205,6 @@ namespace ElectronicDiaryApi.Controllers
         }
 
         // POST: api/Students
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {

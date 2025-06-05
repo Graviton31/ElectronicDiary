@@ -24,7 +24,7 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     IdLocation = l.IdLocation,
                     Name = l.Name,
-                    Address = l.Addres
+                    Address = l.Address
                 })
                 .ToListAsync();
         }

@@ -7,25 +7,9 @@ public partial class Employee
 {
     public int IdEmployee { get; set; }
 
-    public string? Surname { get; set; }
-
-    public string? Name { get; set; }
-
-    public string? Patronymic { get; set; }
-
-    public DateOnly? BirthDate { get; set; }
-
-    public string Login { get; set; } = null!;
-
-    public string Password { get; set; } = null!;
-
-    public string? Phone { get; set; }
-
-    public string Role { get; set; } = null!;
-
-    public bool? IsDelete { get; set; }
-
     public int IdPost { get; set; }
+
+    public virtual User IdEmployeeNavigation { get; set; } = null!;
 
     public virtual Post IdPostNavigation { get; set; } = null!;
 

@@ -67,7 +67,7 @@ namespace ElectronicDiaryApi.Controllers
                     {
                         IdLocation = group.IdLocationNavigation.IdLocation,
                         Name = group.IdLocationNavigation.Name,
-                        Address = group.IdLocationNavigation.Addres
+                        Address = group.IdLocationNavigation.Address
                     }
                 });
         }
@@ -118,7 +118,7 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     IdLocation = group.IdLocationNavigation.IdLocation,
                     Name = group.IdLocationNavigation.Name,
-                    Address = group.IdLocationNavigation.Addres
+                    Address = group.IdLocationNavigation.Address
                 }
             };
         }

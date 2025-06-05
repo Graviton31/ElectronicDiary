@@ -15,11 +15,11 @@ namespace ElectronicDiaryApi.Controllers
     public class EmployeesController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
-        private readonly ILogger<EmployeesController> _logger; // Исправлен тип логгера
+        private readonly ILogger<EmployeesController> _logger;
 
         public EmployeesController(
             ElectronicDiaryContext context,
-            ILogger<EmployeesController> logger) // Исправлен тип параметра
+            ILogger<EmployeesController> logger)
         {
             _context = context;
             _logger = logger;
@@ -32,6 +32,7 @@ namespace ElectronicDiaryApi.Controllers
             try
             {
                 var query = _context.Employees
+                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
                     .Include(e => e.IdPostNavigation)
                     .AsQueryable();
 
@@ -40,10 +41,12 @@ namespace ElectronicDiaryApi.Controllers
                     .Select(e => new EmployeeDto
                     {
                         IdEmployee = e.IdEmployee,
-                        FullName = e.Surname + " " + e.Name + " " + e.Patronymic,
-                        Login = e.Login,
-                        Phone = e.Phone,
-                        Role = e.Role,
+                        FullName = e.IdEmployeeNavigation.Surname + " " +
+                                 e.IdEmployeeNavigation.Name + " " +
+                                 e.IdEmployeeNavigation.Patronymic,
+                        Login = e.IdEmployeeNavigation.Login,
+                        Phone = e.IdEmployeeNavigation.Phone,
+                        Role = e.IdEmployeeNavigation.Role,
                         Post = e.IdPostNavigation.PostName
                     })
                     .Skip((page - 1) * pageSize)
@@ -70,10 +73,11 @@ namespace ElectronicDiaryApi.Controllers
             try
             {
                 var employees = await _context.Employees
+                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
                     .Select(e => new EnrollmentRequestShortInfoDto
                     {
                         IdEmployee = e.IdEmployee,
-                        FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()
+                        FullName = $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}".Trim()
                     })
                     .ToListAsync();
 
@@ -85,7 +89,6 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
-        // EmployeesController.cs
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<EnrollmentRequestShortInfoDto>>> SearchEmployees(string term)
         {
@@ -96,25 +99,29 @@ namespace ElectronicDiaryApi.Controllers
                     return Ok(new List<EnrollmentRequestShortInfoDto>());
 
                 var query = _context.Employees
-                    .Where(e => e.IsDelete != true)
+                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
+                    .Where(e => e.IdEmployeeNavigation.IsDelete != true)
                     .AsQueryable();
 
-                // Оптимизированный запрос с обработкой null
                 var employees = await query
                     .Where(e =>
                         EF.Functions.Like(
-                            (e.Surname ?? "") + " " + (e.Name ?? "") + " " + (e.Patronymic ?? ""),
+                            (e.IdEmployeeNavigation.Surname ?? "") + " " +
+                            (e.IdEmployeeNavigation.Name ?? "") + " " +
+                            (e.IdEmployeeNavigation.Patronymic ?? ""),
                             $"%{searchTerm}%") ||
                         EF.Functions.Like(
-                            (e.Name ?? "") + " " + (e.Surname ?? "") + " " + (e.Patronymic ?? ""),
+                            (e.IdEmployeeNavigation.Name ?? "") + " " +
+                            (e.IdEmployeeNavigation.Surname ?? "") + " " +
+                            (e.IdEmployeeNavigation.Patronymic ?? ""),
                             $"%{searchTerm}%")
                     )
-                    .OrderBy(e => e.Surname)
+                    .OrderBy(e => e.IdEmployeeNavigation.Surname)
                     .Take(10)
                     .Select(e => new EnrollmentRequestShortInfoDto
                     {
                         IdEmployee = e.IdEmployee,
-                        FullName = $"{e.Surname} {e.Name} {e.Patronymic}".Trim()
+                        FullName = $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}".Trim()
                     })
                     .AsSplitQuery()
                     .ToListAsync();
@@ -134,29 +141,31 @@ namespace ElectronicDiaryApi.Controllers
             try
             {
                 var employee = await _context.Employees
-                    .AsSplitQuery() // Добавлено для оптимизации
+                    .AsSplitQuery()
+                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
                     .Include(e => e.IdPostNavigation)
                     .Include(e => e.IdSubjects)
                     .Include(e => e.IdGroups)
+                        .ThenInclude(g => g.IdSubjectNavigation)
                     .FirstOrDefaultAsync(e => e.IdEmployee == id);
 
                 if (employee == null) return NotFound();
 
                 var fullName = string.Join(" ", new[]
                 {
-            employee.Surname,
-            employee.Name,
-            employee.Patronymic
-        }.Where(s => !string.IsNullOrEmpty(s)));
+                    employee.IdEmployeeNavigation.Surname,
+                    employee.IdEmployeeNavigation.Name,
+                    employee.IdEmployeeNavigation.Patronymic
+                }.Where(s => !string.IsNullOrEmpty(s)));
 
                 return new EmployeeDto
                 {
                     IdEmployee = employee.IdEmployee,
                     FullName = fullName,
-                    BirthDate = employee.BirthDate,
-                    Login = employee.Login,
-                    Role = employee.Role,
-                    Phone = employee.Phone,
+                    BirthDate = employee.IdEmployeeNavigation.BirthDate,
+                    Login = employee.IdEmployeeNavigation.Login,
+                    Role = employee.IdEmployeeNavigation.Role,
+                    Phone = employee.IdEmployeeNavigation.Phone,
                     Post = employee.IdPostNavigation?.PostName ?? "Не указано",
                     Subjects = employee.IdSubjects.Select(subject => new SubjectWithGroupsDto
                     {
@@ -168,6 +177,7 @@ namespace ElectronicDiaryApi.Controllers
                             {
                                 IdGroup = g.IdGroup,
                                 Name = g.Name,
+                                SubjectName = g.IdSubjectNavigation?.Name
                             }).ToList()
                     }).ToList()
                 };
@@ -179,13 +189,14 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
-        // GET: api/Employees/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
             try
             {
-                var employee = await _context.Employees.FindAsync(id);
+                var employee = await _context.Employees
+                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
+                    .FirstOrDefaultAsync(e => e.IdEmployee == id);
                 return employee != null ? employee : NotFound();
             }
             catch (Exception ex)
@@ -195,8 +206,6 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
-        // PUT: api/Employees/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmployee(int id, Employee employee)
         {
@@ -226,8 +235,6 @@ namespace ElectronicDiaryApi.Controllers
             return NoContent();
         }
 
-        // POST: api/Employees
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
         {
@@ -237,7 +244,6 @@ namespace ElectronicDiaryApi.Controllers
             return CreatedAtAction("GetEmployee", new { id = employee.IdEmployee }, employee);
         }
 
-        // DELETE: api/Employees/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {

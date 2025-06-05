@@ -47,6 +47,8 @@ public partial class ElectronicDiaryContext : DbContext
 
     public virtual DbSet<Subject> Subjects { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
+
     public virtual DbSet<Visit> Visits { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -65,40 +67,24 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.ToTable("employees");
 
+            entity.HasIndex(e => e.IdEmployee, "fk_employees_users1_idx");
+
             entity.HasIndex(e => e.IdPost, "fk_users_posts1_idx");
 
-            entity.Property(e => e.IdEmployee).HasColumnName("id_employee");
-            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
+            entity.Property(e => e.IdEmployee)
+                .ValueGeneratedNever()
+                .HasColumnName("id_employee");
             entity.Property(e => e.IdPost).HasColumnName("id_post");
-            entity.Property(e => e.IsDelete)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("is_delete");
-            entity.Property(e => e.Login)
-                .HasMaxLength(20)
-                .HasColumnName("login");
-            entity.Property(e => e.Name)
-                .HasMaxLength(20)
-                .HasColumnName("name");
-            entity.Property(e => e.Password)
-                .HasMaxLength(255)
-                .HasColumnName("password");
-            entity.Property(e => e.Patronymic)
-                .HasMaxLength(20)
-                .HasColumnName("patronymic");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(15)
-                .HasColumnName("phone");
-            entity.Property(e => e.Role)
-                .HasColumnType("enum('администратор','руководитель','учитель')")
-                .HasColumnName("role");
-            entity.Property(e => e.Surname)
-                .HasMaxLength(20)
-                .HasColumnName("surname");
+
+            entity.HasOne(d => d.IdEmployeeNavigation).WithOne(p => p.Employee)
+                .HasForeignKey<Employee>(d => d.IdEmployee)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_employees_users1");
 
             entity.HasOne(d => d.IdPostNavigation).WithMany(p => p.Employees)
                 .HasForeignKey(d => d.IdPost)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_users_posts1");
+                .HasConstraintName("fk_users_posts");
         });
 
         modelBuilder.Entity<EnrollmentRequest>(entity =>
@@ -109,9 +95,9 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.HasIndex(e => e.IdGroup, "fk_enrollment_requests_groups1_idx");
 
-            entity.HasIndex(e => e.IdParent, "fk_enrollment_requests_parents1_idx");
+            entity.HasIndex(e => e.IdParent, "fk_parents_enrollment_requests_idx");
 
-            entity.HasIndex(e => e.IdStudent, "fk_enrollment_requests_students1_idx");
+            entity.HasIndex(e => e.IdStudent, "fk_students_idx");
 
             entity.Property(e => e.IdRequests).HasColumnName("id_requests");
             entity.Property(e => e.Comment)
@@ -137,12 +123,12 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasOne(d => d.IdParentNavigation).WithMany(p => p.EnrollmentRequests)
                 .HasForeignKey(d => d.IdParent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_enrollment_requests_parents1");
+                .HasConstraintName("fk_parents_enrollment_requests");
 
             entity.HasOne(d => d.IdStudentNavigation).WithMany(p => p.EnrollmentRequests)
                 .HasForeignKey(d => d.IdStudent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_enrollment_requests_students1");
+                .HasConstraintName("fk_students");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -188,7 +174,7 @@ public partial class ElectronicDiaryContext : DbContext
                     r => r.HasOne<Employee>().WithMany()
                         .HasForeignKey("IdEmployee")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("fk_groups_has_employees_employees1"),
+                        .HasConstraintName("fk_employees"),
                     l => l.HasOne<Group>().WithMany()
                         .HasForeignKey("IdGroup")
                         .OnDelete(DeleteBehavior.ClientSetNull)
@@ -199,7 +185,7 @@ public partial class ElectronicDiaryContext : DbContext
                             .HasName("PRIMARY")
                             .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
                         j.ToTable("groups_has_employees");
-                        j.HasIndex(new[] { "IdEmployee" }, "fk_groups_has_employees_employees1_idx");
+                        j.HasIndex(new[] { "IdEmployee" }, "fk_employe_idx");
                         j.HasIndex(new[] { "IdGroup" }, "fk_groups_has_employees_groups1_idx");
                         j.IndexerProperty<int>("IdGroup").HasColumnName("id_group");
                         j.IndexerProperty<int>("IdEmployee").HasColumnName("id_employee");
@@ -211,7 +197,7 @@ public partial class ElectronicDiaryContext : DbContext
                     r => r.HasOne<Student>().WithMany()
                         .HasForeignKey("IdStudent")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("fk_groups_has_students_students1"),
+                        .HasConstraintName("fk_students_has_students_groups"),
                     l => l.HasOne<Group>().WithMany()
                         .HasForeignKey("IdGroup")
                         .OnDelete(DeleteBehavior.ClientSetNull)
@@ -223,7 +209,7 @@ public partial class ElectronicDiaryContext : DbContext
                             .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
                         j.ToTable("groups_has_students");
                         j.HasIndex(new[] { "IdGroup" }, "fk_groups_has_students_groups1_idx");
-                        j.HasIndex(new[] { "IdStudent" }, "fk_groups_has_students_students1_idx");
+                        j.HasIndex(new[] { "IdStudent" }, "fk_students_idx");
                         j.IndexerProperty<int>("IdGroup").HasColumnName("id_group");
                         j.IndexerProperty<int>("IdStudent").HasColumnName("id_student");
                     });
@@ -274,9 +260,9 @@ public partial class ElectronicDiaryContext : DbContext
             entity.ToTable("locations");
 
             entity.Property(e => e.IdLocation).HasColumnName("id_location");
-            entity.Property(e => e.Addres)
+            entity.Property(e => e.Address)
                 .HasMaxLength(100)
-                .HasColumnName("addres");
+                .HasColumnName("address");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
@@ -331,29 +317,19 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.ToTable("parents");
 
-            entity.Property(e => e.IdParent).HasColumnName("id_parent");
-            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
-            entity.Property(e => e.IsDelete)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("is_delete");
-            entity.Property(e => e.Login)
-                .HasMaxLength(30)
-                .HasColumnName("login");
-            entity.Property(e => e.Name)
-                .HasMaxLength(45)
-                .HasColumnName("name");
-            entity.Property(e => e.Password)
-                .HasMaxLength(255)
-                .HasColumnName("password");
-            entity.Property(e => e.Patronymic)
-                .HasMaxLength(45)
-                .HasColumnName("patronymic");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .HasColumnName("phone");
-            entity.Property(e => e.Surname)
-                .HasMaxLength(45)
-                .HasColumnName("surname");
+            entity.HasIndex(e => e.IdParent, "fk_parents_users1_idx");
+
+            entity.Property(e => e.IdParent)
+                .ValueGeneratedNever()
+                .HasColumnName("id_parent");
+            entity.Property(e => e.Workplace)
+                .HasMaxLength(100)
+                .HasColumnName("workplace");
+
+            entity.HasOne(d => d.IdParentNavigation).WithOne(p => p.Parent)
+                .HasForeignKey<Parent>(d => d.IdParent)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_parents_users1");
         });
 
         modelBuilder.Entity<Post>(entity =>
@@ -444,32 +420,19 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.ToTable("students");
 
-            entity.Property(e => e.IdStudent).HasColumnName("id_student");
-            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
+            entity.HasIndex(e => e.IdStudent, "fk_students_users1_idx");
+
+            entity.Property(e => e.IdStudent)
+                .ValueGeneratedNever()
+                .HasColumnName("id_student");
             entity.Property(e => e.EducationName)
                 .HasMaxLength(100)
                 .HasColumnName("education_name");
-            entity.Property(e => e.IsDelete)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("is_delete");
-            entity.Property(e => e.Login)
-                .HasMaxLength(30)
-                .HasColumnName("login");
-            entity.Property(e => e.Name)
-                .HasMaxLength(45)
-                .HasColumnName("name");
-            entity.Property(e => e.Password)
-                .HasMaxLength(255)
-                .HasColumnName("password");
-            entity.Property(e => e.Patronymic)
-                .HasMaxLength(45)
-                .HasColumnName("patronymic");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .HasColumnName("phone");
-            entity.Property(e => e.Surname)
-                .HasMaxLength(45)
-                .HasColumnName("surname");
+
+            entity.HasOne(d => d.IdStudentNavigation).WithOne(p => p.Student)
+                .HasForeignKey<Student>(d => d.IdStudent)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_students_users1");
         });
 
         modelBuilder.Entity<StudentsHasParent>(entity =>
@@ -480,25 +443,25 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.ToTable("students_has_parents");
 
-            entity.HasIndex(e => e.IdParent, "fk_students_has_parents_parents1_idx");
+            entity.HasIndex(e => e.IdParent, "fk_parents_idx");
 
             entity.HasIndex(e => e.IdStudent, "fk_students_has_parents_students1_idx");
 
             entity.Property(e => e.IdStudent).HasColumnName("id_student");
             entity.Property(e => e.IdParent).HasColumnName("id_parent");
             entity.Property(e => e.ParentRole)
-                .HasColumnType("enum('отец','мать','бабушка','дедушка','опекун','другое')")
+                .HasColumnType("enum('папа','мама','бабушка','дедушка','опекун','другое')")
                 .HasColumnName("parent_role");
 
             entity.HasOne(d => d.IdParentNavigation).WithMany(p => p.StudentsHasParents)
                 .HasForeignKey(d => d.IdParent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_students_has_parents_parents1");
+                .HasConstraintName("fk_parents_students_has_parents");
 
             entity.HasOne(d => d.IdStudentNavigation).WithMany(p => p.StudentsHasParents)
                 .HasForeignKey(d => d.IdStudent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_students_has_parents_students1");
+                .HasConstraintName("fk_students_students_has_parents");
         });
 
         modelBuilder.Entity<Subject>(entity =>
@@ -532,7 +495,7 @@ public partial class ElectronicDiaryContext : DbContext
                     r => r.HasOne<Employee>().WithMany()
                         .HasForeignKey("IdEmployee")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("fk_subjects_has_users_users1"),
+                        .HasConstraintName("fk_employees_subjects_has_users"),
                     l => l.HasOne<Subject>().WithMany()
                         .HasForeignKey("IdSubject")
                         .OnDelete(DeleteBehavior.ClientSetNull)
@@ -542,12 +505,52 @@ public partial class ElectronicDiaryContext : DbContext
                         j.HasKey("IdSubject", "IdEmployee")
                             .HasName("PRIMARY")
                             .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
-                        j.ToTable("subjects_has_employee");
+                        j.ToTable("subjects_has_employees");
+                        j.HasIndex(new[] { "IdEmployee" }, "fk_employees_idx");
                         j.HasIndex(new[] { "IdSubject" }, "fk_subjects_has_users_subjects1_idx");
-                        j.HasIndex(new[] { "IdEmployee" }, "fk_subjects_has_users_users1_idx");
                         j.IndexerProperty<int>("IdSubject").HasColumnName("id_subject");
                         j.IndexerProperty<int>("IdEmployee").HasColumnName("id_employee");
                     });
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.IdUser).HasName("PRIMARY");
+
+            entity.ToTable("users");
+
+            entity.Property(e => e.IdUser).HasColumnName("id_user");
+            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
+            entity.Property(e => e.IsDelete)
+                .HasDefaultValueSql("'0'")
+                .HasColumnName("is_delete");
+            entity.Property(e => e.Login)
+                .HasMaxLength(30)
+                .HasColumnName("login");
+            entity.Property(e => e.Name)
+                .HasMaxLength(45)
+                .HasColumnName("name");
+            entity.Property(e => e.Password)
+                .HasMaxLength(255)
+                .HasColumnName("password");
+            entity.Property(e => e.Patronymic)
+                .HasMaxLength(45)
+                .HasColumnName("patronymic");
+            entity.Property(e => e.Phone)
+                .HasMaxLength(20)
+                .HasColumnName("phone");
+            entity.Property(e => e.RefreshToken)
+                .HasMaxLength(255)
+                .HasColumnName("refresh_token");
+            entity.Property(e => e.RefreshTokenExpiryTime)
+                .HasColumnType("datetime")
+                .HasColumnName("refresh_token_expiry_time");
+            entity.Property(e => e.Role)
+                .HasColumnType("enum('администратор','руководитель','учитель','родитель','студент')")
+                .HasColumnName("role");
+            entity.Property(e => e.Surname)
+                .HasMaxLength(45)
+                .HasColumnName("surname");
         });
 
         modelBuilder.Entity<Visit>(entity =>
@@ -556,9 +559,9 @@ public partial class ElectronicDiaryContext : DbContext
 
             entity.ToTable("visits");
 
-            entity.HasIndex(e => e.IdLesson, "fk_visits_lessons1_idx");
+            entity.HasIndex(e => e.IdStudent, "fk_students_idx");
 
-            entity.HasIndex(e => e.IdStudent, "fk_visits_students1_idx");
+            entity.HasIndex(e => e.IdLesson, "fk_visits_lessons1_idx");
 
             entity.Property(e => e.IdVisit).HasColumnName("id_visit");
             entity.Property(e => e.Comment)
@@ -578,7 +581,7 @@ public partial class ElectronicDiaryContext : DbContext
             entity.HasOne(d => d.IdStudentNavigation).WithMany(p => p.Visits)
                 .HasForeignKey(d => d.IdStudent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_visits_students1");
+                .HasConstraintName("fk_students_visits_lessons1");
         });
 
         OnModelCreatingPartial(modelBuilder);

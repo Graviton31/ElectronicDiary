@@ -44,7 +44,9 @@ namespace ElectronicDiaryApi.Controllers
         {
             var requests = await _context.EnrollmentRequests
                 .Include(er => er.IdStudentNavigation)
+                    .ThenInclude(s => s.IdStudentNavigation) // Загружаем данные пользователя студента
                 .Include(er => er.IdParentNavigation)
+                    .ThenInclude(p => p.IdParentNavigation) // Загружаем данные пользователя родителя
                 .Include(er => er.IdGroupNavigation)
                     .ThenInclude(g => g.IdSubjectNavigation)
                 .Where(er => er.IdGroup == groupId)
@@ -55,10 +57,16 @@ namespace ElectronicDiaryApi.Controllers
                     RequestDate = er.RequestDate,
                     Status = er.Status,
                     Comment = er.Comment,
-                    StudentFullName = $"{er.IdStudentNavigation.Surname} {er.IdStudentNavigation.Name} {er.IdStudentNavigation.Patronymic}".Trim(),
-                    ParentFullName = $"{er.IdParentNavigation.Surname} {er.IdParentNavigation.Name} {er.IdParentNavigation.Patronymic}".Trim(),
+                    StudentFullName = $"{er.IdStudentNavigation.IdStudentNavigation.Surname} " +
+                                    $"{er.IdStudentNavigation.IdStudentNavigation.Name} " +
+                                    $"{er.IdStudentNavigation.IdStudentNavigation.Patronymic}".Trim(),
+                    ParentFullName = $"{er.IdParentNavigation.IdParentNavigation.Surname} " +
+                                   $"{er.IdParentNavigation.IdParentNavigation.Name} " +
+                                   $"{er.IdParentNavigation.IdParentNavigation.Patronymic}".Trim(),
                     GroupName = er.IdGroupNavigation.Name,
-                    SubjectName = er.IdGroupNavigation.IdSubjectNavigation.Name
+                    SubjectName = er.IdGroupNavigation.IdSubjectNavigation.Name,
+                    IdStudent = er.IdStudent,
+                    IdParent = er.IdParent
                 })
                 .ToListAsync();
 

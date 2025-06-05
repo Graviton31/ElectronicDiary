@@ -1,5 +1,4 @@
-﻿// API Controllers/ScheduleController.cs
-using ElectronicDiaryApi.Data;
+﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto.Shedule;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +33,7 @@ namespace ElectronicDiaryApi.Controllers
                 .Include(g => g.IdLocationNavigation)
                 .Include(g => g.IdSubjectNavigation)
                 .Include(g => g.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation)
                 .Include(g => g.StandardSchedules)
                 .Include(g => g.ScheduleChanges)
                     .ThenInclude(c => c.IdScheduleNavigation)
@@ -61,6 +61,7 @@ namespace ElectronicDiaryApi.Controllers
                 .Include(g => g.IdLocationNavigation)
                 .Include(g => g.IdSubjectNavigation)
                 .Include(g => g.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation)
                 .Include(g => g.StandardSchedules)
                 .Include(g => g.ScheduleChanges)
                     .ThenInclude(c => c.IdScheduleNavigation)
@@ -156,7 +157,8 @@ namespace ElectronicDiaryApi.Controllers
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
-                Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
+                Teachers = group.IdEmployees.Select(e =>
+                    $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
                 StartTime = standardSchedule.StartTime,
                 EndTime = standardSchedule.EndTime,
                 Classroom = standardSchedule.Classroom,
@@ -196,7 +198,8 @@ namespace ElectronicDiaryApi.Controllers
                 {
                     GroupName = group.Name,
                     SubjectName = group.IdSubjectNavigation.Name,
-                    Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
+                    Teachers = group.IdEmployees.Select(e =>
+                        $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
                     StartTime = change.NewStartTime ?? change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
                     EndTime = change.NewEndTime ?? change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
                     Classroom = change.NewClassroom ?? change.IdScheduleNavigation?.Classroom,
@@ -226,7 +229,6 @@ namespace ElectronicDiaryApi.Controllers
         {
             if (!change.OldDate.HasValue || !schedule.ContainsKey(change.OldDate.Value)) return;
 
-            // Получаем время из связанного стандартного расписания
             var originalStartTime = change.IdScheduleNavigation?.StartTime;
             if (originalStartTime == null) return;
 
@@ -254,7 +256,8 @@ namespace ElectronicDiaryApi.Controllers
             {
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
-                Teachers = group.IdEmployees.Select(e => $"{e.Surname} {e.Name} {e.Patronymic}").ToList(),
+                Teachers = group.IdEmployees.Select(e =>
+                    $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
                 StartTime = change.NewStartTime ?? TimeOnly.MinValue,
                 EndTime = change.NewEndTime ?? TimeOnly.MinValue,
                 Classroom = change.NewClassroom ?? string.Empty,
