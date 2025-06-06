@@ -117,20 +117,29 @@ namespace ElectronicDiaryApi.Controllers
             if (schedule == null)
             {
                 _logger.LogWarning($"Standard schedule with ID {id} not found");
-                return NotFound();
+                return NotFound(new { error = "Расписание не найдено" });
             }
 
+            // Удаляем связанные изменения расписания
             if (schedule.ScheduleChanges.Any())
             {
-                _logger.LogWarning($"Cannot delete standard schedule {id} - has related changes");
-                return BadRequest("Cannot delete schedule with existing changes");
+                _context.ScheduleChanges.RemoveRange(schedule.ScheduleChanges);
             }
 
             _context.StandardSchedules.Remove(schedule);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation($"Successfully deleted standard schedule with ID: {id}");
+            _logger.LogInformation($"Successfully deleted standard schedule with ID: {id} with all related changes");
             return NoContent();
+        }
+
+        [HttpGet("{id}/hasChanges")]
+        public async Task<IActionResult> HasChanges(int id)
+        {
+            var hasChanges = await _context.ScheduleChanges
+                .AnyAsync(c => c.IdSchedule == id);
+
+            return Ok(new { hasChanges });
         }
 
         [HttpGet("group/{groupId}")]

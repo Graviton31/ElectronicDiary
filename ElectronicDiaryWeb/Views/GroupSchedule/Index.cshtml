@@ -54,6 +54,14 @@
     .modal-header.bg-danger {
         background-color: #dc3545 !important;
     }
+
+    .modal.fade {
+        transition: opacity 0.15s linear;
+    }
+
+    .modal-backdrop.fade {
+        transition: opacity 0.15s linear;
+    }
 </style>
 
 <div class="container mt-4">
@@ -259,6 +267,7 @@
     </div>
 </div>
 
+<!-- Основное модальное окно удаления -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -271,6 +280,30 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления с изменениями -->
+<div class="modal fade" id="confirmDeleteWithChangesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Это стандартное расписание имеет связанные изменения. Вы действительно хотите удалить его вместе со всеми изменениями?</p>
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Это действие нельзя отменить!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteWithChanges">Удалить всё</button>
             </div>
         </div>
     </div>
@@ -420,7 +453,7 @@
             });
     }
 
-    let currentStandardId = null;
+        let currentStandardId = null;
     let currentChangeId = null;
 
     function setDeleteParams(standardId, changeId) {
@@ -428,10 +461,11 @@
         currentChangeId = changeId !== 0 ? changeId : null;
 
         const modalBody = document.getElementById('deleteModalBody');
-        modalBody.innerHTML = ''; // Очищаем предыдущее содержимое
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+        modalBody.innerHTML = '';
 
         if (currentStandardId && currentChangeId) {
-            // Если есть оба ID, предлагаем выбор
             modalBody.innerHTML = `
                 <div class="mb-3">
                     <p>Что именно вы хотите удалить?</p>
@@ -451,35 +485,43 @@
                     </div>
                 </div>
             `;
-        } else {
-            // Если только один тип записи
-            const id = currentStandardId || currentChangeId;
-            const type = currentStandardId ? 'стандартное расписание' : 'изменение расписания';
+        } else if (currentStandardId) {
             modalBody.innerHTML = `
-                <p>Вы уверены, что хотите удалить ${type} (ID: ${id})?</p>
+                <p>Вы уверены, что хотите удалить стандартное расписание (ID: ${currentStandardId})?</p>
+            `;
+        } else {
+            modalBody.innerHTML = `
+                <p>Вы уверены, что хотите удалить изменение расписания (ID: ${currentChangeId})?</p>
             `;
         }
 
-        // Добавляем кнопку подтверждения
-        const confirmBtn = document.createElement('button');
-        confirmBtn.type = 'button';
-        confirmBtn.className = 'btn btn-danger';
-        confirmBtn.textContent = 'Удалить';
-        confirmBtn.onclick = performDelete;
-
-        modalBody.appendChild(confirmBtn);
+        // Обработчик для кнопки удаления в основном модальном окне
+        confirmBtn.onclick = function() {
+            if (currentStandardId && !currentChangeId) {
+                // Для стандартного расписания - показываем подтверждение
+                $('#deleteModal').modal('hide');
+                $('#confirmDeleteWithChangesModal').modal('show');
+            } else {
+                // Для изменений или при выборе - удаляем сразу
+                performDelete();
+            }
+        };
     }
+
+    // Обработчик для кнопки подтверждения удаления с изменениями
+    document.getElementById('confirmDeleteWithChanges')?.addEventListener('click', function() {
+        $('#confirmDeleteWithChangesModal').modal('hide');
+        performDelete();
+    });
 
     async function performDelete() {
         let deleteType, recordId;
 
         if (currentStandardId && currentChangeId) {
-            // Если был выбор между двумя вариантами
             const selected = document.querySelector('input[name="deleteOption"]:checked').value;
             deleteType = selected;
             recordId = selected === 'standard' ? currentStandardId : currentChangeId;
         } else {
-            // Если только один вариант
             deleteType = currentStandardId ? 'standard' : 'change';
             recordId = currentStandardId || currentChangeId;
         }
@@ -487,18 +529,102 @@
         const url = `${API_BASE_URL}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
 
         try {
-            const response = await fetch(url, { method: 'DELETE' });
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
 
             if (response.ok) {
-                $('#deleteModal').modal('hide');
                 window.location.reload();
             } else {
-                const error = await response.json();
-                alert(`Ошибка: ${error.title || 'Неизвестная ошибка'}`);
+                const errorData = await response.json();
+                showErrorToast(errorData.error || 'Неизвестная ошибка');
             }
         } catch (error) {
             console.error('Ошибка:', error);
-            alert('Ошибка сети');
+            showErrorToast('Ошибка сети');
         }
+    }
+
+    function showErrorToast(message) {
+        alert(`Ошибка: ${message}`);
+    }
+
+    async function checkForRelatedChanges(scheduleId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}StandardSchedules/${scheduleId}/hasChanges`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.hasChanges) {
+                    // Сразу скрываем текущее модальное окно
+                    $('#deleteModal').modal('hide');
+
+                    // Показываем подтверждение после небольшой задержки
+                    setTimeout(() => {
+                        $('#confirmDeleteWithChangesModal').modal('show');
+                    }, 300);
+                } else {
+                    performDelete();
+                }
+            } else {
+                performDelete();
+            }
+        } catch (error) {
+            console.error('Ошибка проверки изменений:', error);
+            performDelete();
+        }
+    }
+
+
+    // Обработчик для кнопки подтверждения удаления с изменениями
+    document.getElementById('confirmDeleteWithChanges')?.addEventListener('click', function() {
+        $('#confirmDeleteWithChangesModal').modal('hide');
+        performDelete();
+    });
+
+    async function performDelete() {
+        let deleteType, recordId;
+
+        if (currentStandardId && currentChangeId) {
+            const selected = document.querySelector('input[name="deleteOption"]:checked').value;
+            deleteType = selected;
+            recordId = selected === 'standard' ? currentStandardId : currentChangeId;
+        } else {
+            deleteType = currentStandardId ? 'standard' : 'change';
+            recordId = currentStandardId || currentChangeId;
+        }
+
+        const url = `${API_BASE_URL}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                showErrorToast(errorData.error || 'Неизвестная ошибка');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showErrorToast('Ошибка сети');
+        }
+    }
+
+    function showErrorToast(message) {
+        alert(`Ошибка: ${message}`);
+    }
+
+    function showErrorToast(message) {
+        // Реализация toast-уведомления (если у вас есть)
+        // Или просто alert для простоты
+        alert(`Ошибка: ${message}`);
     }
 </script>
