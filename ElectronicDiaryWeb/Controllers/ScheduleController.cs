@@ -2,6 +2,7 @@
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.Models.Shedule;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace ElectronicDiaryWeb.Controllers
 {
+    [Authorize]
     public class ScheduleController : Controller
     {
         private readonly HttpClient _httpClient;

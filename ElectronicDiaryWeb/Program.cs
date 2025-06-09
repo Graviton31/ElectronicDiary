@@ -1,11 +1,14 @@
 using ElectronicDiaryApi.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Добавление сервисов
-builder.Services.AddControllersWithViews(); // Поддержка MVC
-builder.Services.AddHttpClient(); // Для HttpClientFactory
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(10);
@@ -13,7 +16,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// 2. Настройка CORS (важно для доступа к API)
+// Настройка CORS должна быть ЗДЕСЬ, до builder.Build()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -28,9 +31,20 @@ builder.Services.AddCors(options =>
     });
 });
 
-var app = builder.Build();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+    });
 
-// 3. Конфигурация Middleware
+builder.Services.AddAuthorization();
+
+var app = builder.Build(); // После этого точка нельзя изменять builder.Services
+
+// 2. Конфигурация Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -40,17 +54,15 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCors("AllowFrontend"); // Подключение CORS ПОСЛЕ UseRouting
+app.UseCors("AllowFrontend"); // Используем политику CORS
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-// 4. Настройка маршрутов
+// 3. Настройка маршрутов
 app.UseEndpoints(endpoints =>
 {
-    // Для атрибутной маршрутизации (важно для вашего GroupScheduleController)
     endpoints.MapControllers();
-
-    // Conventional routing
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Schedule}/{action=Index}/{id?}");

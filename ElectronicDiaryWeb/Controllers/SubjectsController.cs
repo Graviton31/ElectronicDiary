@@ -6,6 +6,7 @@ using ElectronicDiaryApi.ModelsDto.Subject;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.Models.Group;
 using ElectronicDiaryWeb.Models.Subject;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,6 +15,7 @@ using System.Text.Json;
 
 namespace ElectronicDiaryWeb.Controllers
 {
+    [Authorize]
     public class SubjectsController : Controller
     {
         private readonly HttpClient _apiClient;
@@ -25,6 +27,7 @@ namespace ElectronicDiaryWeb.Controllers
             _apiClient.BaseAddress = new Uri("https://localhost:7123");
             _logger = logger;
         }
+
 
         public async Task<IActionResult> Index()
         {

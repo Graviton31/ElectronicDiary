@@ -162,6 +162,7 @@ namespace ElectronicDiaryApi.Controllers
                 StartTime = standardSchedule.StartTime,
                 EndTime = standardSchedule.EndTime,
                 Classroom = standardSchedule.Classroom,
+                Location = group.IdLocationNavigation?.Name, // Добавляем локацию
                 StandardScheduleId = standardSchedule.IdStandardSchedule,
                 IsChanged = false
             };
@@ -203,6 +204,7 @@ namespace ElectronicDiaryApi.Controllers
                     StartTime = change.NewStartTime ?? change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
                     EndTime = change.NewEndTime ?? change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
                     Classroom = change.NewClassroom ?? change.IdScheduleNavigation?.Classroom,
+                    Location = group.IdLocationNavigation?.Name, // Добавляем локацию
                     IsChanged = true,
                     ChangeType = "перенос",
                     ScheduleChangeId = change.IdScheduleChange,

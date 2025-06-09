@@ -1,4 +1,5 @@
 ﻿using ElectronicDiaryApi.ModelsDto.UsersView;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -15,6 +16,7 @@ namespace ElectronicDiaryWeb.Controllers
         }
 
         // GET: Employees/Details/5
+        [Authorize(Roles = "администратор, руководитель, учитель")]
         public async Task<IActionResult> Details(int id)
         {
             try

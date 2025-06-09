@@ -5,9 +5,10 @@ using ElectronicDiaryApi.ModelsDto.UsersView;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryApi.ModelsDto.Group;
 using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElectronicDiaryWeb.Controllers
-{
+{   [Authorize(Roles = "администратор, руководитель, учитель")]
     public class EnrollmentRequestsController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -19,6 +20,7 @@ namespace ElectronicDiaryWeb.Controllers
             _httpClient.BaseAddress = new Uri(ApiBaseUrl);
         }
 
+        
         public async Task<IActionResult> Index(int subjectId)
         {
             try

@@ -9,9 +9,10 @@ using ElectronicDiaryApi.Controllers;
 using static ElectronicDiaryApi.Controllers.StandardScheduleController;
 using static ElectronicDiaryApi.Controllers.ScheduleChangeController;
 using ElectronicDiaryWeb.Models.Shedule;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElectronicDiaryWeb.Controllers
-{
+{   [Authorize]
     [Route("GroupSchedule")]
     public class GroupScheduleController : Controller
     {
@@ -27,6 +28,7 @@ namespace ElectronicDiaryWeb.Controllers
         }
 
         // Controllers/GroupScheduleController.cs
+        
         [HttpGet("GetStandardSchedules")]
         public async Task<IActionResult> GetStandardSchedules(int groupId, DateTime date)
         {
