@@ -25,8 +25,8 @@ builder.Services.AddCors(options =>
             "https://localhost:7012", // Ваш MVC-фронтенд
             "https://localhost:7123" // API (если нужно)
         )
-        .AllowAnyMethod()
         .AllowAnyHeader()
+        .AllowAnyMethod()
         .AllowCredentials();
     });
 });
@@ -36,7 +36,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
     });
 

@@ -53,10 +53,12 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             AccessToken = accessToken,
+            RefreshToken = refreshToken,
             UserId = user.IdUser,
             Role = user.Role,
             FullName = $"{user.Surname} {user.Name} {user.Patronymic}",
-            AccessTokenExpires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpireMinutes"))
+            AccessTokenExpires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpireMinutes")),
+            RefreshTokenExpires = user.RefreshTokenExpiryTime
         });
     }
 

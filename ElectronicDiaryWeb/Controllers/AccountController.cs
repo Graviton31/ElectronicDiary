@@ -52,7 +52,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+        var result = await response.Content.ReadFromJsonAsync<AuthResponseModel>();
         SetAuthCookies(result);
 
         return RedirectToLocal(returnUrl);
@@ -69,10 +69,10 @@ public class AccountController : Controller
         ClearAuthCookies();
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Schedule");
     }
 
-    private void SetAuthCookies(AuthResponseDto authResult)
+    private void SetAuthCookies(AuthResponseModel authResult)
     {
         // Храним access-token под неочевидным именем
         Response.Cookies.Append("_secure_at", authResult.AccessToken, new CookieOptions
@@ -105,6 +105,6 @@ public class AccountController : Controller
     private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Schedule");
     }
 }

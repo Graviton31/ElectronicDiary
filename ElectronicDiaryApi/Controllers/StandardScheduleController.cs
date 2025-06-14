@@ -12,9 +12,9 @@ namespace ElectronicDiaryApi.Controllers
     public class StandardScheduleController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
-        private readonly ILogger<GroupsController> _logger;
+        private readonly ILogger<ElectronicDiaryContext> _logger;
 
-        public StandardScheduleController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
+        public StandardScheduleController(ElectronicDiaryContext context, ILogger<ElectronicDiaryContext> logger)
         {
             _context = context;
             _logger = logger;

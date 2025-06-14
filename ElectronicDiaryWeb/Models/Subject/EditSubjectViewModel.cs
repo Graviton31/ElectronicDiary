@@ -31,12 +31,12 @@ namespace ElectronicDiaryWeb.Models.Subject
 
         [Required(ErrorMessage = "Обязательное поле")]
         [Range(1, 10, ErrorMessage = "Длительность от 1 до 10")]
-        [Display(Name = "Длительность курса (лет)")]
+        [Display(Name = "Длительность курса (мес.)")]
         public sbyte Duration { get; set; }
 
         [Required(ErrorMessage = "Обязательное поле")]
         [Range(1, 5, ErrorMessage = "Длительность урока от 1 до 5")]
-        [Display(Name = "Продолжительность урока (часов)")]
+        [Display(Name = "Продолжительность урока (академ. часов)")]
         public sbyte LessonLength { get; set; }
 
         [Display(Name = "Программа предмета")]

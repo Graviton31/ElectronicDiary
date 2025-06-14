@@ -1,76 +1,361 @@
 ﻿@using ElectronicDiaryApi.ModelsDto.Subject
-@model IEnumerable<SubjectListItemDto>
+@model IEnumerable<SubjectWithStatsDto>
 
 @{
-    ViewData["Title"] = "Список предметов";
+    ViewData["Title"] = "Предметы";
+}
+
+<div class="e-journal-container">
+    <!-- Заголовок с иконкой -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-calendar-week header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+                <p class="page-subtitle">Все предметы учебного центра</p>
+            </div>
+        </div>
+        <div class="header-divider"></div>
+    </header>
+
+    <div class="subject-management-container">
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-body">
+                <!-- Кнопка добавления и фильтры -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <form method="get" class="d-flex align-items-center gap-3">
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" class="form-control" name="search" placeholder="Поиск по названию"
+                                   value="@ViewBag.SearchTerm">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+
+                        <select class="form-select" name="status" onchange="this.form.submit()"
+                                style="width: 200px;">
+                            <option value="">Все статусы</option>
+                            <option value="active" selected="@(ViewBag.SelectedStatus == "active")">Активные</option>
+                            <option value="recruiting" selected="@(ViewBag.SelectedStatus == "recruiting")">Набор</option>
+                            <option value="inactive" selected="@(ViewBag.SelectedStatus == "inactive")">Неактивные</option>
+                        </select>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchTerm) || !string.IsNullOrEmpty(ViewBag.SelectedStatus))
+                        {
+                            <a href="@Url.Action("Index")" class="btn btn-outline-danger">
+                                <i class="bi bi-x-lg"></i> Сбросить
+                            </a>
+                        }
+                    </form>
+
+                    <a asp-action="Create" class="btn btn-primary" style="background-color: #4361ee; border-color: #4361ee;">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        <span class="btn-text">Добавить предмет</span>
+                    </a>
+                </div>
+
+                @if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <div>@ViewBag.ErrorMessage</div>
+                    </div>
+                }
+
+                @if (!Model.Any())
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-book empty-icon"></i>
+                        <h5 class="empty-title">Нет предметов</h5>
+                        <p class="empty-text">По вашему запросу не найдено ни одного предмета</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-4">
+                        @foreach (var subject in Model)
+                        {
+                            <div class="col-md-6 col-lg-4">
+                                <a asp-controller="Subjects" asp-action="Details" asp-route-id="@subject.IdSubject" class="text-decoration-none">
+                                    <div class="card h-100 subject-card @GetStatusClass(subject)">
+                                        <!-- Индикатор статуса -->
+                                        <div class="subject-status-badge">
+                                            @GetStatusText(subject)
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <h5 class="card-title mb-0" style="color: #4361ee;">@subject.Name</h5>
+                                            </div>
+                                            <h6 class="card-subtitle mb-2 text-muted">@subject.FullName</h6>
+
+                                            @if (!string.IsNullOrEmpty(subject.Description))
+                                            {
+                                                <p class="card-text text-muted small mb-3 subject-description" title="@subject.Description">
+                                                    @GetShortDescription(subject.Description, 100)
+                                                </p>
+                                            }
+
+                                            @if (subject.GroupsCount > 0)
+                                            {
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between small mb-1">
+                                                        <span>Заполненность групп</span>
+                                                        <span>@subject.AvgGroupFillPercentage%</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 6px;">
+                                                        @{
+                                                            var percentage = subject.AvgGroupFillPercentage > 100 ? 100 :
+                                                            subject.AvgGroupFillPercentage < 0 ? 0 :
+                                                            subject.AvgGroupFillPercentage;
+                                                        }
+                                                        <div class="progress-bar @GetProgressBarClass(subject)"
+                                                             role="progressbar"
+                                                             style="width: @percentage%;"
+                                                             aria-valuenow="@percentage"
+                                                             aria-valuemin="0"
+                                                             aria-valuemax="100"></div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <div class="subject-stats d-flex justify-content-between">
+                                                <div class="stat-item">
+                                                    <i class="bi bi-people-fill stat-icon" style="color: #4361ee;"></i>
+                                                    <span class="stat-value">@subject.TotalStudents</span>
+                                                    <span class="stat-label">Студентов</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <i class="bi bi-person-video2 stat-icon" style="color: #4361ee;"></i>
+                                                    <span class="stat-value">@subject.TeachersCount</span>
+                                                    <span class="stat-label">Преподавателей</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <i class="bi bi-calendar-week stat-icon" style="color: #4361ee;"></i>
+                                                    <span class="stat-value">@subject.Duration</span>
+                                                    <span class="stat-label">@(subject.Duration == 1 ? "Месяц" : subject.Duration <= 5 ? "Месяца" : "Месяцев")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0 pt-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="badge" style="background-color: #4361ee;">
+                                                    @subject.GroupsCount @(subject.GroupsCount == 1 ? "группа" : subject.GroupsCount < 5 ? "группы" : "групп")
+                                                </span>
+                                                <span class="small" style="color: #4361ee;">
+                                                    Подробнее <i class="bi bi-arrow-right"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    // Функция для определения класса статуса
+    string GetStatusClass(SubjectWithStatsDto subject)
+    {
+        if (subject.GroupsCount == 0) return "subject-inactive";
+        if (subject.AvgGroupFillPercentage >= 80) return "subject-active";
+        return "subject-recruiting";
+    }
+
+    // Функция для текста статуса
+    string GetStatusText(SubjectWithStatsDto subject)
+    {
+        if (subject.GroupsCount == 0) return "Неактивный";
+        if (subject.AvgGroupFillPercentage >= 80) return "Активный";
+        return "Идёт набор";
+    }
+
+    // Функция для класса progress-bar
+    string GetProgressBarClass(SubjectWithStatsDto subject)
+    {
+        if (subject.GroupsCount == 0) return "bg-secondary";
+        if (subject.AvgGroupFillPercentage >= 80) return "bg-success";
+        if (subject.AvgGroupFillPercentage >= 50) return "bg-warning";
+        return "bg-danger";
+    }
+
+    // Функция для сокращения описания
+    string GetShortDescription(string description, int maxLength)
+    {
+        if (description.Length <= maxLength) return description;
+        return description.Substring(0, maxLength) + "...";
+    }
 }
 
 <style>
-    .table {
-        margin-top: 20px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        width: 100%;
+    /* Дополнительные стили для карточек предметов */
+    .subject-management-container {
+        margin-top: 1rem;
     }
 
-        .table thead th {
-            background-color: #343a40;
-            color: white;
-            border-bottom: 2px solid #dee2e6;
-            padding: 12px 15px;
+    .subject-card {
+        transition: var(--transition);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .subject-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
         }
 
-        .table tbody td {
-            vertical-align: middle;
-            padding: 12px 15px;
+        .subject-card .card-subtitle {
+            font-size: 0.9rem;
         }
 
-    .alert {
-        margin-top: 20px;
+        /* Стили статусов */
+        .subject-card.subject-active {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .subject-card.subject-recruiting {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .subject-card.subject-inactive {
+            border-left: 4px solid var(--secondary-color);
+        }
+
+    .subject-status-badge {
+        position: absolute;
+        top: 15px;
+        right: -30px;
+        width: 100px;
+        padding: 3px 0;
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: white;
+        transform: rotate(45deg);
+    }
+
+    .subject-active .subject-status-badge {
+        background-color: var(--success-color);
+    }
+
+    .subject-recruiting .subject-status-badge {
+        background-color: var(--warning-color);
+        color: var(--text-dark);
+    }
+
+    .subject-inactive .subject-status-badge {
+        background-color: var(--secondary-color);
+    }
+
+    .subject-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .subject-stats {
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background-color: rgba(67, 97, 238, 0.05);
+        flex: 0 0 30%;
+    }
+
+    .stat-icon {
+        font-size: 1.2rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        display: block;
+    }
+
+    /* Адаптация для мобильных */
+    @@media (max-width: 767.98px) {
+        .subject-stats {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-item {
+            flex: 0 0 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+        }
+
+            .stat-item .stat-icon {
+                display: inline;
+                margin-right: 0.5rem;
+                margin-bottom: 0;
+                font-size: 1rem;
+            }
+
+            .stat-item .stat-value {
+                display: inline;
+                margin-right: 0.25rem;
+                font-size: 1rem;
+            }
+
+            .stat-item .stat-label {
+                display: inline;
+                font-size: 0.65rem;
+            }
+
+        .subject-status-badge {
+            top: 10px;
+            right: -35px;
+            font-size: 0.6rem;
+        }
+
+        .input-group {
+            max-width: 300px;
+        }
+
+        .form-select {
+            max-width: 200px;
+        }
+
+        .d-flex.align-items-center.gap-3 {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem !important;
+        }
+
+        .input-group,
+        .form-select {
+            max-width: 100%;
+            width: 100% !important;
+        }
+
+        .card-body .d-flex.justify-content-between {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
     }
 </style>
-
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>@ViewData["Title"]</h2>
-        <a asp-action="Create" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i>Добавить предмет
-        </a>
-    </div>
-
-    @if (ViewBag.ErrorMessage != null)
-    {
-        <div class="alert alert-danger d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <div>@ViewBag.ErrorMessage</div>
-        </div>
-    }
-
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr class="table-dark">
-                <th>Название</th>
-                <th>Полное название</th>
-                <th>Количество групп</th>
-                <th>Количество преподавателей</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var subject in Model)
-            {
-                <tr>
-                    <td>@subject.Name</td>
-                    <td>@subject.FullName</td>
-                    <td>@subject.GroupsCount</td>
-                    <td>@subject.TeachersCount</td>
-                    <td>
-                        <a asp-controller="Subjects" asp-action="Details" asp-route-id="@subject.IdSubject"
-                           class="btn btn-info btn-sm">
-                            <i class="bi bi-info-circle me-1"></i>Подробнее
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>

@@ -1,8 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace ElectronicDiaryWeb.Models.Auth
+﻿namespace ElectronicDiaryApi.ModelsDto.Auth
 {
-    public class RegisterChildWithParentsModel : BaseUserModel
+    public class RegisterChildWithParentsDto : BaseUserDto
     {
         public string? EducationName { get; set; }
         public List<int> ParentIds { get; set; } = new();

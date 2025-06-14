@@ -27,14 +27,34 @@ namespace ElectronicDiaryApi.Controllers
 
         // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<PagedResponse<EmployeeDto>>> GetEmployees(int page = 1, int pageSize = 10)
+        public async Task<ActionResult<PagedResponse<EmployeeDto>>> GetEmployees(
+            int page = 1,
+            int pageSize = 10,
+            string search = "")
         {
             try
             {
                 var query = _context.Employees
-                    .Include(e => e.IdEmployeeNavigation) // Добавлено для загрузки пользователя
+                    .Include(e => e.IdEmployeeNavigation)
                     .Include(e => e.IdPostNavigation)
+                    .Where(e => e.IdEmployeeNavigation.IsDelete != true)
                     .AsQueryable();
+
+                // Добавляем поиск
+                if (!string.IsNullOrEmpty(search))
+                {
+                    var searchTerm = search.ToLower();
+                    query = query.Where(e =>
+                        (e.IdEmployeeNavigation.Surname + " " +
+                         e.IdEmployeeNavigation.Name + " " +
+                         e.IdEmployeeNavigation.Patronymic).ToLower().Contains(searchTerm) ||
+                        e.IdEmployeeNavigation.Login.ToLower().Contains(searchTerm) ||
+                        (e.IdPostNavigation.PostName != null &&
+                         e.IdPostNavigation.PostName.ToLower().Contains(searchTerm)) ||
+                        (e.IdEmployeeNavigation.Role != null &&
+                         e.IdEmployeeNavigation.Role.ToLower().Contains(searchTerm))
+                    );
+                }
 
                 var totalCount = await query.CountAsync();
                 var data = await query

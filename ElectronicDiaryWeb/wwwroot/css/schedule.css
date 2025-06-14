@@ -1,0 +1,290 @@
+﻿/* Специфичные стили для расписания, которых нет в site.css */
+.week-navigation-container {
+    margin-bottom: 1.5rem;
+}
+
+.week-period-display {
+    background-color: #4361ee;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    color: white;
+    box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+}
+
+.week-nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.week-nav-button {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.today-btn {
+    min-width: 90px;
+    padding: 0.375rem 1rem;
+    border-radius: 50px !important;
+    white-space: nowrap;
+}
+
+.today-btn-text {
+    font-size: 0.9rem;
+}
+
+.today-badge {
+    display: inline-block;
+    background-color: #4361ee;
+    color: white;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+.schedule-row-1, .schedule-row-2 {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.schedule-row-2 {
+    margin-bottom: 0;
+}
+
+.schedule-day-card {
+    flex: 1;
+    min-width: 0;
+    transition: transform 0.2s ease;
+}
+
+    .schedule-day-card .card {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .schedule-day-card:hover .card {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+.bg-weekend {
+    background-color: #fff0f0 !important;
+}
+
+.bg-weekend-dark {
+    background-color: #e67e7e !important;
+    color: white !important;
+}
+
+.current-day .card {
+    border: 2px solid #4361ee;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+}
+
+.weekend .card {
+    background-color: rgba(255, 245, 245, 0.7);
+}
+
+.schedule-lessons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.schedule-lesson {
+    padding: 0.75rem;
+    border-radius: 8px;
+    background-color: white;
+    border-left: 4px solid #4361ee;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    font-size: 0.85rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+    .schedule-lesson:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .schedule-lesson.cancelled {
+        position: relative;
+        opacity: 0.9;
+        background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(220, 53, 69, 0.05) 5px, rgba(220, 53, 69, 0.05) 10px);
+        border-left-color: #dc3545;
+    }
+
+        .schedule-lesson.cancelled::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #dc3545;
+            transform: rotate(-5deg);
+            opacity: 0.5;
+        }
+
+    .schedule-lesson.additional {
+        border-left-color: #198754;
+        background-color: rgba(25, 135, 84, 0.05);
+    }
+
+    .schedule-lesson.moved {
+        border-left-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.05);
+    }
+
+.schedule-lesson-time {
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 65px;
+    color: #4361ee;
+}
+
+.schedule-lesson-subject {
+    font-weight: 600;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-lesson-details {
+    margin-top: 0.25rem;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.schedule-lesson-teachers {
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.badge-text {
+    font-size: 0.7rem;
+}
+
+.moved-notice {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #ffc107;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 2px solid #ffc107;
+}
+
+/* Стиль для даты в карточке дня */
+.schedule-day-card .card-header .badge {
+    background-color: #4361ee !important;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Адаптация для мобильных */
+@@media (max-width: 1199.98px) {
+    .schedule-row-1, .schedule-row-2 {
+        flex-wrap: wrap;
+    }
+
+    .schedule-day-card {
+        flex: 0 0 calc(50% - 0.5rem);
+    }
+}
+
+@@media (max-width: 767.98px) {
+    .schedule-day-card {
+        flex: 0 0 100%;
+    }
+
+    .week-nav-buttons {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .today-btn {
+        order: 0;
+        min-width: 80px;
+        padding: 0.375rem 0.5rem;
+        margin: 0;
+        flex-shrink: 1;
+    }
+
+    .today-btn-text {
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .week-nav-button {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .week-period-display {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .today-badge {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+    }
+
+    .schedule-lesson {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .schedule-lesson-subject {
+        max-width: 120px;
+    }
+
+    .badge-text {
+        display: none;
+    }
+}
+
+@@media (max-width: 480px) {
+    .today-btn {
+        min-width: 70px;
+        padding: 0.375rem 0.3rem;
+    }
+
+    .today-btn-text {
+        font-size: 0.75rem;
+    }
+
+    .week-nav-button {
+        width: 32px;
+        height: 32px;
+    }
+}

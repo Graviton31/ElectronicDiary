@@ -7,5 +7,6 @@
         public string FullName { get; set; }
         public int GroupsCount { get; set; }
         public int TeachersCount { get; set; }
+        public sbyte Duration { get; set; }
     }
 }

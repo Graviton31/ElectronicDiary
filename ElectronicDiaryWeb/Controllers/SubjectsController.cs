@@ -29,25 +29,50 @@ namespace ElectronicDiaryWeb.Controllers
         }
 
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search, string status)
         {
             try
             {
-                var response = await _apiClient.GetAsync("/api/Subjects");
+                // Формируем URL с параметрами
+                var url = "/api/Subjects/with-stats";
+                var queryParams = new List<string>();
+
+                if (!string.IsNullOrEmpty(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search)}");
+
+                if (!string.IsNullOrEmpty(status))
+                    queryParams.Add($"status={Uri.EscapeDataString(status)}");
+
+                if (queryParams.Any())
+                    url += "?" + string.Join("&", queryParams);
+
+                var response = await _apiClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var subjects = await response.Content.ReadFromJsonAsync<List<SubjectListItemDto>>();
+                    var subjects = await response.Content.ReadFromJsonAsync<List<SubjectWithStatsDto>>() ?? new List<SubjectWithStatsDto>();
+                    ViewBag.SearchTerm = search;
+                    ViewBag.SelectedStatus = status;
                     return View(subjects);
                 }
 
-                ViewBag.ErrorMessage = "Ошибка при загрузке данных";
-                return View(new List<SubjectListItemDto>());
+                // Если статус не успешный, но не 500, просто показываем пустой список
+                if (response.StatusCode != System.Net.HttpStatusCode.InternalServerError)
+                {
+                    return View(new List<SubjectWithStatsDto>());
+                }
+
+                // Только для 500 ошибки показываем сообщение
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ViewBag.ErrorMessage = $"Ошибка сервера: {errorContent}";
+                return View(new List<SubjectWithStatsDto>());
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = $"Ошибка: {ex.Message}";
-                return View(new List<SubjectListItemDto>());
+                _logger.LogError(ex, "Ошибка в методе Index");
+                // Только для критических ошибок показываем сообщение
+                ViewBag.ErrorMessage = $"Критическая ошибка: {ex.Message}";
+                return View(new List<SubjectWithStatsDto>());
             }
         }
 

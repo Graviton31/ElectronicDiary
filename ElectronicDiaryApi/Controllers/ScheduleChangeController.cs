@@ -11,9 +11,9 @@ namespace ElectronicDiaryApi.Controllers
     public class ScheduleChangeController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
-        private readonly ILogger<GroupsController> _logger;
+        private readonly ILogger<ElectronicDiaryContext> _logger;
 
-        public ScheduleChangeController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
+        public ScheduleChangeController(ElectronicDiaryContext context, ILogger<ElectronicDiaryContext> logger)
         {
             _context = context;
             _logger = logger;

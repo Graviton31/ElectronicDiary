@@ -26,13 +26,30 @@ namespace ElectronicDiaryApi.Controllers
 
         // GET: api/Parents
         [HttpGet]
-        public async Task<ActionResult<PagedResponse<ParentDto>>> GetParents(int page = 1, int pageSize = 10)
+        public async Task<ActionResult<PagedResponse<ParentDto>>> GetParents(
+            int page = 1,
+            int pageSize = 10,
+            string search = "")
         {
             try
             {
                 var query = _context.Parents
-                    .Include(p => p.IdParentNavigation) // Добавляем загрузку связанного пользователя
+                    .Include(p => p.IdParentNavigation)
+                    .Where(p => p.IdParentNavigation.IsDelete != true)
                     .AsQueryable();
+
+                // Добавляем поиск
+                if (!string.IsNullOrEmpty(search))
+                {
+                    var searchTerm = search.ToLower();
+                    query = query.Where(p =>
+                        (p.IdParentNavigation.Surname + " " +
+                         p.IdParentNavigation.Name + " " +
+                         p.IdParentNavigation.Patronymic).ToLower().Contains(searchTerm) ||
+                        p.IdParentNavigation.Login.ToLower().Contains(searchTerm) ||
+                        (p.Workplace != null && p.Workplace.ToLower().Contains(searchTerm))
+                    );
+                }
 
                 var totalCount = await query.CountAsync();
                 var data = await query

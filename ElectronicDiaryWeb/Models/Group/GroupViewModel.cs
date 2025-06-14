@@ -16,9 +16,9 @@ namespace ElectronicDiaryWeb.Models.Group
         [Display(Name = "Преподаватели группы")]
         public List<int> SelectedTeacherIds { get; set; } = new();
 
-        [Display(Name = "Макс. студентов")]
+        [Display(Name = "Макс. учеников")]
         [Range(1, 30, ErrorMessage = "Допустимо от 1 до 30")]
-        public sbyte? StudentCount { get; set; }
+        public sbyte? MaxStudentCount { get; set; }
 
         [Display(Name = "Ворзраст с")]
         [Range(1, 18, ErrorMessage = "Допустимо от 1 до 18")]

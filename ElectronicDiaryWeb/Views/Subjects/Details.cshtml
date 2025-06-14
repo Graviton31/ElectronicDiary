@@ -1,69 +1,53 @@
 ﻿@using ElectronicDiaryWeb.Models.Subject
 @model SubjectDetailsViewModel
 
-<style>
-    .card {
-        border-radius: 1rem;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
+@{
+    ViewData["Title"] = Model != null ? $"Предмет {Model.Subject.FullName}" : "Детали предмета";
+}
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-        }
+@if (Model == null)
+{
+    <div class="alert alert-danger">Предмет не найден</div>
+    return;
+}
 
-    .border-start-4 {
-        border-left-width: 4px !important;
-    }
-
-    .list-group-item {
-        border: none;
-        padding: 0.75rem 1.25rem;
-    }
-
-    .alert-warning {
-        background-color: #fff3cd;
-        border-color: #ffeeba;
-    }
-
-    .badge {
-        font-weight: 500;
-        padding: 0.6em 1em;
-    }
-
-    .text-muted small {
-        font-size: 0.875em;
-    }
-</style>
-
-<div class="container py-4">
-    <!-- Заголовок с кнопками управления -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="display-4">
-            <i class="bi bi-journal-bookmark-fill me-3"></i>@Model.Subject.FullName
-        </h1>
-        <div class="btn-group flex-wrap gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
-               class="btn btn-primary px-4">
-                <i class="bi bi-pencil-square me-2"></i>Редактировать
-            </a>
-            <a asp-controller="GroupSchedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
-               class="btn btn-secondary px-4">
-                <i class="bi bi-calendar-week me-2"></i>Расписание
-            </a>
-            <a asp-controller="EnrollmentRequests" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
-               class="btn btn-warning px-4">
-                <i class="bi bi-list-task me-2"></i>Заявки
-            </a>
-            <a asp-action="Delete" asp-route-id="@Model.Subject.IdSubject"
-               class="btn btn-danger px-4">
-                <i class="bi bi-trash me-2"></i>Удалить
-            </a>
+<div class="e-journal-container mt-4">
+    <!-- Заголовок страницы -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-journal-bookmark-fill header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">@Model.Subject.FullName</h1>
+                <p class="page-subtitle">Детальная информация о предмете</p>
+            </div>
         </div>
+        <div class="header-divider"></div>
+    </header>
+
+    <!-- Кнопки действий -->
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
+           class="btn btn-primary px-4">
+            <i class="bi bi-pencil-square me-2"></i>Редактировать
+        </a>
+        <a asp-controller="GroupSchedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+           class="btn btn-secondary px-4">
+            <i class="bi bi-calendar-week me-2"></i>Расписание
+        </a>
+        <a asp-controller="EnrollmentRequests" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+           class="btn btn-warning px-4">
+            <i class="bi bi-list-task me-2"></i>Заявки
+        </a>
+        <a asp-action="Delete" asp-route-id="@Model.Subject.IdSubject"
+           class="btn btn-danger px-4">
+            <i class="bi bi-trash me-2"></i>Удалить
+        </a>
     </div>
 
     <!-- Основная информация о предмете -->
-    <div class="card shadow-lg mb-4">
+    <div class="card animate__animated animate__fadeIn mb-4">
         <div class="card-header bg-primary text-white py-3">
             <h2 class="h4 mb-0">
                 <i class="bi bi-info-circle me-2"></i>Основные характеристики
@@ -121,7 +105,7 @@
     </div>
 
     <!-- Секция с группами -->
-    <div class="card shadow-lg mb-4">
+    <div class="card animate__animated animate__fadeIn mb-4">
         <div class="card-header bg-success text-white py-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="h4 mb-0">
@@ -198,16 +182,17 @@
             }
             else
             {
-                <div class="alert alert-warning mb-0 d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Нет активных групп
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle empty-icon"></i>
+                    <h4 class="empty-title">Нет активных групп</h4>
+                    <p class="empty-text">Добавьте группы для этого предмета</p>
                 </div>
             }
         </div>
     </div>
 
     <!-- Секция с преподавателями -->
-    <div class="card shadow-lg">
+    <div class="card animate__animated animate__fadeIn">
         <div class="card-header bg-info text-white py-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="h4 mb-0">
@@ -225,7 +210,9 @@
                     @foreach (var teacher in Model.Teachers)
                     {
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card h-100 border-start-4 border-info">
+                            <div class="card h-100 border-start-4 border-info clickable-card"
+                                 onclick="window.location.href='@Url.Action("Details", "Employees", new { id = teacher.IdEmployee })'"
+                                 style="cursor: pointer;">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-3">
                                         <div class="flex-shrink-0">
@@ -244,7 +231,7 @@
                                             <i class="bi bi-telephone me-2 text-muted"></i>
                                             @if (!string.IsNullOrEmpty(teacher.Phone))
                                             {
-                                                <a href="tel:@teacher.Phone">@teacher.Phone</a>
+                                                <a href="tel:@teacher.Phone" class="stretched-link-exception">@teacher.Phone</a>
                                             }
                                             else
                                             {
@@ -257,14 +244,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="card-footer bg-transparent">
-                                    <a asp-controller="Employees"
-                                       asp-action="Details"
-                                       asp-route-id="@teacher.IdEmployee"
-                                       class="btn btn-outline-info btn-sm">
-                                        <i class="bi bi-file-person me-2"></i>Профиль
-                                    </a>
-                                </div>
                             </div>
                         </div>
                     }
@@ -272,11 +251,66 @@
             }
             else
             {
-                <div class="alert alert-warning mb-0 d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Нет прикрепленных преподавателей
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle empty-icon"></i>
+                    <h4 class="empty-title">Нет прикрепленных преподавателей</h4>
+                    <p class="empty-text">Назначьте преподаватели для этого предмета</p>
                 </div>
             }
         </div>
     </div>
+
+    <div class="mb-4">
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
+            ← Назад
+        </a>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                // 1. Попробуем использовать сохранённый URL из sessionStorage
+                const returnUrl = sessionStorage.getItem('returnUrl');
+
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                } else {
+                    // 2. Если нет сохранённого URL, используем history.back()
+                    window.history.back();
+                }
+            });
+
+            // Добавляем эффект при наведении на карточки преподавателей
+            const teacherCards = document.querySelectorAll('.clickable-card');
+            teacherCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .clickable-card {
+        transition: all 0.2s ease;
+    }
+
+        .clickable-card:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+    .stretched-link-exception {
+        position: static;
+    }
+</style>

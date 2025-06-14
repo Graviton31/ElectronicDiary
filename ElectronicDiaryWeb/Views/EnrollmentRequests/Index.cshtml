@@ -180,7 +180,7 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            const apiBaseUrl = 'https://localhost:7123';
+            const apiBaseUrl = window.apiBaseUrl;
             let currentRequests = []; // Хранилище загруженных заявок
 
             // Форматирование даты

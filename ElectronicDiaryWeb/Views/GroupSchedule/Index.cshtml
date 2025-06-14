@@ -1,241 +1,338 @@
-﻿<!-- Views/GroupSchedule/Index.cshtml -->
-@using System.Globalization
+﻿@using System.Globalization
 @model ElectronicDiaryWeb.Models.CombinedScheduleViewModel
 
-<style>
-    .lesson-card {
-        border-radius: 12px;
-        background: #f8fafc;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/schedule.css" asp-append-version="true" />
 
-        .lesson-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-    .btn-icon {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .cancelled {
-        position: relative;
-        opacity: 0.7;
-        background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(220,53,69,0.05) 5px, rgba(220,53,69,0.05) 10px);
-    }
-
-        .cancelled::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #dc3545;
-            transform: rotate(-5deg);
-        }
-
-    .bi-trash {
-        transition: color 0.2s;
-    }
-
-    .btn-outline-danger:hover .bi-trash {
-        color: #dc3545 !important;
-    }
-
-    .btn-outline-danger {
-        border-color: #dc3545;
-    }
-
-    .modal-header.bg-danger {
-        background-color: #dc3545 !important;
-    }
-
-    .modal.fade {
-        transition: opacity 0.15s linear;
-    }
-
-    .modal-backdrop.fade {
-        transition: opacity 0.15s linear;
-    }
-</style>
-
-<div class="container mt-4">
-    <h2 class="mb-4 text-primary fw-bold">Управление расписанием групп</h2>
-
-    <!-- Group selection and actions -->
-    <div class="bg-light rounded-3 p-4 mb-4 shadow-sm">
-        <div class="row align-items-center g-3">
-            <!-- Group selector -->
-            <div class="col-md-6">
-                <form method="get" class="form-inline">
-                    <input type="hidden" name="subjectId" value="@Model.SubjectId" />
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="bi bi-people-fill text-muted"></i>
-                        </span>
-                        <select name="groupId" class="form-select ps-0" onchange="this.form.submit()">
-                            @foreach (var group in Model.Groups)
-                            {
-                                <option value="@group.IdGroup" selected="@(group.IdGroup == Model.SelectedGroupId)">
-                                    @group.Name
-                                </option>
-                            }
-                        </select>
-                    </div>
-                </form>
+<div class="e-journal-container">
+    <!-- Заголовок с иконкой -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-calendar-week header-icon"></i>
             </div>
+            <div>
+                <h1 class="page-title">Управление расписанием групп</h1>
+                <p class="page-subtitle">Просмотр и редактирование расписания</p>
+            </div>
+        </div>
+        <div class="header-divider"></div>
+    </header>
 
-            @if (Model.SelectedGroupId.HasValue)
-            {
-                <div class="col-md-6">
-                    <div class="d-flex gap-3 justify-content-md-end">
-                        <button type="button"
-                                class="btn btn-success px-4 py-2 rounded-pill"
-                                data-bs-toggle="modal"
-                                data-bs-target="#standardLessonModal"
-                                onclick="loadStandardScheduleForm()">
-                            <i class="bi bi-plus-circle me-2"></i>Добавить занятие
-                        </button>
-                        <button type="button"
-                                class="btn btn-warning px-4 py-2 rounded-pill"
-                                data-bs-toggle="modal"
-                                data-bs-target="#scheduleChangeModal"
-                                onclick="loadScheduleChangeForm()">
-                            <i class="bi bi-pencil-square me-2"></i>Изменение в расписании
-                        </button>
+    <div class="schedule-management-container">
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-body">
+                <!-- Group selection and actions -->
+                <div class="bg-light rounded-3 p-4 mb-4 shadow-sm">
+                    <div class="row align-items-center g-3">
+                        <!-- Group selector -->
+                        <div class="col-md-6">
+                            <form method="get" class="form-inline">
+                                <input type="hidden" name="subjectId" value="@Model.SubjectId" />
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class="bi bi-people-fill text-muted"></i>
+                                    </span>
+                                    <select name="groupId" class="form-select ps-0 custom-select" onchange="this.form.submit()">
+                                        <option value="">Выберите группу</option>
+                                        @foreach (var group in Model.Groups)
+                                        {
+                                            <option value="@group.IdGroup" selected="@(group.IdGroup == Model.SelectedGroupId)">
+                                                @group.Name
+                                            </option>
+                                        }
+                                    </select>
+                                    <span class="input-group-text bg-white border-start-0">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
+
+                        @if (Model.SelectedGroupId.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex gap-3 justify-content-md-end">
+                                    <button type="button"
+                                            class="btn btn-success px-4 py-2 rounded-pill"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#standardLessonModal"
+                                            onclick="loadStandardScheduleForm()">
+                                        <i class="bi bi-plus-circle me-2"></i>Добавить занятие
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-warning px-4 py-2 rounded-pill"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#scheduleChangeModal"
+                                            onclick="loadScheduleChangeForm()">
+                                        <i class="bi bi-pencil-square me-2"></i>Изменение в расписании
+                                    </button>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
-            }
-        </div>
-    </div>
 
-    @if (Model.SelectedGroupId.HasValue)
-    {
-        <!-- Week navigation -->
-        <div class="d-flex justify-content-center gap-2 mb-4">
-            <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = Model.PreviousWeekStart, subjectId = Model.SubjectId })"
-               class="btn btn-outline-primary px-4 rounded-pill">← Предыдущая</a>
-            <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = DateTime.Today, subjectId = Model.SubjectId })"
-               class="btn btn-outline-secondary px-4 rounded-pill">Сегодня</a>
-            <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = Model.NextWeekStart, subjectId = Model.SubjectId })"
-               class="btn btn-outline-primary px-4 rounded-pill">Следующая →</a>
-        </div>
-
-        <!-- Schedule -->
-        @if (Model.Schedule?.Days != null)
-        {
-            <div class="row g-4">
-                @foreach (var day in Model.Schedule.Days)
+                @if (Model.SelectedGroupId.HasValue)
                 {
-                    <div class="col-xl-4 col-lg-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
-                                <h5 class="mb-0 d-flex justify-content-between align-items-center">
-                                    <span class="text-primary fw-semibold">
-                                        @day.Date.ToString("dddd", new CultureInfo("ru-RU"))
+                    <!-- Week navigation -->
+                    <div class="week-navigation-container mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="week-period-display">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-week"></i>
+                                    <span class="week-period-text fw-medium">
+                                        @Model.CurrentWeekStart.ToString("dd.MM.yyyy") - @Model.CurrentWeekStart.AddDays(6).ToString("dd.MM.yyyy")
                                     </span>
-                                    <span class="badge bg-primary rounded-pill">
-                                        @day.Date.ToString("dd.MM.yy")
-                                    </span>
-                                </h5>
+                                </div>
                             </div>
-                            <div class="card-body pt-3 pb-0">
-                                @if (!day.Lessons.Any())
-                                {
-                                    <div class="text-center text-muted py-4">
-                                        <i class="bi bi-calendar-x fs-4"></i>
-                                        <div class="mt-2">Нет занятий</div>
-                                    </div>
-                                }
-                                else
-                                {
-                                    @foreach (var lesson in day.Lessons.OrderBy(l => l.StartTime))
-                                    {
-                                        <div class="lesson-card mb-3 p-3 @(lesson.IsCancelled ? "cancelled" : "")">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1 me-3">
-                                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                                        <span class="badge bg-light text-dark border">
-                                                            @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
-                                                        </span>
-                                                        @if (lesson.IsCancelled)
-                                                        {
-                                                            <span class="badge bg-danger">
-                                                                <i class="bi bi-x-circle me-1"></i>Отменено
-                                                            </span>
-                                                        }
-                                                        @if (lesson.IsAdditional)
-                                                        {
-                                                            <span class="badge bg-success">
-                                                                <i class="bi bi-plus-circle me-1"></i>Дополнительное
-                                                            </span>
-                                                        }
-                                                    </div>
-
-                                                    <h6 class="mb-2 text-truncate">@lesson.SubjectName</h6>
-
-                                                    <div class="text-muted small">
-                                                        @if (!string.IsNullOrEmpty(lesson.Classroom))
-                                                        {
-                                                            <div class="d-flex align-items-center mb-1">
-                                                                <i class="bi bi-door-open me-2"></i>
-                                                                @lesson.Classroom
-                                                            </div>
-                                                        }
-                                                        <div class="d-flex align-items-center">
-                                                            <i class="bi bi-person me-2"></i>
-                                                            <span class="text-truncate">@string.Join(", ", lesson.Teachers)</span>
-                                                        </div>
-                                                    </div>
-
-                                                    @if (lesson.ChangeType == "перенос")
-                                                    {
-                                                        <div class="mt-2">
-                                                            <div class="alert alert-warning py-1 mb-0">
-                                                                <i class="bi bi-arrow-left-right me-2"></i>
-                                                                Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
-                                                                @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                </div>
-
-                                                <div class="d-flex flex-column gap-2">
-                                                    @if (lesson.StandardScheduleId.HasValue || lesson.ScheduleChangeId.HasValue)
-                                                    {
-                                                        <button type="button"
-                                                                class="btn btn-icon btn-sm btn-outline-danger rounded-circle align-self-end"
-                                                                title="Удалить"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#deleteModal"
-                                                                onclick="setDeleteParams(@(lesson.StandardScheduleId ?? 0), @(lesson.ScheduleChangeId ?? 0))">
-                                                            <i class="bi bi-trash fs-6"></i>
-                                                        </button>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                }
+                            <div class="week-nav-buttons">
+                                <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = Model.PreviousWeekStart, subjectId = Model.SubjectId })"
+                                   class="btn btn-outline-primary week-nav-button"
+                                   title="Предыдущая неделя">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                                <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = DateTime.Today, subjectId = Model.SubjectId })"
+                                   class="btn btn-primary week-nav-button today-btn"
+                                   title="Текущая неделя">
+                                    <span class="today-btn-text">Сегодня</span>
+                                </a>
+                                <a href="@Url.Action("Index", new { groupId = Model.SelectedGroupId, date = Model.NextWeekStart, subjectId = Model.SubjectId })"
+                                   class="btn btn-outline-primary week-nav-button"
+                                   title="Следующая неделя">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Schedule -->
+                    @if (Model.Schedule?.Days != null)
+                    {
+                        <!-- Первая строка: Понедельник-Среда -->
+                        <div class="schedule-row-1 mb-3">
+                            @foreach (var day in Model.Schedule.Days.Take(3))
+                            {
+                                <div class="schedule-day-card @(day.Date == DateOnly.FromDateTime(DateTime.Today) ? "current-day" : "")">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0 fw-semibold">
+                                                    @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(day.Date.ToString("dddd", new CultureInfo("ru-RU")))
+                                                    @if (day.Date == DateOnly.FromDateTime(DateTime.Today))
+                                                    {
+                                                        <span class="today-badge">Сегодня</span>
+                                                    }
+                                                </h5>
+                                                <span class="badge rounded-pill bg-primary">
+                                                    @day.Date.ToString("dd.MM.yy")
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-2">
+                                            @if (!day.Lessons.Any())
+                                            {
+                                                <div class="empty-state py-3">
+                                                    <i class="bi bi-calendar-x empty-icon"></i>
+                                                    <div class="empty-text">Нет занятий</div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="schedule-lessons-container">
+                                                    @foreach (var lesson in day.Lessons.OrderBy(l => l.StartTime))
+                                                    {
+                                                        <div class="schedule-lesson @(lesson.IsCancelled ? "cancelled" : "") @(lesson.IsAdditional ? "additional" : "")">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div class="flex-grow-1 me-3">
+                                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                                        <span class="schedule-lesson-time">
+                                                                            @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
+                                                                        </span>
+                                                                        @if (lesson.IsCancelled)
+                                                                        {
+                                                                            <span class="badge bg-danger badge-pill d-flex align-items-center gap-1">
+                                                                                <i class="bi bi-x-circle-fill me-1"></i>
+                                                                                <span class="badge-text">Отменено</span>
+                                                                            </span>
+                                                                        }
+                                                                        @if (lesson.IsAdditional)
+                                                                        {
+                                                                            <span class="badge bg-success badge-pill d-flex align-items-center gap-1">
+                                                                                <i class="bi bi-plus-circle-fill me-1"></i>
+                                                                                <span class="badge-text">Дополнительное</span>
+                                                                            </span>
+                                                                        }
+                                                                    </div>
+
+                                                                    <h6 class="schedule-lesson-subject mb-2">@lesson.SubjectName</h6>
+
+                                                                    <div class="schedule-lesson-details">
+                                                                        @if (!string.IsNullOrEmpty(lesson.Classroom))
+                                                                        {
+                                                                            <div class="d-flex align-items-center mb-1">
+                                                                                <i class="bi bi-door-open me-2"></i>
+                                                                                @lesson.Classroom
+                                                                            </div>
+                                                                        }
+                                                                        <div class="d-flex align-items-center">
+                                                                            <i class="bi bi-person me-2"></i>
+                                                                            <span class="text-truncate">@string.Join(", ", lesson.Teachers)</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    @if (lesson.ChangeType == "перенос")
+                                                                    {
+                                                                        <div class="moved-notice mt-2">
+                                                                            <i class="bi bi-info-circle me-2"></i>
+                                                                            Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
+                                                                            @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
+                                                                        </div>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="d-flex flex-column gap-2">
+                                                                    @if (lesson.StandardScheduleId.HasValue || lesson.ScheduleChangeId.HasValue)
+                                                                    {
+                                                                        <button type="button"
+                                                                                class="btn btn-icon btn-sm btn-outline-danger rounded-circle align-self-end"
+                                                                                title="Удалить"
+                                                                                data-bs-toggle="modal"
+                                                                                data-bs-target="#deleteModal"
+                                                                                onclick="setDeleteParams(@(lesson.StandardScheduleId ?? 0), @(lesson.ScheduleChangeId ?? 0))">
+                                                                            <i class="bi bi-trash fs-6"></i>
+                                                                        </button>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Вторая строка: Четверг-Воскресенье -->
+                        <div class="schedule-row-2">
+                            @foreach (var day in Model.Schedule.Days.Skip(3))
+                            {
+                                <div class="schedule-day-card @(day.Date == DateOnly.FromDateTime(DateTime.Today) ? "current-day" : "")">
+                                    <div class="card h-100">
+                                        <div class="card-header @(day.Date.DayOfWeek == DayOfWeek.Saturday || day.Date.DayOfWeek == DayOfWeek.Sunday ? "bg-weekend" : "bg-light")">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0 fw-semibold">
+                                                    @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(day.Date.ToString("dddd", new CultureInfo("ru-RU")))
+                                                    @if (day.Date == DateOnly.FromDateTime(DateTime.Today))
+                                                    {
+                                                        <span class="today-badge">Сегодня</span>
+                                                    }
+                                                </h5>
+                                                <span class="badge rounded-pill @(day.Date.DayOfWeek == DayOfWeek.Saturday || day.Date.DayOfWeek == DayOfWeek.Sunday ? "bg-weekend-dark" : "bg-primary")">
+                                                    @day.Date.ToString("dd.MM.yy")
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-2">
+                                            @if (!day.Lessons.Any())
+                                            {
+                                                <div class="empty-state py-3">
+                                                    <i class="bi bi-calendar-x empty-icon"></i>
+                                                    <div class="empty-text">Нет занятий</div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="schedule-lessons-container">
+                                                    @foreach (var lesson in day.Lessons.OrderBy(l => l.StartTime))
+                                                    {
+                                                        <div class="schedule-lesson @(lesson.IsCancelled ? "cancelled" : "") @(lesson.IsAdditional ? "additional" : "")">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div class="flex-grow-1 me-3">
+                                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                                        <span class="schedule-lesson-time">
+                                                                            @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
+                                                                        </span>
+                                                                        @if (lesson.IsCancelled)
+                                                                        {
+                                                                            <span class="badge bg-danger badge-pill d-flex align-items-center gap-1">
+                                                                                <i class="bi bi-x-circle-fill me-1"></i>
+                                                                                <span class="badge-text">Отменено</span>
+                                                                            </span>
+                                                                        }
+                                                                        @if (lesson.IsAdditional)
+                                                                        {
+                                                                            <span class="badge bg-success badge-pill d-flex align-items-center gap-1">
+                                                                                <i class="bi bi-plus-circle-fill me-1"></i>
+                                                                                <span class="badge-text">Дополнительное</span>
+                                                                            </span>
+                                                                        }
+                                                                    </div>
+
+                                                                    <h6 class="schedule-lesson-subject mb-2">@lesson.SubjectName</h6>
+
+                                                                    <div class="schedule-lesson-details">
+                                                                        @if (!string.IsNullOrEmpty(lesson.Classroom))
+                                                                        {
+                                                                            <div class="d-flex align-items-center mb-1">
+                                                                                <i class="bi bi-door-open me-2"></i>
+                                                                                @lesson.Classroom
+                                                                            </div>
+                                                                        }
+                                                                        <div class="d-flex align-items-center">
+                                                                            <i class="bi bi-person me-2"></i>
+                                                                            <span class="text-truncate">@string.Join(", ", lesson.Teachers)</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    @if (lesson.ChangeType == "перенос")
+                                                                    {
+                                                                        <div class="moved-notice mt-2">
+                                                                            <i class="bi bi-info-circle me-2"></i>
+                                                                            Перенос с @lesson.OriginalDetails.Date.ToString("dd.MM")
+                                                                            @lesson.OriginalDetails.StartTime.ToString("HH\\:mm")
+                                                                        </div>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="d-flex flex-column gap-2">
+                                                                    @if (lesson.StandardScheduleId.HasValue || lesson.ScheduleChangeId.HasValue)
+                                                                    {
+                                                                        <button type="button"
+                                                                                class="btn btn-icon btn-sm btn-outline-danger rounded-circle align-self-end"
+                                                                                title="Удалить"
+                                                                                data-bs-toggle="modal"
+                                                                                data-bs-target="#deleteModal"
+                                                                                onclick="setDeleteParams(@(lesson.StandardScheduleId ?? 0), @(lesson.ScheduleChangeId ?? 0))">
+                                                                            <i class="bi bi-trash fs-6"></i>
+                                                                        </button>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-info-circle fs-5"></i>
+                        <h5 class="empty-title">Выберите группу</h5>
+                        <p class="empty-text">Выберите группу из списка для просмотра расписания</p>
+                    </div>
                 }
             </div>
-        }
-    }
-    else
-    {
-        <div class="alert alert-info d-flex align-items-center gap-2">
-            <i class="bi bi-info-circle fs-5"></i>
-            Выберите группу из списка для просмотра расписания
         </div>
-    }
+    </div>
 </div>
 
 <!-- Modal Windows -->
@@ -308,8 +405,224 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Дополнительные стили для этой страницы */
+    .custom-select {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: var(--border-radius);
+        padding: 0.5rem 1rem;
+        transition: var(--transition);
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: none;
+    }
+
+    .input-group-text {
+        background-color: white;
+        border: 1px solid #dee2e6;
+    }
+
+    .input-group .form-select {
+        border-right: none;
+    }
+
+    .input-group .input-group-text:last-child {
+        border-left: none;
+        color: var(--text-light);
+    }
+
+    .week-nav-button {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50% !important;
+        padding: 0;
+        transition: all 0.2s ease;
+    }
+
+    .today-btn {
+        min-width: 90px;
+        padding: 0.375rem 1rem;
+        border-radius: 50px !important;
+        white-space: nowrap;
+    }
+
+    .today-btn-text {
+        font-size: 0.9rem;
+    }
+
+    .week-period-display {
+        background-color: #4361ee;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        color: white;
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+    }
+
+    .week-period-text {
+        font-size: 0.95rem;
+    }
+
+    .schedule-row-1, .schedule-row-2 {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .schedule-row-2 {
+        margin-bottom: 0;
+    }
+
+    .schedule-day-card {
+        flex: 1;
+        min-width: 0;
+        transition: transform 0.2s ease;
+    }
+
+    .bg-weekend {
+        background-color: #fff0f0 !important;
+    }
+
+    .bg-weekend-dark {
+        background-color: #e67e7e !important;
+        color: white !important;
+    }
+
+    .schedule-lessons-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .schedule-lesson {
+        padding: 0.75rem;
+        border-radius: 8px;
+        background-color: white;
+        border-left: 4px solid #4361ee;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        font-size: 0.85rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .schedule-lesson-time {
+        font-weight: 600;
+        white-space: nowrap;
+        min-width: 65px;
+        color: #4361ee;
+    }
+
+    .schedule-lesson-subject {
+        font-weight: 600;
+        color: var(--text-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .schedule-lesson-details {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    .badge-text {
+        font-size: 0.7rem;
+    }
+
+    /* Адаптация */
+    @@media (max-width: 1199.98px) {
+        .schedule-row-1, .schedule-row-2 {
+            flex-wrap: wrap;
+        }
+
+        .schedule-day-card {
+            flex: 0 0 calc(50% - 0.5rem);
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .schedule-day-card {
+            flex: 0 0 100%;
+        }
+
+        .week-nav-buttons {
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .today-btn {
+            order: 0;
+            min-width: 80px;
+            padding: 0.375rem 0.5rem;
+            margin: 0;
+            flex-shrink: 1;
+        }
+
+        .today-btn-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .week-nav-button {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+
+        .week-period-display {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .today-badge {
+            font-size: 0.6rem;
+            padding: 0.1rem 0.3rem;
+        }
+
+        .schedule-lesson {
+            padding: 0.6rem;
+            font-size: 0.8rem;
+        }
+
+        .schedule-lesson-subject {
+            max-width: 120px;
+        }
+
+        .badge-text {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .today-btn {
+            min-width: 70px;
+            padding: 0.375rem 0.3rem;
+        }
+
+        .today-btn-text {
+            font-size: 0.75rem;
+        }
+
+        .week-nav-button {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+
 <script>
-    const API_BASE_URL = 'https://localhost:7123/api/';
+    const apiBaseUrl = window.apiBaseUrl;
 
     // Load standard schedule form
     function loadStandardScheduleForm() {
@@ -376,7 +689,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}ScheduleChanges`, {
+            const response = await fetch(`${apiBaseUrl}ScheduleChanges`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -453,7 +766,7 @@
             });
     }
 
-        let currentStandardId = null;
+    let currentStandardId = null;
     let currentChangeId = null;
 
     function setDeleteParams(standardId, changeId) {
@@ -526,7 +839,7 @@
             recordId = currentStandardId || currentChangeId;
         }
 
-        const url = `${API_BASE_URL}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
+        const url = `${apiBaseUrl}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
 
         try {
             const response = await fetch(url, {
@@ -549,82 +862,6 @@
     }
 
     function showErrorToast(message) {
-        alert(`Ошибка: ${message}`);
-    }
-
-    async function checkForRelatedChanges(scheduleId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}StandardSchedules/${scheduleId}/hasChanges`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.hasChanges) {
-                    // Сразу скрываем текущее модальное окно
-                    $('#deleteModal').modal('hide');
-
-                    // Показываем подтверждение после небольшой задержки
-                    setTimeout(() => {
-                        $('#confirmDeleteWithChangesModal').modal('show');
-                    }, 300);
-                } else {
-                    performDelete();
-                }
-            } else {
-                performDelete();
-            }
-        } catch (error) {
-            console.error('Ошибка проверки изменений:', error);
-            performDelete();
-        }
-    }
-
-
-    // Обработчик для кнопки подтверждения удаления с изменениями
-    document.getElementById('confirmDeleteWithChanges')?.addEventListener('click', function() {
-        $('#confirmDeleteWithChangesModal').modal('hide');
-        performDelete();
-    });
-
-    async function performDelete() {
-        let deleteType, recordId;
-
-        if (currentStandardId && currentChangeId) {
-            const selected = document.querySelector('input[name="deleteOption"]:checked').value;
-            deleteType = selected;
-            recordId = selected === 'standard' ? currentStandardId : currentChangeId;
-        } else {
-            deleteType = currentStandardId ? 'standard' : 'change';
-            recordId = currentStandardId || currentChangeId;
-        }
-
-        const url = `${API_BASE_URL}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
-
-        try {
-            const response = await fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                const errorData = await response.json();
-                showErrorToast(errorData.error || 'Неизвестная ошибка');
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            showErrorToast('Ошибка сети');
-        }
-    }
-
-    function showErrorToast(message) {
-        alert(`Ошибка: ${message}`);
-    }
-
-    function showErrorToast(message) {
-        // Реализация toast-уведомления (если у вас есть)
-        // Или просто alert для простоты
         alert(`Ошибка: ${message}`);
     }
 </script>
