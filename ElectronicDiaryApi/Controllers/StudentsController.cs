@@ -20,9 +20,9 @@ namespace ElectronicDiaryApi.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
-        private readonly ILogger<GroupsController> _logger;
+        private readonly ILogger<ElectronicDiaryContext> _logger;
 
-        public StudentsController(ElectronicDiaryContext context, ILogger<GroupsController> logger)
+        public StudentsController(ElectronicDiaryContext context, ILogger<ElectronicDiaryContext> logger)
         {
             _context = context;
             _logger = logger;
@@ -30,13 +30,30 @@ namespace ElectronicDiaryApi.Controllers
 
         // GET: api/Students
         [HttpGet]
-        public async Task<ActionResult<PagedResponse<StudentDto>>> GetStudents(int page = 1, int pageSize = 10)
+        public async Task<ActionResult<PagedResponse<StudentDto>>> GetStudents(
+            int page = 1,
+            int pageSize = 10,
+            string search = "")
         {
             try
             {
                 var query = _context.Students
-                    .Include(s => s.IdStudentNavigation) // Добавляем загрузку связанного пользователя
+                    .Include(s => s.IdStudentNavigation)
+                    .Where(s => s.IdStudentNavigation.IsDelete != true)
                     .AsQueryable();
+
+                // Добавляем поиск
+                if (!string.IsNullOrEmpty(search))
+                {
+                    var searchTerm = search.ToLower();
+                    query = query.Where(s =>
+                        (s.IdStudentNavigation.Surname + " " +
+                         s.IdStudentNavigation.Name + " " +
+                         s.IdStudentNavigation.Patronymic).ToLower().Contains(searchTerm) ||
+                        s.IdStudentNavigation.Login.ToLower().Contains(searchTerm) ||
+                        (s.EducationName != null && s.EducationName.ToLower().Contains(searchTerm))
+                    );
+                }
 
                 var totalCount = await query.CountAsync();
                 var data = await query

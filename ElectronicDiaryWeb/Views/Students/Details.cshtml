@@ -39,12 +39,12 @@
                     @foreach (var subject in Model.Subjects)
                     {
                         <div class="col-md-6 mb-4">
-                            <div class="card">
+                            <div class="card clickable-card" onclick="window.location.href='@Url.Action("Details", "Subjects", new { id = subject.IdSubject })'" style="cursor: pointer;">
                                 <!-- Заголовок с названием предмета -->
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0">@subject.Name</h6>
                                 </div>
-                                
+
                                 <!-- Тело карточки с группами -->
                                 <div class="card-body">
                                     @if (subject.Groups.Any())
@@ -92,7 +92,7 @@
                     @foreach (var parent in Model.Parents)
                     {
                         <div class="col-md-6 mb-3">
-                            <div class="card">
+                            <div class="card clickable-card" onclick="window.location.href='@Url.Action("Details", "Parents", new { id = parent.IdParent })'" style="cursor: pointer;">
                                 <div class="card-body">
                                     <h6 class="card-title">@parent.FullName</h6>
                                     <dl class="row">
@@ -141,7 +141,7 @@
                             {
                                 <tr>
                                     <td>@req.IdRequest</td>
-                                    <td>@req.RequestDate?.ToString("dd.MM.yyyy") ?? "Дата не указана"</td>
+                                    <td>@req.RequestDate?.ToString("dd.MM.yyyy")"</td>
                                     <td>
                                         <span class="badge @(req.Status == "Approved" ? "bg-success" :
                                              req.Status == "Pending" ? "bg-warning" :
@@ -171,17 +171,101 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('goBackButton').addEventListener('click', function() {
-                // 1. Попробуем использовать сохранённый URL из sessionStorage
-                const returnUrl = sessionStorage.getItem('returnUrl');
+            // Проверяем актуальность сохранённого состояния (не старше 30 минут)
+            const savedState = sessionStorage.getItem('journalState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                const stateAge = Date.now() - (state.timestamp || 0);
+                if (stateAge > 30 * 60 * 1000) {
+                    sessionStorage.removeItem('journalState');
+                }
+            }
 
-                if (returnUrl) {
-                    window.location.href = returnUrl;
+            // Обработчик кнопки "Назад"
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                const returnUrl = sessionStorage.getItem('returnUrl') || document.referrer;
+                const savedState = sessionStorage.getItem('journalState') ||
+                                  localStorage.getItem('journalBackupState');
+
+                if (savedState && returnUrl) {
+                    const state = JSON.parse(savedState);
+
+                    // Формируем URL с параметрами
+                    const url = new URL(returnUrl, window.location.origin);
+                    url.searchParams.set('subjectId', state.subjectId);
+                    url.searchParams.set('groupId', state.groupId);
+
+                    if (state.journalId) {
+                        url.searchParams.set('journalId', state.journalId);
+                    }
+
+                    // Добавляем параметр для предотвращения кэширования
+                    url.searchParams.set('_t', Date.now());
+
+                    window.location.href = url.toString();
                 } else {
-                    // 2. Если нет сохранённого URL, используем history.back()
                     window.history.back();
                 }
             });
         });
     </script>
 }
+
+<style>
+    .clickable-card:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для карточек (как были) */
+    .clickable-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+        .clickable-card:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+    /* Новые стили для таблицы журнала (если она есть на странице) */
+    .journal-table .clickable-student {
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+        padding-right: 25px !important; /* Для стрелки */
+    }
+
+        .journal-table .clickable-student:hover {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+
+        /* Стрелка при наведении */
+        .journal-table .clickable-student::after {
+            content: "→";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.2s ease;
+            color: #6c757d;
+        }
+
+        .journal-table .clickable-student:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(3px);
+        }
+
+    /* Адаптивность */
+    @@media (max-width: 768px) {
+        .clickable-card:hover {
+            transform: none; /* Отключаем поднятие на мобильных */
+        }
+
+        .journal-table .clickable-student::after {
+            display: none; /* Скрываем стрелку на малых экранах */
+        }
+    }
+</style>

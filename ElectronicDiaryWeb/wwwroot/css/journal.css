@@ -10,6 +10,34 @@
 }
 
 /* ==================== БЛОКИ ВЫБОРА (СЕЛЕКТОРЫ) ==================== */
+
+.clickable-student {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+    .clickable-student:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Иконка стрелки (по желанию) */
+    .clickable-student::after {
+        content: "→";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .clickable-student:hover::after {
+        opacity: 0.5;
+    }
+
 /* Контейнер селекторов */
 .journal-selectors {
     margin-bottom: 1.5rem; /* Отступ снизу */
@@ -388,6 +416,14 @@
 
 /* ==================== АДАПТИВНОСТЬ ==================== */
 @media (max-width: 768px) {
+
+    .clickable-student:hover {
+        transform: translateY(-1px) !important;
+    }
+
+    .clickable-student:hover {
+        transform: none; /* На мобильных убираем поднятие */
+    }
     /* Контент на мобильных */
     .journal-content {
         padding: 1rem; /* Уменьшенные отступы */
@@ -445,3 +481,73 @@
         margin-left: 5px; /* Отступ от иконки */
     }
 }
+
+.clickable-student::after {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.clickable-student:hover::after {
+    transform: translateY(-50%) translateX(3px);
+}
+
+.clickable-student {
+    will-change: transform;
+    transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+    .clickable-student::after {
+        transition: all 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+/* Стили для ошибок в модальном окне */
+.modal-error {
+    transition: opacity 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+/* Анимация появления/исчезновения */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-error {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Стили для состояния восстановления */
+.restoring-state {
+    opacity: 0.7;
+    pointer-events: none;
+    position: relative;
+}
+
+    .restoring-state::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .restoring-state::before {
+        content: "Восстановление состояния...";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 11;
+        font-weight: bold;
+        color: #4361ee;
+    }

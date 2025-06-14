@@ -1,10 +1,12 @@
 ﻿using ElectronicDiaryApi.ModelsDto.Journal;
 using ElectronicDiaryApi.ModelsDto.Subject;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElectronicDiaryWeb.Controllers
 {
+    [Authorize(Roles = "администратор, руководитель, учитель")]
     public class JournalsController : Controller
     {
         private readonly HttpClient _httpClient;

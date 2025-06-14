@@ -1,12 +1,11 @@
 ﻿@using ElectronicDiaryWeb.Models.Subject
 @model EditSubjectViewModel
-@{
-    ViewData["Title"] = Model != null
-        ? $"Редактирование предмета {Model.SubjectName}"
-        : "Редактирование предмета";
-}
 
 <link rel="stylesheet" href="~/css/сreateEditSubject.css" asp-append-version="true" />
+
+@{
+    ViewData["Title"] = Model != null ? $"Редакьтирование {Model.SubjectName}" : "Редактирование предмета";
+}
 
 @if (Model == null)
 {
@@ -14,249 +13,247 @@
     return;
 }
 
-<div class="container mb-5">
-    <header class="page-header">
-        <div>
-            <h2 class="header-title">
-                <i class="bi bi-pencil-square me-2"></i>
-                Редактирование предмета: @Model.SubjectFullName
-            </h2>
+<div class="e-journal-container">
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-pencil-square header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Редактирование предмета: @Model.SubjectName</h1>
+            </div>
         </div>
-        <div class="header-actions">
-            <button type="submit" form="main-form" class="btn btn-primary shadow-sm px-4 py-2">
-                <i class="bi bi-save me-2"></i>Сохранить
-            </button>
-            <a asp-action="Details" asp-route-id="@Model.IdSubject"
-               class="btn btn-outline-secondary shadow-sm px-4 py-2">
-                <i class="bi bi-x-lg me-2"></i>Отмена
-            </a>
-        </div>
+        <div class="header-divider"></div>
     </header>
 
-    <form asp-action="Edit" asp-route-id="@Model.IdSubject" method="post" id="main-form">
-        <input type="hidden" asp-for="IdSubject" />
+    <div class="subject-management-container">
+        <form asp-action="Edit" asp-route-id="@Model.IdSubject" method="post" id="main-form">
+            <input type="hidden" asp-for="IdSubject" />
 
-        <div class="row g-4">
-            <!-- Секция предмета -->
-            <div class="col-lg-5">
-                <div class="card shadow-sm border-primary">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Основные параметры</h4>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="form-floating mb-3">
-                            <input asp-for="SubjectName" class="form-control" placeholder=" " />
-                            <label asp-for="SubjectName"></label>
-                            <span asp-validation-for="SubjectName" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-floating mb-3">
-                            <input asp-for="SubjectFullName" class="form-control" placeholder=" " />
-                            <label asp-for="SubjectFullName"></label>
-                            <span asp-validation-for="SubjectFullName" class="text-danger small"></span>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input asp-for="Duration" type="number" class="form-control" min="1" max="10" placeholder=" " />
-                                    <label asp-for="Duration">Длительность </label>
-                                    <small class="form-text text-muted mt-1 d-block">Количество лет обучения</small>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input asp-for="LessonLength" type="number" class="form-control" min="1" max="5" placeholder=" " />
-                                    <label asp-for="LessonLength">Продолжительность урока</label>
-                                    <small class="form-text text-muted mt-1 d-block">В академических часах</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-floating mb-4">
-                            <textarea asp-for="SubjectDescription" class="form-control"
-                                      style="height: 100px" placeholder=" "></textarea>
-                            <label asp-for="SubjectDescription"></label>
-                        </div>
-
-                        <div class="form-floating mb-4">
-                            <textarea asp-for="Syllabus" class="form-control"
-                                      style="height: 100px"
-                                      placeholder=" "></textarea> <!-- Убрали required -->
-                            <label asp-for="Syllabus"></label>
-                            <span asp-validation-for="Syllabus" class="text-danger small"></span>
-                        </div>
-
-                        <div class="teacher-input-wrapper">
-                            <label class="form-label">Преподаватели предмета</label>
-                            <div class="teacher-search-container">
-                                <input type="text"
-                                       class="form-control teacher-search-input"
-                                       placeholder="Начните вводить ФИО..."
-                                       data-target="SelectedSubjectTeacherIds" />
-                                <div class="teacher-search-results"></div>
-                            </div>
-
-                            <div class="selected-teachers-list">
-                                @if (Model.SelectedSubjectTeacherIds != null)
-                                {   
-                                    @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
-                                    {
-                                        <div class="teacher-tag" data-teacher-id="@teacherId">
-                                            <span class="teacher-tag-content">
-                                                @(Model.TeacherNames.TryGetValue(teacherId, out var name) ? name : "Неизвестный")
-                                            </span>
-                                            <span class="remove-teacher-btn">×</span>
-                                        </div>
-                                    }
-                                }
-                            </div>
-
-                            <div class="hidden-teacher-ids">
-                                @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
-                                {
-                                    <input type="hidden"
-                                           name="SelectedSubjectTeacherIds"
-                                           value="@teacherId" />
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Секция групп -->
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-success">
-                    <div class="card-header bg-success text-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">
-                                <i class="bi bi-people-fill me-2"></i>
-                                Учебные группы
-                            </h4>
-                            <button type="button"
-                                    class="btn btn-light btn-sm"
-                                    id="add-group-btn">
-                                <i class="bi bi-plus-circle me-2"></i>Добавить группу
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="card-body" id="groups-container">
-                        @for (var i = 0; i < Model.ExistingGroups.Count; i++)
-                        {
-                            <div class="group-card card mb-3">
-                                <input type="hidden" asp-for="ExistingGroups[i].IdGroup" />
-
-                                <!-- Убрали скрытое поле и изменили структуру -->
-                                <div class="form-check form-switch mb-0">
-                                    <input asp-for="ExistingGroups[i].IsDelete"
-                                           class="form-check-input group-delete-switch"
-                                           type="checkbox"
-                                           value="true" /> <!-- Явное указание значения -->
-                                    <input type="hidden" asp-for="ExistingGroups[i].IsDelete" value="false" /> <!-- Fallback -->
-                                    <label class="form-check-label small">Удалить группу</label>
+            <div class="card animate__animated animate__fadeIn">
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Секция предмета -->
+                        <div class="col-lg-5">
+                            <div class="card shadow-sm border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">
+                                        <i class="bi bi-clipboard-data me-2"></i>
+                                        Основные параметры
+                                    </h4>
                                 </div>
 
                                 <div class="card-body">
-                                    <div class="row g-3">
+                                    <div class="form-floating mb-3">
+                                        <input asp-for="SubjectName" class="form-control" placeholder=" " required />
+                                        <label asp-for="SubjectName" class="required-field">Краткое название</label>
+                                        <span asp-validation-for="SubjectName" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="form-floating mb-3">
+                                        <input asp-for="SubjectFullName" class="form-control" placeholder=" " required />
+                                        <label asp-for="SubjectFullName" class="required-field">Полное название</label>
+                                        <span asp-validation-for="SubjectFullName" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="row g-3 mb-4">
                                         <div class="col-md-6">
                                             <div class="form-floating">
-                                                <input asp-for="ExistingGroups[i].Name"
-                                                       class="form-control" placeholder=" " />
-                                                <label asp-for="ExistingGroups[i].Name"></label>
+                                                <input asp-for="Duration" type="number" class="form-control" min="1" max="10" placeholder=" " required />
+                                                <label asp-for="Duration" class="required-field">Длительность</label>
+                                                <small class="form-text text-muted">мес.</small>
+                                                <span asp-validation-for="Duration" class="text-danger small"></span>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
                                             <div class="form-floating">
-                                                <input asp-for="ExistingGroups[i].MaxStudentCount"
-                                                       class="form-control" min="1" max="30" placeholder=" " />
-                                                <label asp-for="ExistingGroups[i].MaxStudentCount"></label>
+                                                <input asp-for="LessonLength" type="number" class="form-control" min="1" max="5" placeholder=" " required />
+                                                <label asp-for="LessonLength" class="required-field">Длит. урока</label>
+                                                <small class="form-text text-muted">час.</small>
+                                                <span asp-validation-for="LessonLength" class="text-danger small"></span>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="row g-3 mb-4">
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="ExistingGroups[i].MinAge"
-                                                           class="form-control"
-                                                           placeholder=" "
-                                                           required />
-                                                    <label asp-for="ExistingGroups[i].MinAge"></label>
-                                                    <span asp-validation-for="ExistingGroups[i].MinAge" class="text-danger small"></span>
+                                    <div class="form-floating mb-4">
+                                        <textarea asp-for="SubjectDescription" class="form-control"
+                                                  style="height: 100px" placeholder=" "></textarea>
+                                        <label asp-for="SubjectDescription">Описание предмета</label>
+                                    </div>
+
+                                    <div class="form-floating mb-4">
+                                        <textarea asp-for="Syllabus" class="form-control"
+                                                  style="height: 100px" placeholder=" "></textarea>
+                                        <label asp-for="Syllabus">Программа предмета</label>
+                                    </div>
+
+                                    <div class="teacher-input-wrapper">
+                                        <label class="form-label required-field">Преподаватели предмета</label>
+                                        <div class="teacher-search-container">
+                                            <input type="text"
+                                                   class="form-control teacher-search-input"
+                                                   placeholder="Начните вводить ФИО..."
+                                                   data-target="SelectedSubjectTeacherIds" />
+                                            <div class="teacher-search-results"></div>
+                                        </div>
+
+                                        <div class="selected-teachers-list mt-2">
+                                            @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
+                                            {
+                                                <div class="teacher-tag" data-teacher-id="@teacherId">
+                                                    <span class="teacher-tag-content">@(Model.TeacherNames.TryGetValue(teacherId, out var name) ? name : "Неизвестный")</span>
+                                                    <span class="remove-teacher-btn">×</span>
                                                 </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="ExistingGroups[i].MaxAge"
-                                                           class="form-control"
-                                                           placeholder=" "
-                                                           required />
-                                                    <label asp-for="ExistingGroups[i].MaxAge"></label>
-                                                    <span asp-validation-for="ExistingGroups[i].MaxAge" class="text-danger small"></span>
-                                                </div>
-                                            </div>
+                                            }
                                         </div>
 
-                                        <div class="col-md-12 location-select-wrapper">
-                                            <div class="form-floating">
-                                                <select asp-for="ExistingGroups[i].SelectedLocationId"
-                                                        class="form-select"
-                                                        asp-items="Model.Locations">
-                                                    <option value="">Выберите локацию</option>
-                                                </select>
-                                                <label asp-for="ExistingGroups[i].SelectedLocationId"></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-12 teacher-input-wrapper">
-                                            <label class="form-label">Преподаватели группы</label>
-                                            <div class="teacher-search-container">
-                                                <input type="text"
-                                                       class="form-control teacher-search-input"
-                                                       placeholder="Поиск преподавателей..."
-                                                       data-target="ExistingGroups[@i].SelectedTeacherIds" />
-                                                <div class="teacher-search-results"></div>
-                                            </div>
-
-                                            <div class="selected-teachers-list">
-                                                @foreach (var teacherId in Model.ExistingGroups[i].SelectedTeacherIds)
-                                                {
-                                                    <div class="teacher-tag" data-teacher-id="@teacherId">
-                                                        <span class="teacher-tag-content">
-                                                            @(Model.TeacherNames.TryGetValue(teacherId, out var name) ? name : "Неизвестный")
-                                                        </span>
-                                                        <span class="remove-teacher-btn">×</span>
-                                                    </div>
-                                                }
-                                            </div>
-
-                                            <div class="hidden-teacher-ids">
-                                                @foreach (var teacherId in Model.ExistingGroups[i].SelectedTeacherIds)
-                                                {
-                                                    <input type="hidden"
-                                                           name="ExistingGroups[@i].SelectedTeacherIds"
-                                                           value="@teacherId" />
-                                                }
-                                            </div>
+                                        <div class="hidden-teacher-ids">
+                                            @foreach (var teacherId in Model.SelectedSubjectTeacherIds)
+                                            {
+                                                <input type="hidden"
+                                                       name="SelectedSubjectTeacherIds"
+                                                       value="@teacherId" />
+                                            }
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        }
+                        </div>
+
+                        <!-- Секция групп -->
+                        <div class="col-lg-7">
+                            <div class="card shadow-sm border-success">
+                                <div class="card-header bg-success text-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h4 class="mb-0">
+                                            <i class="bi bi-people-fill me-2"></i>
+                                            Учебные группы
+                                        </h4>
+                                        <button type="button"
+                                                class="btn btn-light btn-sm"
+                                                id="add-group-btn">
+                                            <i class="bi bi-plus-circle me-2"></i>Добавить группу
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card-body" id="groups-container">
+                                    @for (var i = 0; i < Model.ExistingGroups.Count; i++)
+                                    {
+                                        <div class="group-card card">
+                                            <input type="hidden" asp-for="ExistingGroups[i].IdGroup" />
+
+                                            <div class="card-header py-2 d-flex justify-content-between align-items-center bg-light">
+                                                <span class="badge bg-primary">Группа @(i + 1)</span>
+                                                <div class="form-check form-switch mb-0">
+                                                    <input asp-for="ExistingGroups[i].IsDelete" class="form-check-input group-delete-switch" type="checkbox" value="true" />
+                                                    <input type="hidden" asp-for="ExistingGroups[i].IsDelete" value="false" />
+                                                    <label class="form-check-label small">Удалить группу</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="card-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="form-floating">
+                                                            <input asp-for="ExistingGroups[i].Name" class="form-control" placeholder=" " required />
+                                                            <label asp-for="ExistingGroups[i].Name" class="required-field">Название</label>
+                                                            <span asp-validation-for="ExistingGroups[i].Name" class="text-danger small"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-floating">
+                                                            <input asp-for="ExistingGroups[i].MaxStudentCount" type="number" class="form-control" min="1" max="30" placeholder=" " required />
+                                                            <label asp-for="ExistingGroups[i].MaxStudentCount" class="required-field">Макс. студентов</label>
+                                                            <span asp-validation-for="ExistingGroups[i].MaxStudentCount" class="text-danger small"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-3 mb-4">
+                                                        <div class="col-md-6">
+                                                            <div class="form-floating">
+                                                                <input asp-for="ExistingGroups[i].MinAge" type="number" class="form-control" min="1" max="18" placeholder=" " required />
+                                                                <label asp-for="ExistingGroups[i].MinAge" class="required-field">Возраст с</label>
+                                                                <span asp-validation-for="ExistingGroups[i].MinAge" class="text-danger small"></span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-floating">
+                                                                <input asp-for="ExistingGroups[i].MaxAge" type="number" class="form-control" min="1" max="19" placeholder=" " required />
+                                                                <label asp-for="ExistingGroups[i].MaxAge" class="required-field">Возраст до</label>
+                                                                <span asp-validation-for="ExistingGroups[i].MaxAge" class="text-danger small"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12 location-select-wrapper">
+                                                        <div class="form-floating">
+                                                            <select asp-for="ExistingGroups[i].SelectedLocationId"
+                                                                    class="form-select"
+                                                                    asp-items="Model.Locations" required>
+                                                                <option value="">Выберите локацию</option>
+                                                            </select>
+                                                            <label asp-for="ExistingGroups[i].SelectedLocationId" class="required-field">Локация</label>
+                                                            <span asp-validation-for="ExistingGroups[i].SelectedLocationId" class="text-danger small"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="teacher-input-wrapper">
+                                                        <label class="form-label required-field">Преподаватели группы</label>
+                                                        <div class="teacher-search-container">
+                                                            <input type="text"
+                                                                   class="form-control teacher-search-input"
+                                                                   placeholder="Поиск преподавателей..."
+                                                                   data-target="ExistingGroups[@i].SelectedTeacherIds" />
+                                                            <div class="teacher-search-results"></div>
+                                                        </div>
+
+                                                        <div class="selected-teachers-list mt-2">
+                                                            @foreach (var teacherId in Model.ExistingGroups[i].SelectedTeacherIds)
+                                                            {
+                                                                <div class="teacher-tag" data-teacher-id="@teacherId">
+                                                                    <span class="teacher-tag-content">@(Model.TeacherNames.TryGetValue(teacherId, out var name) ? name : "Неизвестный")</span>
+                                                                    <span class="remove-teacher-btn">×</span>
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <div class="hidden-teacher-ids">
+                                                            @foreach (var teacherId in Model.ExistingGroups[i].SelectedTeacherIds)
+                                                            {
+                                                                <input type="hidden"
+                                                                       name="ExistingGroups[@i].SelectedTeacherIds"
+                                                                       value="@teacherId" />
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="form-actions mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary px-4 py-2">
+                            <i class="bi bi-save me-2"></i>Сохранить предмет
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.IdSubject" class="btn btn-outline-secondary px-4 py-2 ms-2">
+                            <i class="bi bi-x-lg me-2"></i>Отмена
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <!-- Шаблон для новых групп -->
 <template id="group-template">
-    <div class="group-card card mb-3">
+    <div class="group-card card">
         <div class="card-header py-2 d-flex justify-content-between align-items-center bg-light">
             <span class="badge bg-primary">Новая группа</span>
             <button type="button" class="btn btn-sm btn-danger remove-group">
@@ -267,48 +264,47 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input name="ExistingGroups[__INDEX__].Name" class="form-control" placeholder=" " />
-                        <label>Название группы</label>
+                        <input name="ExistingGroups[__INDEX__].Name" class="form-control" placeholder=" " required />
+                        <label class="required-field">Название</label>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input name="ExistingGroups[__INDEX__].MaxStudentCount" type="number"
-                               class="form-control" min="1" max="30" placeholder=" " />
-                        <label>Макс. студентов</label>
+                        <input name="ExistingGroups[__INDEX__].MaxStudentCount" type="number" class="form-control" min="1" max="30" placeholder=" " required />
+                        <label class="required-field">Макс. студентов</label>
                     </div>
                 </div>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <div class="form-floating">
-                            <input name="ExistingGroups[__INDEX__].MinAge" type="number"
-                                   class="form-control" min="1" max="18" placeholder=" " />
-                            <label>Возраст с</label>
+                            <input name="ExistingGroups[__INDEX__].MinAge" type="number" class="form-control" min="1" max="18" placeholder=" " required />
+                            <label class="required-field">Возраст с</label>
                         </div>
                     </div>
+
                     <div class="col-md-6">
                         <div class="form-floating">
-                            <input name="ExistingGroups[__INDEX__].MaxAge" type="number"
-                                   class="form-control" min="1" max="19" placeholder=" " />
-                            <label>Возраст до</label>
+                            <input name="ExistingGroups[__INDEX__].MaxAge" type="number" class="form-control" min="1" max="19" placeholder=" " required />
+                            <label class="required-field">Возраст до</label>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-12 location-select-wrapper">
                     <div class="form-floating">
                         <select name="ExistingGroups[__INDEX__].SelectedLocationId"
-                                class="form-select">
+                                class="form-select" required>
                             <option value="">Выберите локацию</option>
                             @foreach (var location in Model.Locations)
                             {
                                 <option value="@location.Value">@location.Text</option>
                             }
                         </select>
-                        <label>Локация</label>
+                        <label class="required-field">Локация</label>
                     </div>
                 </div>
+
                 <div class="col-12 teacher-input-wrapper">
-                    <label class="form-label">Преподаватели группы</label>
+                    <label class="form-label required-field">Преподаватели группы</label>
                     <div class="teacher-search-container">
                         <input type="text"
                                class="form-control teacher-search-input"
@@ -316,7 +312,8 @@
                                data-target="ExistingGroups[__INDEX__].SelectedTeacherIds" />
                         <div class="teacher-search-results"></div>
                     </div>
-                    <div class="selected-teachers-list"></div>
+
+                    <div class="selected-teachers-list mt-2"></div>
                     <div class="hidden-teacher-ids"></div>
                 </div>
             </div>
@@ -326,165 +323,176 @@
 
 @section Scripts {
     <script>
-        const apiBaseUrl = 'https://localhost:7123';
+        const apiBaseUrl = window.apiBaseUrl;
 
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            initTeacherSearch();
-            initGroupActions();
-            initValidation();
-        });
+        // Модуль управления преподавателями
+        const TeacherManager = (() => {
+            const debounce = (func, delay) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func(...args), delay);
+                };
+            };
 
-        // Инициализация поиска преподавателей
-        function initTeacherSearch() {
-            document.querySelectorAll('.teacher-search-input').forEach(input => {
-                setupTeacherSearch(input);
-            });
-        }
-
-        // Настройка поиска для конкретного поля
-        function setupTeacherSearch(input) {
-            const container = input.closest('.teacher-input-wrapper');
-            const results = container.querySelector('.teacher-search-results');
-            const hiddenInputs = container.querySelector('.hidden-teacher-ids');
-            const targetField = input.dataset.target;
-
-            input.addEventListener('input', debounce(async (e) => {
-                const term = e.target.value.trim();
-                if (term.length < 2) {
-                    results.style.display = 'none';
-                    return;
-                }
-
+            const fetchTeachers = async (term) => {
                 try {
                     const response = await fetch(`${apiBaseUrl}/api/Employees/search?term=${encodeURIComponent(term)}`);
-                    const data = await response.json();
-                    showResults(data, results);
+                    if (!response.ok) throw new Error('Ошибка сети');
+                    return await response.json();
                 } catch (error) {
                     console.error('Ошибка поиска:', error);
+                    return [];
                 }
-            }, 300));
-
-            // Обработка выбора преподавателя
-            results.addEventListener('click', (e) => {
-                const item = e.target.closest('.search-result-item');
-                if (!item) return;
-
-                const teacherId = item.dataset.id;
-                const teacherName = item.dataset.name;
-
-                // Проверка дубликатов
-                if (!hiddenInputs.querySelector(`input[value="${teacherId}"]`)) {
-                    addTeacherTag(teacherId, teacherName, targetField, hiddenInputs, container);
-                }
-
-                input.value = '';
-                results.style.display = 'none';
-            });
-
-            // Удаление тега преподавателя
-            container.addEventListener('click', (e) => {
-                if (e.target.closest('.remove-teacher-btn')) {
-                    const tag = e.target.closest('.teacher-tag');
-                    const teacherId = tag.dataset.teacherId;
-                    hiddenInputs.querySelector(`input[value="${teacherId}"]`).remove();
-                    tag.remove();
-                }
-            });
-        }
-
-        // Инициализация действий с группами
-        function initGroupActions() {
-            // Добавление новой группы
-            document.getElementById('add-group-btn').addEventListener('click', () => {
-                const template = document.getElementById('group-template').content.cloneNode(true);
-                const newGroup = template.firstElementChild;
-                const index = document.querySelectorAll('.group-card').length;
-
-                // Обновление индексов
-                newGroup.querySelectorAll('[name]').forEach(el => {
-                    el.name = el.name.replace(/__INDEX__/g, index);
-                });
-
-                // Инициализация поиска для новой группы
-                newGroup.querySelectorAll('.teacher-search-input').forEach(input => {
-                    input.dataset.target = `ExistingGroups[${index}].SelectedTeacherIds`;
-                    setupTeacherSearch(input);
-                });
-
-                document.getElementById('groups-container').appendChild(newGroup);
-            });
-
-            // Удаление группы
-            document.addEventListener('click', (e) => {
-                if (e.target.closest('.remove-group')) {
-                    const groupCard = e.target.closest('.group-card');
-                    const isNew = !groupCard.querySelector('[name*="IdGroup"]');
-
-                    if (isNew) {
-                        groupCard.remove();
-                    } else {
-                        const deleteFlag = groupCard.querySelector('.group-deleted-flag');
-                        deleteFlag.value = 'true';
-                        groupCard.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-        // Валидация возрастов
-        function initValidation() {
-            document.addEventListener('input', function(e) {
-                if (e.target.matches('[name$="MinAge"], [name$="MaxAge"]')) {
-                    const minAge = parseInt(e.target.closest('.row').querySelector('[name$="MinAge"]').value);
-                    const maxAge = parseInt(e.target.closest('.row').querySelector('[name$="MaxAge"]').value);
-
-                    if (minAge > maxAge) {
-                        e.target.setCustomValidity('Максимальный возраст должен быть больше минимального');
-                    } else {
-                        e.target.setCustomValidity('');
-                    }
-                }
-            });
-        }
-
-        // Вспомогательные функции
-        function debounce(func, timeout = 300) {
-            let timer;
-            return (...args) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => { func.apply(this, args); }, timeout);
             };
-        }
 
-        function showResults(items, container) {
-            container.innerHTML = items.map(teacher => `
-                <div class="search-result-item"
-                     data-id="${teacher.idEmployee}"
-                     data-name="${teacher.fullName}">
-                    ${teacher.fullName}
-                </div>
-            `).join('');
-            container.style.display = items.length ? 'block' : 'none';
-        }
+            const updateSelectedList = (container) => {
+                const selectedList = container.querySelector('.selected-teachers-list');
+                const hasTeachers = selectedList.children.length > 0;
 
-        function addTeacherTag(id, name, target, hiddenContainer, parent) {
-            // Добавляем hidden input
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = target;
-            input.value = id;
-            hiddenContainer.appendChild(input);
+                selectedList.style.display = hasTeachers ? 'flex' : 'none';
+                selectedList.style.border = hasTeachers ? '1px solid #dee2e6' : 'none';
+            };
 
-            // Добавляем визуальный тег
-            const tag = document.createElement('div');
-            tag.className = 'teacher-tag';
-            tag.dataset.teacherId = id;
-            tag.innerHTML = `
-                <span class="teacher-tag-content">${name}</span>
-                <span class="remove-teacher-btn">×</span>
-            `;
-            parent.querySelector('.selected-teachers-list').appendChild(tag);
+            return {
+                init: (input) => {
+                    const container = input.closest('.teacher-input-wrapper');
+                    const results = container.querySelector('.teacher-search-results');
+                    const hiddenInputs = container.querySelector('.hidden-teacher-ids');
+
+                    const showResults = (items) => {
+                        results.innerHTML = items.map(teacher => `
+                            <div class="search-result-item"
+                                 data-id="${teacher.idEmployee}"
+                                 data-name="${teacher.fullName}">
+                                ${teacher.fullName}
+                            </div>
+                        `).join('');
+                        results.style.display = items.length ? 'block' : 'none';
+                    };
+
+                    const addTeacher = (id, name) => {
+                        if (hiddenInputs.querySelector(`input[value="${id}"]`)) return;
+
+                        // Добавляем hidden input
+                        const newInput = document.createElement('input');
+                        newInput.type = 'hidden';
+                        newInput.name = input.dataset.target;
+                        newInput.value = id;
+                        hiddenInputs.appendChild(newInput);
+
+                        // Добавляем визуальный элемент
+                        const tag = document.createElement('div');
+                        tag.className = 'teacher-tag';
+                        tag.dataset.teacherId = id;
+                        tag.innerHTML = `
+                            <span class="teacher-name">${name}</span>
+                            <span class="remove-teacher-btn">×</span>
+                        `;
+                        container.querySelector('.selected-teachers-list').appendChild(tag);
+                        updateSelectedList(container);
+                    };
+
+                    // Обработчики событий
+                    input.addEventListener('input', debounce(async (e) => {
+                        const term = e.target.value.trim();
+                        if (term.length < 2) {
+                            results.style.display = 'none';
+                            return;
+                        }
+                        showResults(await fetchTeachers(term));
+                    }, 300));
+
+                    container.addEventListener('click', (e) => {
+                        if (e.target.closest('.search-result-item')) {
+                            const item = e.target.closest('.search-result-item');
+                            addTeacher(item.dataset.id, item.dataset.name);
+                            input.value = '';
+                            results.style.display = 'none';
+                        }
+
+                        if (e.target.closest('.remove-teacher-btn')) {
+                            const tag = e.target.closest('.teacher-tag');
+                            const id = tag.dataset.teacherId;
+                            hiddenInputs.querySelector(`input[value="${id}"]`).remove();
+                            tag.remove();
+                            updateSelectedList(container);
+                        }
+                    });
+
+                    // Инициализация при первом запуске
+                    updateSelectedList(container);
+                },
+
+                updateSelectedList
+            };
+        })();
+
+        // Модуль управления группами
+        const GroupManager = (() => {
+            let groupIndex = @Model.ExistingGroups.Count;
+
+            const createLocationOptions = (selectElement) => {
+                selectElement.innerHTML = `
+                    <option value="">Выберите локацию</option>
+        @foreach (var location in Model.Locations)
+        {
+                            <option value="@location.Value">@location.Text</option>
         }
+                `;
+            };
+
+            return {
+                addGroup: () => {
+                    const template = document.getElementById('group-template').content.cloneNode(true);
+                    const newGroup = template.firstElementChild;
+                    const index = groupIndex++;
+
+                    // Обновляем индексы в имени полей
+                    const regex = /__INDEX__/g;
+                    newGroup.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(regex, index);
+                    });
+
+                    // Инициализация компонентов
+                    newGroup.querySelectorAll('.teacher-search-input').forEach(TeacherManager.init);
+                    createLocationOptions(newGroup.querySelector('select[name*="SelectedLocationId"]'));
+                    document.getElementById('groups-container').appendChild(newGroup);
+                },
+
+                initRemoveHandlers: () => {
+                    document.addEventListener('click', (e) => {
+                        if (e.target.closest('.remove-group')) {
+                            e.target.closest('.group-card').remove();
+                        }
+                    });
+                }
+            };
+        })();
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация полей поиска преподавателей
+            document.querySelectorAll('.teacher-search-input').forEach(TeacherManager.init);
+
+            // Инициализация групп
+            GroupManager.initRemoveHandlers();
+            document.getElementById('add-group-btn').addEventListener('click', GroupManager.addGroup);
+
+            // Принудительное обновление списков преподавателей
+            document.querySelectorAll('.teacher-input-wrapper').forEach(container => {
+                TeacherManager.updateSelectedList(container);
+            });
+
+            // Кастомные сообщения валидации
+            document.getElementById('main-form').addEventListener('submit', function(e) {
+                if (!this.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                this.classList.add('was-validated');
+            }, false);
+        });
     </script>
 }

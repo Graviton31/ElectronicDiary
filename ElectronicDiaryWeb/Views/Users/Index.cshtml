@@ -22,35 +22,51 @@
     <div class="user-management-container">
         <div class="card animate__animated animate__fadeIn">
             <div class="card-body">
-                <!-- Переключатель типов пользователей -->
-                <div class="user-type-toggle mb-4" id="userTypeButtons">
-                    <div class="btn-group" role="group">
-                        <button type="button"
-                                class="btn btn-outline-primary user-type-btn"
-                                data-user-type="Employees">
-                            <div class="btn-content">
-                                <i class="bi bi-person-badge"></i>
-                                <span>Сотрудники</span>
-                            </div>
-                        </button>
-                        <button type="button"
-                                class="btn btn-outline-primary user-type-btn"
-                                data-user-type="Parents">
-                            <div class="btn-content">
-                                <i class="bi bi-people"></i>
-                                <span>Родители</span>
-                            </div>
-                        </button>
-                        <button type="button"
-                                class="btn btn-outline-primary user-type-btn"
-                                data-user-type="Students">
-                            <div class="btn-content">
-                                <i class="bi bi-mortarboard"></i>
-                                <span>Ученики</span>
-                            </div>
-                        </button>
+                <!-- Переключатель типов пользователей, поиск и кнопка регистрации -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                    <div class="user-type-toggle" id="userTypeButtons">
+                        <div class="btn-group" role="group">
+                            <button type="button"
+                                    class="btn btn-outline-primary user-type-btn"
+                                    data-user-type="Employees">
+                                <div class="btn-content">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>Сотрудники</span>
+                                </div>
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary user-type-btn"
+                                    data-user-type="Parents">
+                                <div class="btn-content">
+                                    <i class="bi bi-people"></i>
+                                    <span>Родители</span>
+                                </div>
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary user-type-btn"
+                                    data-user-type="Students">
+                                <div class="btn-content">
+                                    <i class="bi bi-mortarboard"></i>
+                                    <span>Ученики</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
+                    
+                    <!-- Кнопка регистрации (только для администраторов) -->
+                    @if (User.IsInRole("администратор"))
+                    {
+                        <div>
+                            <a id="registerUserBtn" href="#" class="btn btn-success">
+                                <i class="bi bi-person-plus"></i>
+                                <span id="registerBtnText">Зарегистрировать сотрудника</span>
+                            </a>
+                        </div>
+                    }
                 </div>
+
+                <!-- Контейнер для поиска -->
+                <div id="searchContainer" class="flex-grow-1 flex-md-grow-0" style="max-width: 400px;"></div>
 
                 <!-- Список пользователей -->
                 <div class="user-list-container">
@@ -62,7 +78,7 @@
                         <div class="header-item employee-field">Роль</div>
                     </div>
                     <div class="user-list" id="usersList">
-                        <!-- Данные будут загружены через JS -->
+                        <!-- Данные пользователей -->
                         <div class="empty-state">
                             <div class="spinner-container">
                                 <div class="spinner-border text-primary" role="status">
@@ -104,23 +120,43 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const apiBaseUrl = window.apiBaseUrl;
         // Конфигурация
         const config = {
-            apiBaseUrl: 'https://localhost:7123',
             elements: {
                 userList: document.getElementById('usersList'),
                 employeeFields: document.querySelectorAll('.employee-field'),
                 pageInfo: document.getElementById('pageInfo'),
                 prevPage: document.getElementById('prevPage'),
                 nextPage: document.getElementById('nextPage'),
-                errorContainer: document.getElementById('errorContainer')
+                errorContainer: document.getElementById('errorContainer'),
+                searchContainer: document.getElementById('searchContainer'),
+                searchInput: document.createElement('input'),
+                searchLoader: document.createElement('div'),
+                registerUserBtn: document.getElementById('registerUserBtn'),
+                registerBtnText: document.getElementById('registerBtnText')
             },
             state: {
                 page: 1,
                 pageSize: 10,
                 type: 'Employees',
-                totalPages: 1
+                totalPages: 1,
+                searchQuery: '',
+                isSearching: false
             }
+        };
+
+        // Маршруты для кнопки регистрации
+        const registrationRoutes = {
+            'Employees': '/Register/RegisterEmployee',
+            'Parents': '/Register/RegisterParent',
+            'Students': '/Register/RegisterChild'
+        };
+
+        const registerButtonTexts = {
+            'Employees': 'Зарегистрировать сотрудника',
+            'Parents': 'Зарегистрировать родителя',
+            'Students': 'Зарегистрировать ученика'
         };
 
         // Инициализация
@@ -132,6 +168,7 @@
             }
 
             loadStateFromURL();
+            setupSearchInput();
             setupEventListeners();
             loadUsers();
         }
@@ -141,6 +178,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             config.state.type = urlParams.get('type') || 'Employees';
             config.state.page = parseInt(urlParams.get('page')) || 1;
+            config.state.searchQuery = urlParams.get('search') || '';
         }
 
         // Обновление URL
@@ -148,6 +186,11 @@
             const newUrl = new URL(window.location);
             newUrl.searchParams.set('type', config.state.type);
             newUrl.searchParams.set('page', config.state.page);
+            if (config.state.searchQuery) {
+                newUrl.searchParams.set('search', config.state.searchQuery);
+            } else {
+                newUrl.searchParams.delete('search');
+            }
             window.history.replaceState({}, '', newUrl);
         }
 
@@ -168,19 +211,82 @@
                 field.style.display = isEmployeeView ? 'block' : 'none';
             });
 
+            // Обновляем кнопку регистрации
+            if (config.elements.registerUserBtn) {
+                config.elements.registerUserBtn.href = registrationRoutes[config.state.type];
+                config.elements.registerBtnText.textContent = registerButtonTexts[config.state.type];
+            }
+
             // Пагинация
             config.elements.pageInfo.textContent = `Страница ${config.state.page} из ${config.state.totalPages}`;
             config.elements.prevPage.classList.toggle('disabled', config.state.page === 1);
             config.elements.nextPage.classList.toggle('disabled', config.state.page >= config.state.totalPages);
         }
 
+        // Настройка поиска
+        function setupSearchInput() {
+            const searchWrapper = document.createElement('div');
+            searchWrapper.className = 'search-wrapper position-relative';
+
+            // Поле ввода
+            config.elements.searchInput.type = 'text';
+            config.elements.searchInput.className = 'form-control search-input ps-4';
+            config.elements.searchInput.placeholder = 'Поиск по ФИО, логину...';
+            config.elements.searchInput.value = config.state.searchQuery;
+
+            // Иконка поиска
+            const searchIcon = document.createElement('i');
+            searchIcon.className = 'bi bi-search search-icon position-absolute';
+
+            // Индикатор загрузки
+            config.elements.searchLoader.className = 'search-loader position-absolute d-none';
+            const loaderSpinner = document.createElement('div');
+            loaderSpinner.className = 'spinner-border spinner-border-sm text-primary';
+            loaderSpinner.setAttribute('role', 'status');
+            config.elements.searchLoader.appendChild(loaderSpinner);
+
+            searchWrapper.appendChild(searchIcon);
+            searchWrapper.appendChild(config.elements.searchInput);
+            searchWrapper.appendChild(config.elements.searchLoader);
+            config.elements.searchContainer.appendChild(searchWrapper);
+
+            // Обработчик изменения поискового запроса
+            let searchTimeout;
+            config.elements.searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                config.state.searchQuery = e.target.value.trim();
+                config.state.page = 1;
+
+                // Показываем индикатор загрузки
+                config.state.isSearching = true;
+                config.elements.searchLoader.classList.remove('d-none');
+                searchIcon.classList.add('d-none');
+
+                searchTimeout = setTimeout(() => {
+                    loadUsers().finally(() => {
+                        // Скрываем индикатор после загрузки
+                        config.state.isSearching = false;
+                        config.elements.searchLoader.classList.add('d-none');
+                        searchIcon.classList.remove('d-none');
+                    });
+                }, 500);
+            });
+        }
+
         // Загрузка данных
         async function loadUsers() {
             try {
-                showLoading();
-                const url = new URL(`${config.apiBaseUrl}/api/${config.state.type}`);
+                if (!config.state.isSearching) {
+                    showLoading();
+                }
+
+                const url = new URL(`${apiBaseUrl}/api/${config.state.type}`);
                 url.searchParams.set('page', config.state.page);
                 url.searchParams.set('pageSize', config.state.pageSize);
+
+                if (config.state.searchQuery) {
+                    url.searchParams.set('search', config.state.searchQuery);
+                }
 
                 const response = await fetch(url, { credentials: 'include' });
 
@@ -204,7 +310,9 @@
                 showError(`Ошибка загрузки данных: ${error.message}`);
                 showEmptyState();
             } finally {
-                hideLoading();
+                if (!config.state.isSearching) {
+                    hideLoading();
+                }
             }
         }
 
@@ -301,6 +409,8 @@
                     if (newType !== config.state.type) {
                         config.state.type = newType;
                         config.state.page = 1;
+                        config.state.searchQuery = '';
+                        config.elements.searchInput.value = '';
                         loadUsers();
                     }
                 });
@@ -329,11 +439,7 @@
                 if (!userItem) return;
 
                 const userId = userItem.dataset.userId;
-
-                // Сохраняем текущий URL как URL для возврата
                 sessionStorage.setItem('returnUrl', window.location.href);
-
-                // Переходим на страницу деталей
                 window.location.href = `/${config.state.type}/Details/${userId}`;
             });
 
@@ -341,7 +447,7 @@
             window.addEventListener('resize', () => {
                 if (config.elements.userList.children.length > 0 &&
                     !config.elements.userList.querySelector('.empty-state')) {
-                    loadUsers(); // Перерисовываем список для корректного отображения
+                    loadUsers();
                 }
             });
         }
@@ -357,7 +463,6 @@
             `;
             config.elements.errorContainer.classList.add('animate__fadeIn');
 
-            // Автоматическое скрытие через 5 секунд
             setTimeout(() => {
                 config.elements.errorContainer.classList.add('fade-out');
                 setTimeout(() => {

@@ -41,12 +41,12 @@
                     @foreach (var student in Model.Students)
                     {
                         <div class="col-md-6 mb-3">
-                            <div class="card">
+                            <div class="card clickable-card" onclick="window.location.href='@Url.Action("Details", "Students", new { id = student.IdStudent })'" style="cursor: pointer;">
                                 <div class="card-body">
                                     <h5 class="card-title">@student.FullName</h5>
                                     <dl class="row mb-0">
                                         <dt class="col-sm-5">Телефон:</dt>
-                                        <dd class="col-sm-7">@(student.Phone ?? "не указан")</dd>                                     
+                                        <dd class="col-sm-7">@(student.Phone ?? "не указан")</dd>
                                     </dl>
                                     <dt class="col-sm-3">Кем приходится ребёнку:</dt>
                                     <dd class="col-sm-9">@(student.ParentRole)</dd>
@@ -128,6 +128,26 @@
                     window.history.back();
                 }
             });
+
+            // Добавляем эффект при наведении на карточки студентов
+            const cards = document.querySelectorAll('.clickable-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
         });
     </script>
 }
+
+<style>
+    .clickable-card:hover {
+        background-color: #f8f9fa;
+    }
+</style>

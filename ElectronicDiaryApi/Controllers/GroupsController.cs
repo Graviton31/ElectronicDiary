@@ -24,6 +24,8 @@ namespace ElectronicDiaryApi.Controllers
         [HttpPost]
         public async Task<ActionResult<GroupDto>> CreateGroup(CreateGroupDto createDto)
         {
+            _logger.LogInformation("Creating group with MaxStudentCount: {MaxStudentCount}", createDto.MaxStudentCount);
+
             var subject = await _context.Subjects.FindAsync(createDto.IdSubject);
             if (subject == null) return BadRequest("Invalid Subject ID");
 

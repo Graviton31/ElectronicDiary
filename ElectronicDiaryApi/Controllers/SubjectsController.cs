@@ -14,8 +14,9 @@ namespace ElectronicDiaryApi.Controllers
     public class SubjectsController : ControllerBase
     {
         private readonly ElectronicDiaryContext _context;
+        private readonly ILogger<SubjectsController> _logger;
 
-        public SubjectsController(ElectronicDiaryContext context)
+        public SubjectsController(ElectronicDiaryContext context, ILogger<SubjectsController> logger)
         {
             _context = context;
         }
@@ -33,6 +34,7 @@ namespace ElectronicDiaryApi.Controllers
                     IdSubject = s.IdSubject,
                     Name = s.Name,
                     FullName = s.FullName,
+                    Duration = s.Duration, // Добавляем Duration
                     GroupsCount = s.Groups.Count,
                     TeachersCount = s.IdEmployees.Count
                 })
@@ -68,6 +70,77 @@ namespace ElectronicDiaryApi.Controllers
                     Login = t.IdEmployeeNavigation.Login
                 }).ToList()
             };
+        }
+
+        // Controllers/SubjectsController.cs
+        [HttpGet("with-stats")]
+        public async Task<ActionResult<IEnumerable<SubjectWithStatsDto>>> GetSubjectsWithStats(
+            [FromQuery] string search = null,
+            [FromQuery] string status = null)
+        {
+            try
+            {
+                var query = _context.Subjects
+                    .Include(s => s.Groups)
+                        .ThenInclude(g => g.IdStudents)
+                    .Include(s => s.IdEmployees)
+                    .Where(e => e.IsDelete != true);
+
+                // Поиск по названию
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(s => s.Name.Contains(search) || s.FullName.Contains(search));
+                }
+
+                // Фильтрация по статусу
+                if (!string.IsNullOrEmpty(status))
+                {
+                    switch (status.ToLower())
+                    {
+                        case "active":
+                            query = query.Where(s => s.Groups
+                                .Where(g => g.IsDelete != true)
+                                .Average(g => (double)g.IdStudents.Count / (g.MaxStudentCount > 0 ? g.MaxStudentCount : 1) * 100) >= 80);
+                            break;
+                        case "inactive":
+                            query = query.Where(s => s.Groups.Any(g => g.IsDelete != true) != true);
+                            break;
+                        case "recruiting":
+                            query = query.Where(s => s.Groups
+                                .Where(g => g.IsDelete != true)
+                                .Average(g => (double)g.IdStudents.Count / (g.MaxStudentCount > 0 ? g.MaxStudentCount : 1) * 100) < 80);
+                            break;
+                    }
+                }
+
+                var subjects = await query
+                    .Select(s => new SubjectWithStatsDto
+                    {
+                        IdSubject = s.IdSubject,
+                        Name = s.Name ?? "Без названия",
+                        FullName = s.FullName ?? "Без полного названия",
+                        Description = s.Description,
+                        Duration = s.Duration,
+                        GroupsCount = s.Groups.Count(g => g.IsDelete != true),
+                        TeachersCount = s.IdEmployees.Count,
+                        TotalStudents = s.Groups
+                            .Where(g => g.IsDelete != true)
+                            .Sum(g => g.IdStudents.Count),
+                        AvgGroupFillPercentage = s.Groups.Any(g => g.IsDelete != true && g.MaxStudentCount > 0)
+                            ? Math.Round(s.Groups
+                                .Where(g => g.IsDelete != true && g.MaxStudentCount > 0)
+                                .Average(g => (double)g.IdStudents.Count / g.MaxStudentCount * 100))
+                            : 0
+                    })
+                    .ToListAsync();
+
+                return Ok(subjects);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при получении списка предметов со статистикой");
+                return StatusCode(500, "Произошла ошибка при загрузке данных");
+            }
         }
 
         [HttpGet("{id}/groups")]

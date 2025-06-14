@@ -1,0 +1,205 @@
+﻿@using ElectronicDiaryWeb.Models.Auth
+@model RegisterParentModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Регистрация родителя";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Регистрация родителя</h3>
+        </div>
+        <div class="card-body">
+            <form id="parentForm" asp-action="RegisterParent" method="post" class="needs-validation" novalidate>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="text-primary mb-3">Личные данные</h4>
+                        <div class="form-group mb-3">
+                            <label asp-for="Surname" class="form-label">Фамилия*</label>
+                            <input asp-for="Surname" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label">Имя*</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите имя</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Patronymic" class="form-label">Отчество</label>
+                            <input asp-for="Patronymic" class="form-control" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="BirthDate" class="form-label">Дата рождения*</label>
+                            <input asp-for="BirthDate" type="date" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите дату рождения</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Phone" class="form-label">Телефон*</label>
+                            <input asp-for="Phone" class="form-control" placeholder="+7XXXXXXXXXX" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите телефон</div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Workplace" class="form-label">Место работы</label>
+                            <input asp-for="Workplace" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h4 class="text-primary mb-3">Учетные данные</h4>
+                        <div class="form-group mb-3">
+                            <label asp-for="Login" class="form-label">Логин*</label>
+                            <input asp-for="Login" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите логин</div>
+                            <small class="form-text text-muted">Логин должен быть уникальным</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">Пароль*</label>
+                            <input asp-for="Password" type="password" class="form-control" required minlength="6" />
+                            <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">Подтверждение пароля*</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                            <div class="invalid-feedback">Пароли не совпадают</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Зарегистрировать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('parentForm');
+        if (!form) return;
+
+        // Конфигурация API
+        const apiBaseUrl = window.apiBaseUrl;
+
+        // Элементы формы
+        const passwordInput = form.querySelector('input[name="Password"]');
+        const confirmPasswordInput = form.querySelector('input[name="ConfirmPassword"]');
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Валидация паролей
+        function validatePasswords() {
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordInput.setCustomValidity("Пароли не совпадают");
+                return false;
+            } else {
+                confirmPasswordInput.setCustomValidity("");
+                return true;
+            }
+        }
+
+        passwordInput.addEventListener('input', validatePasswords);
+        confirmPasswordInput.addEventListener('input', validatePasswords);
+
+        // Отправка формы
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Валидация формы
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            if (!validatePasswords()) {
+                alert("Пароли не совпадают");
+                return;
+            }
+
+            try {
+                // Показать индикатор загрузки
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Регистрация...
+                `;
+
+                // Подготовка данных
+                const formData = {
+                    login: form.querySelector('input[name="Login"]').value,
+                    password: passwordInput.value,
+                    name: form.querySelector('input[name="Name"]').value,
+                    surname: form.querySelector('input[name="Surname"]').value,
+                    patronymic: form.querySelector('input[name="Patronymic"]').value || null,
+                    birthDate: new Date(form.querySelector('input[name="BirthDate"]').value).toISOString().split('T')[0],
+                    phone: form.querySelector('input[name="Phone"]').value,
+                    workplace: form.querySelector('input[name="Workplace"]').value || null
+                };
+
+                // Получаем CSRF-токен
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                // Отправка запроса
+                const response = await fetch(`${apiBaseUrl}/api/users/register-parent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': csrfToken,
+                        'Authorization': `Bearer ${getCookie('_secure_at')}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(formData)
+                });
+
+                // Обработка ответа
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Ошибка сервера: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert('Родитель успешно зарегистрирован!');
+                window.location.href = '/Home/Index';
+
+            } catch (error) {
+                console.error('Ошибка регистрации:', error);
+                showError(error.message || 'Произошла ошибка при регистрации');
+            } finally {
+                // Восстановить кнопку
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрировать';
+            }
+        });
+
+        // Функция отображения ошибок
+        function showError(message) {
+            // Удаляем предыдущие ошибки
+            const existingAlerts = form.querySelectorAll('.alert-danger');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Создаем новое сообщение об ошибке
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger mt-3';
+            errorAlert.textContent = message;
+
+            // Добавляем перед кнопкой отправки
+            const submitContainer = form.querySelector('.d-flex.justify-content-between.mt-4');
+            form.insertBefore(errorAlert, submitContainer);
+        }
+
+        // Функция получения куки
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+    });
+</script>
