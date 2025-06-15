@@ -3,6 +3,7 @@ using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.EnrollmentRequest;
 using ElectronicDiaryApi.ModelsDto.Group;
 using ElectronicDiaryApi.ModelsDto.Subject;
+using ElectronicDiaryApi.ModelsDto.UsersView;
 using ElectronicDiaryWeb.Models;
 using ElectronicDiaryWeb.Models.Group;
 using ElectronicDiaryWeb.Models.Subject;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Diagnostics;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ElectronicDiaryWeb.Controllers
@@ -33,6 +35,9 @@ namespace ElectronicDiaryWeb.Controllers
         {
             try
             {
+                // Получаем ID текущего пользователя
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
                 // Формируем URL с параметрами
                 var url = "/api/Subjects/with-stats";
                 var queryParams = new List<string>();
@@ -42,6 +47,17 @@ namespace ElectronicDiaryWeb.Controllers
 
                 if (!string.IsNullOrEmpty(status))
                     queryParams.Add($"status={Uri.EscapeDataString(status)}");
+
+                // Если пользователь - учитель, добавляем параметр teacherId
+                if (User.IsInRole("учитель"))
+                {
+                    // Получаем ID сотрудника (учителя)
+                    var employee = await _apiClient.GetFromJsonAsync<EmployeeDto>($"/api/Employees/by-user/{userId}");
+                    if (employee != null)
+                    {
+                        queryParams.Add($"teacherId={employee.IdEmployee}");
+                    }
+                }
 
                 if (queryParams.Any())
                     url += "?" + string.Join("&", queryParams);

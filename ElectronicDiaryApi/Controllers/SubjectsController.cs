@@ -76,7 +76,8 @@ namespace ElectronicDiaryApi.Controllers
         [HttpGet("with-stats")]
         public async Task<ActionResult<IEnumerable<SubjectWithStatsDto>>> GetSubjectsWithStats(
             [FromQuery] string search = null,
-            [FromQuery] string status = null)
+            [FromQuery] string status = null,
+            [FromQuery] int? teacherId = null) 
         {
             try
             {
@@ -85,6 +86,13 @@ namespace ElectronicDiaryApi.Controllers
                         .ThenInclude(g => g.IdStudents)
                     .Include(s => s.IdEmployees)
                     .Where(e => e.IsDelete != true);
+
+                // Фильтрация по учителю, если указан teacherId
+                if (teacherId.HasValue)
+                {
+                    query = query.Where(s => s.IdEmployees.Any(e => e.IdEmployee == teacherId.Value) ||
+                                            s.Groups.Any(g => g.IdEmployees.Any(e => e.IdEmployee == teacherId.Value)));
+                }
 
                 // Поиск по названию
                 if (!string.IsNullOrEmpty(search))

@@ -114,7 +114,6 @@
     (function() {
         console.log('[DEBUG] Schedule change form script started');
         const form = document.getElementById('changeForm');
-        const apiBaseUrl = window.apiBaseUrl;
 
         if (!form) {
             console.error('[DEBUG] Form element not found!');
@@ -170,7 +169,7 @@
             const groupId = document.querySelector('#GroupId').value;
             try {
                 const response = await fetch(
-                    `${apiBaseUrl}StandardSchedules/GetStandardSchedules?groupId=${groupId}&date=${date}`
+                    `${apiBaseUrl}/api/StandardSchedules/GetStandardSchedules?groupId=${groupId}&date=${date}`
                 );
 
                 if (!response.ok) {

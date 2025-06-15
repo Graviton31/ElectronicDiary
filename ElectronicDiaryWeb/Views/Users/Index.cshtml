@@ -11,10 +11,27 @@
             <div class="icon-wrapper me-3">
                 <i class="bi bi-people-fill header-icon"></i>
             </div>
-            <div>
-                <h1 class="page-title">Управление пользователями</h1>
-                <p class="page-subtitle">Просмотр и управление учетными записями системы</p>
-            </div>
+            @if (User.IsInRole("администратор"))
+            {
+                <div>
+                        <h1 class="page-title">Управление пользователями</h1>
+                    <p class="page-subtitle">Просмотр и управление учетными записями системы</p>
+                </div>
+            }
+            @if (User.IsInRole("руководитель"))
+            {
+                <div>
+                    <h1 class="page-title">Пользователи</h1>
+                    <p class="page-subtitle">Просмотр информации о пользователях</p>
+                </div>
+            }
+            @if (User.IsInRole("учитель"))
+            {
+                <div>
+                    <h1 class="page-title">Сотрудники</h1>
+                    <p class="page-subtitle">Просмотр информации о сотрудниках</p>
+                </div>
+            }
         </div>
         <div class="header-divider"></div>
     </header>
@@ -22,51 +39,55 @@
     <div class="user-management-container">
         <div class="card animate__animated animate__fadeIn">
             <div class="card-body">
-                <!-- Переключатель типов пользователей, поиск и кнопка регистрации -->
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-                    <div class="user-type-toggle" id="userTypeButtons">
-                        <div class="btn-group" role="group">
-                            <button type="button"
-                                    class="btn btn-outline-primary user-type-btn"
-                                    data-user-type="Employees">
-                                <div class="btn-content">
-                                    <i class="bi bi-person-badge"></i>
-                                    <span>Сотрудники</span>
+                <!-- Панель управления (поиск, переключатели, кнопка) -->
+                <div class="user-control-panel mb-4">
+                    <div class="row g-3 align-items-center">
+                        <!-- Поиск -->
+                        <div class="col-md-5 col-lg-4">
+                            <div class="search-wrapper position-relative">
+                                <i class="bi bi-search search-icon position-absolute"></i>
+                                <input type="text" id="searchInput" class="form-control search-input ps-4"
+                                       placeholder="Поиск по ФИО, логину...">
+                                <div class="search-loader position-absolute d-none">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                                 </div>
-                            </button>
-                            <button type="button"
-                                    class="btn btn-outline-primary user-type-btn"
-                                    data-user-type="Parents">
-                                <div class="btn-content">
-                                    <i class="bi bi-people"></i>
-                                    <span>Родители</span>
-                                </div>
-                            </button>
-                            <button type="button"
-                                    class="btn btn-outline-primary user-type-btn"
-                                    data-user-type="Students">
-                                <div class="btn-content">
-                                    <i class="bi bi-mortarboard"></i>
-                                    <span>Ученики</span>
-                                </div>
-                            </button>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Кнопка регистрации (только для администраторов) -->
-                    @if (User.IsInRole("администратор"))
-                    {
-                        <div>
-                            <a id="registerUserBtn" href="#" class="btn btn-success">
-                                <i class="bi bi-person-plus"></i>
-                                <span id="registerBtnText">Зарегистрировать сотрудника</span>
-                            </a>
-                        </div>
-                    }
-                </div>
 
-                <!-- Контейнер для поиска -->
-                <div id="searchContainer" class="flex-grow-1 flex-md-grow-0" style="max-width: 400px;"></div>
+                        <!-- Переключатель типов -->
+                        <div class="col-md-5 col-lg-6">
+                            <div class="btn-group user-type-toggle" role="group">
+                                @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+                                {
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Employees">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span class="btn-text">Сотрудники</span>
+                                    </button>
+                                
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Parents">
+                                        <i class="bi bi-people"></i>
+                                        <span class="btn-text">Родители</span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Students">
+                                        <i class="bi bi-mortarboard"></i>
+                                        <span class="btn-text">Ученики</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Кнопка регистрации -->
+                        @if (User.IsInRole("администратор"))
+                        {
+                            <div class="col-md-2 text-md-end">
+                                <a id="registerUserBtn" href="#" class="btn btn-success btn-register">
+                                    <i class="bi bi-person-plus"></i>
+                                    <span class="btn-text">Зарегистрировать</span>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
 
                 <!-- Список пользователей -->
                 <div class="user-list-container">
@@ -121,6 +142,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const apiBaseUrl = window.apiBaseUrl;
+
+        // console.log(User.IsIn("руководитель"))
+
         // Конфигурация
         const config = {
             elements: {
@@ -130,11 +154,9 @@
                 prevPage: document.getElementById('prevPage'),
                 nextPage: document.getElementById('nextPage'),
                 errorContainer: document.getElementById('errorContainer'),
-                searchContainer: document.getElementById('searchContainer'),
-                searchInput: document.createElement('input'),
-                searchLoader: document.createElement('div'),
+                searchInput: null,
+                searchLoader: null,
                 registerUserBtn: document.getElementById('registerUserBtn'),
-                registerBtnText: document.getElementById('registerBtnText')
             },
             state: {
                 page: 1,
@@ -194,7 +216,6 @@
             window.history.replaceState({}, '', newUrl);
         }
 
-        // Обновление UI
         function updateUI() {
             // Обновление кнопок типа
             document.querySelectorAll('.user-type-btn').forEach(btn => {
@@ -211,10 +232,13 @@
                 field.style.display = isEmployeeView ? 'block' : 'none';
             });
 
-            // Обновляем кнопку регистрации
+            // Обновляем кнопку регистрации (если она существует)
             if (config.elements.registerUserBtn) {
                 config.elements.registerUserBtn.href = registrationRoutes[config.state.type];
-                config.elements.registerBtnText.textContent = registerButtonTexts[config.state.type];
+                const registerTextElement = document.getElementById('registerBtnText');
+                if (registerTextElement) {
+                    registerTextElement.textContent = registerButtonTexts[config.state.type];
+                }
             }
 
             // Пагинация
@@ -225,30 +249,11 @@
 
         // Настройка поиска
         function setupSearchInput() {
-            const searchWrapper = document.createElement('div');
-            searchWrapper.className = 'search-wrapper position-relative';
+            config.elements.searchInput = document.getElementById('searchInput');
+            config.elements.searchLoader = document.querySelector('.search-loader');
 
-            // Поле ввода
-            config.elements.searchInput.type = 'text';
-            config.elements.searchInput.className = 'form-control search-input ps-4';
-            config.elements.searchInput.placeholder = 'Поиск по ФИО, логину...';
+            // Устанавливаем начальное значение
             config.elements.searchInput.value = config.state.searchQuery;
-
-            // Иконка поиска
-            const searchIcon = document.createElement('i');
-            searchIcon.className = 'bi bi-search search-icon position-absolute';
-
-            // Индикатор загрузки
-            config.elements.searchLoader.className = 'search-loader position-absolute d-none';
-            const loaderSpinner = document.createElement('div');
-            loaderSpinner.className = 'spinner-border spinner-border-sm text-primary';
-            loaderSpinner.setAttribute('role', 'status');
-            config.elements.searchLoader.appendChild(loaderSpinner);
-
-            searchWrapper.appendChild(searchIcon);
-            searchWrapper.appendChild(config.elements.searchInput);
-            searchWrapper.appendChild(config.elements.searchLoader);
-            config.elements.searchContainer.appendChild(searchWrapper);
 
             // Обработчик изменения поискового запроса
             let searchTimeout;
@@ -260,14 +265,14 @@
                 // Показываем индикатор загрузки
                 config.state.isSearching = true;
                 config.elements.searchLoader.classList.remove('d-none');
-                searchIcon.classList.add('d-none');
+                document.querySelector('.search-icon').classList.add('d-none');
 
                 searchTimeout = setTimeout(() => {
                     loadUsers().finally(() => {
                         // Скрываем индикатор после загрузки
                         config.state.isSearching = false;
                         config.elements.searchLoader.classList.add('d-none');
-                        searchIcon.classList.remove('d-none');
+                        document.querySelector('.search-icon').classList.remove('d-none');
                     });
                 }, 500);
             });

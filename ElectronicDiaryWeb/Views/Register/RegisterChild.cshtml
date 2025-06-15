@@ -122,9 +122,11 @@
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
-                    <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Назад
-                    </a>
+                    <div class="mb-4">
+                        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
+                            ← Назад
+                        </a>
+                    </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-user-plus"></i> Зарегистрировать
                     </button>
@@ -307,8 +309,37 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
+
+
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                const returnUrl = sessionStorage.getItem('returnUrl') || document.referrer;
+                const savedState = sessionStorage.getItem('journalState') ||
+                                  localStorage.getItem('journalBackupState');
+
+                if (savedState && returnUrl) {
+                    const state = JSON.parse(savedState);
+
+                    // Формируем URL с параметрами
+                    const url = new URL(returnUrl, window.location.origin);
+                    url.searchParams.set('subjectId', state.subjectId);
+                    url.searchParams.set('groupId', state.groupId);
+
+                    if (state.journalId) {
+                        url.searchParams.set('journalId', state.journalId);
+                    }
+
+                    // Добавляем параметр для предотвращения кэширования
+                    url.searchParams.set('_t', Date.now());
+
+                    window.location.href = url.toString();
+                } else {
+                    window.history.back();
+                }
+            });
+
             // Обработчик поиска
             const searchBtn = document.getElementById('searchBtn');
             if (searchBtn) {
