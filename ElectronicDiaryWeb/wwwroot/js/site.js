@@ -37,6 +37,7 @@ const httpClient = {
             ...options.headers
         };
 
+        // Получаем токен из куков
         const accessToken = getCookie('_secure_at');
         if (accessToken) {
             headers['Authorization'] = `Bearer ${accessToken}`;
@@ -45,6 +46,7 @@ const httpClient = {
         const config = {
             method,
             headers,
+            credentials: 'include', // Это важно для отправки кук
             ...options,
             body: data ? JSON.stringify(data) : null
         };

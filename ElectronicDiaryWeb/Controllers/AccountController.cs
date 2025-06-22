@@ -79,7 +79,7 @@ public class AccountController : Controller
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires = authResult.AccessTokenExpires,
             IsEssential = true
         });

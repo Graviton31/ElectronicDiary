@@ -2,10 +2,12 @@
 {
     public class UnifiedLessonInfoDto
     {
+        public int GroupId { get; set; }
         public string GroupName { get; set; }
         public string SubjectName { get; set; }
         public string Location { get; set; }
         public List<string> Teachers { get; set; }
+        public List<string> ChildrenInfo { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public string Classroom { get; set; }

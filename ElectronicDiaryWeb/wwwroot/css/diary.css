@@ -1,0 +1,80 @@
+﻿/* СТИЛИ ДЛЯ ЗАМЕТНОЙ ИКОНКИ КОММЕНТАРИЯ */
+.comment-btn {
+    width: 32px; /* Увеличенный размер */
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white; /* Белый цвет иконки */
+    background-color: var(--primary-color); /* Основной цвет фона */
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+    .comment-btn:hover {
+        background-color: var(--secondary-color); /* Изменение цвета при наведении */
+        transform: scale(1.1) translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .comment-btn i {
+        font-size: 1.3rem; /* Увеличенный размер иконки */
+        position: relative;
+        top: 1px; /* Визуальное выравнивание */
+    }
+
+    /* Индикатор комментария */
+    .comment-btn.has-comment {
+        animation: pulse 1.5s infinite;
+    }
+
+        .comment-btn.has-comment:hover {
+            animation: pulse 0.5s infinite;
+        }
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(67, 97, 238, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+    }
+}
+
+/* АДАПТИВ ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 767.98px) {
+    .comment-btn {
+        width: 36px; /* Ещё больше на мобильных */
+        height: 36px;
+    }
+
+        .comment-btn i {
+            font-size: 1.4rem;
+        }
+}
+
+@media (max-width: 576px) {
+    .comment-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+        .comment-btn i {
+            font-size: 1.3rem;
+        }
+}

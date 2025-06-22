@@ -86,7 +86,7 @@ public class RegisterController : Controller
             return View(model);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Users");
     }
 
     //[Authorize(Roles = "администратор")]
@@ -129,7 +129,7 @@ public class RegisterController : Controller
             return View(model);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Users");
     }
 
     [HttpGet("RegisterParent")]
@@ -168,6 +168,6 @@ public class RegisterController : Controller
             return View(model);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Users");
     }
 }

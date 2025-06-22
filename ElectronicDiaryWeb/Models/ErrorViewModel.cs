@@ -6,6 +6,8 @@ namespace ElectronicDiaryWeb.Models
 
         public string? Message { get; set; }
 
+        public string? Details { get; set; }
+
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }

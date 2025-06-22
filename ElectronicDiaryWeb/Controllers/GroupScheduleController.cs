@@ -1,5 +1,4 @@
 ﻿using ElectronicDiaryWeb.Models;
-using ElectronicDiaryApi.ModelsDto.Shedule;
 using ElectronicDiaryApi.ModelsDto.Group;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,6 +9,7 @@ using static ElectronicDiaryApi.Controllers.StandardScheduleController;
 using static ElectronicDiaryApi.Controllers.ScheduleChangeController;
 using ElectronicDiaryWeb.Models.Shedule;
 using Microsoft.AspNetCore.Authorization;
+using ElectronicDiaryApi.ModelsDto.Responses;
 
 namespace ElectronicDiaryWeb.Controllers
 {   [Authorize]
