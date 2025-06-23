@@ -189,6 +189,70 @@ body {
         box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
     }
 
+/* Дополнительные стили для дневника */
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lesson-item {
+    border-left: 3px solid var(--primary-color);
+    transition: all 0.2s ease;
+}
+
+    .lesson-item:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .lesson-item.bg-danger {
+        border-left-color: var(--danger-color);
+    }
+
+    .lesson-item.bg-warning {
+        border-left-color: var(--warning-color);
+    }
+
+    .lesson-item.bg-info {
+        border-left-color: var(--info-color);
+    }
+
+.day-header {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.comment-btn {
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 767.98px) {
+    .lesson-item {
+        padding: 0.75rem;
+    }
+
+    .lesson-time {
+        font-size: 0.85rem;
+    }
+
+    .lesson-subject {
+        font-size: 0.9rem;
+    }
+
+    .lesson-group, .lesson-teachers {
+        font-size: 0.8rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+}
+
 /* Адаптация */
 @media (max-width: 767.98px) {
     .page-header .icon-wrapper {

@@ -1,6 +1,13 @@
 ﻿@using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@inject IAuthorizationService AuthorizationService
+@{
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,9 +93,18 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand">
+                @if (userRole != "родитель" && userRole != "студент")
+                {
+                    <a class="navbar-brand">
                     <i class="bi bi-journal-bookmark me-2"></i>Электронный журнал
-                </a>
+                    </a>
+                }
+                else
+                {
+                    <a class="navbar-brand">
+                        <i class="bi bi-journal-bookmark me-2"></i>Электронный дневник
+                    </a>
+                }
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -99,21 +115,32 @@
                                 <i class="bi bi-calendar3 me-1"></i>Расписание
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Users" asp-action="Index">
-                                <i class="bi bi-people me-1"></i>Пользователи
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Journals" asp-action="Index">
-                                <i class="bi bi-clipboard-data me-1"></i>Журнал
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Subjects" asp-action="Index">
-                                <i class="bi bi-book me-1"></i>Предметы
-                            </a>
-                        </li>
+                         @if (userRole != "родитель" && userRole != "студент")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Users" asp-action="Index">
+                                    <i class="bi bi-people me-1"></i>Пользователи
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Journals" asp-action="Index">
+                                    <i class="bi bi-clipboard-data me-1"></i>Журнал
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Subjects" asp-action="Index">
+                                    <i class="bi bi-book me-1"></i>Предметы
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Diary" asp-action="Index">
+                                    <i class="bi bi-book me-1"></i>Дневник
+                                </a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
@@ -146,6 +173,8 @@
             </div>
         </nav>
     </header>
+
+    <div id="global-alerts" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
 
     <!-- Модальное окно подтверждения выхода -->
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
@@ -226,4 +255,24 @@
             sessionStorage.setItem('returnUrl', document.referrer);
         }
     });
+
+    // Функция для показа уведомлений
+    function showGlobalAlert(message, type = 'danger') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show m-3`;
+        alertDiv.innerHTML = `
+            <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle' : 'bi-check-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        const container = document.getElementById('global-alerts');
+        container.appendChild(alertDiv);
+
+        setTimeout(() => {
+            alertDiv.classList.add('fade');
+            setTimeout(() => alertDiv.remove(), 150);
+        }, 5000);
+    }
+
 </script>

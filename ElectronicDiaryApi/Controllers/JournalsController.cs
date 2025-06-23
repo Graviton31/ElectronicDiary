@@ -1,4 +1,5 @@
-﻿using ElectronicDiaryApi.Data;
+﻿using ClosedXML.Excel;
+using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using ElectronicDiaryApi.ModelsDto;
 using ElectronicDiaryApi.ModelsDto.Group;
@@ -466,6 +467,233 @@ namespace ElectronicDiaryApi.Controllers
                 }).ToList();
 
             return Ok(students);
+        }
+
+        [HttpGet("Journals/{journalId}/ExportExcel")]
+        public async Task<IActionResult> ExportJournalToExcel(int journalId)
+        {
+            var journal = await _context.Journals
+                .Include(j => j.Lessons)
+                    .ThenInclude(l => l.Visits)
+                .Include(j => j.IdGroupNavigation)
+                    .ThenInclude(g => g.IdStudents)
+                        .ThenInclude(s => s.IdStudentNavigation)
+                .Include(j => j.IdGroupNavigation)
+                    .ThenInclude(g => g.IdSubjectNavigation)
+                .FirstOrDefaultAsync(j => j.IdJournal == journalId);
+
+            if (journal == null)
+                return NotFound("Журнал не найден");
+
+            // Формируем данные для экспорта
+            var exportData = new JournalExcelExportDto
+            {
+                GroupName = journal.IdGroupNavigation.Name,
+                SubjectName = journal.IdGroupNavigation.IdSubjectNavigation.Name,
+                StartDate = journal.StartDate ?? DateOnly.MinValue,
+                EndDate = journal.EndDate ?? DateOnly.MinValue,
+                Students = journal.IdGroupNavigation.IdStudents
+                    .Select(s => new StudentVisitDto
+                    {
+                        IdStudent = s.IdStudent,
+                        FullName = $"{s.IdStudentNavigation.Surname} {s.IdStudentNavigation.Name} {s.IdStudentNavigation.Patronymic}".Trim()
+                    })
+                    .ToList(),
+                Lessons = journal.Lessons
+                    .OrderBy(l => l.LessonDate)
+                    .Select(l => new LessonDto
+                    {
+                        IdLesson = l.IdLesson,
+                        LessonDate = l.LessonDate,
+                        Visits = l.Visits.ToDictionary(
+                            v => v.IdStudent,
+                            v => new VisitDto
+                            {
+                                IdVisit = v.IdVisit,
+                                UnvisitedStatuses = v.UnvisitedStatuses,
+                                Comment = v.Comment
+                            })
+                    })
+                    .ToList()
+            };
+
+            // Генерируем Excel и возвращаем файл
+            return GenerateExcelFile(exportData);
+        }
+
+        private IActionResult GenerateExcelFile(JournalExcelExportDto data)
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Журнал посещений");
+
+                // Стили границ
+                var borderStyle = XLBorderStyleValues.Medium;
+                var borderColor = XLColor.FromArgb(200, 200, 200); // Серый
+
+                // Стили
+                var headerStyle = workbook.Style;
+                headerStyle.Font.Bold = true;
+                headerStyle.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                headerStyle.Fill.BackgroundColor = XLColor.FromArgb(234, 244, 249); // Мягкий голубой
+                headerStyle.Font.FontColor = XLColor.FromArgb(51, 51, 51); // Темно-серый
+                headerStyle.Border.TopBorder = borderStyle;
+                headerStyle.Border.BottomBorder = borderStyle;
+                headerStyle.Border.LeftBorder = borderStyle;
+                headerStyle.Border.RightBorder = borderStyle;
+                headerStyle.Border.TopBorderColor = borderColor;
+                headerStyle.Border.BottomBorderColor = borderColor;
+                headerStyle.Border.LeftBorderColor = borderColor;
+                headerStyle.Border.RightBorderColor = borderColor;
+
+                var totalStyle = workbook.Style;
+                totalStyle.Font.Bold = true;
+                totalStyle.Fill.BackgroundColor = XLColor.FromArgb(245, 245, 245); // Светло-серый
+                totalStyle.Font.FontColor = XLColor.FromArgb(51, 51, 51);
+                totalStyle.Border.TopBorder = borderStyle;
+                totalStyle.Border.BottomBorder = borderStyle;
+                totalStyle.Border.LeftBorder = borderStyle;
+                totalStyle.Border.RightBorder = borderStyle;
+                totalStyle.Border.TopBorderColor = borderColor;
+                totalStyle.Border.BottomBorderColor = borderColor;
+                totalStyle.Border.LeftBorderColor = borderColor;
+                totalStyle.Border.RightBorderColor = borderColor;
+
+                var defaultCellStyle = workbook.Style;
+                defaultCellStyle.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                defaultCellStyle.Font.FontColor = XLColor.FromArgb(68, 68, 68);
+                defaultCellStyle.Border.TopBorder = borderStyle;
+                defaultCellStyle.Border.BottomBorder = borderStyle;
+                defaultCellStyle.Border.LeftBorder = borderStyle;
+                defaultCellStyle.Border.RightBorder = borderStyle;
+                defaultCellStyle.Border.TopBorderColor = borderColor;
+                defaultCellStyle.Border.BottomBorderColor = borderColor;
+                defaultCellStyle.Border.LeftBorderColor = borderColor;
+                defaultCellStyle.Border.RightBorderColor = borderColor;
+
+                // Заголовок (название группы, предмета, период)
+                worksheet.Cell(1, 1).Value = $"Группа: {data.GroupName}";
+                worksheet.Cell(2, 1).Value = $"Предмет: {data.SubjectName}";
+                worksheet.Cell(3, 1).Value = $"Период: {data.StartDate:dd.MM.yyyy} - {data.EndDate:dd.MM.yyyy}";
+                worksheet.Range(1, 1, 3, 1).Style.Font.FontColor = XLColor.FromArgb(51, 51, 51);
+
+                // Заголовки таблицы
+                int currentRow = 5;
+                worksheet.Cell(currentRow, 1).Value = "№";
+                worksheet.Cell(currentRow, 2).Value = "ФИО студента";
+
+                // Заполняем даты занятий (без года)
+                for (int i = 0; i < data.Lessons.Count; i++)
+                {
+                    worksheet.Cell(currentRow, 3 + i).Value = data.Lessons[i].LessonDate?.ToString("dd.MM") ?? "Дата";
+                }
+
+                // Добавляем колонки для статистики
+                int statsStartCol = 3 + data.Lessons.Count;
+                worksheet.Cell(currentRow, statsStartCol).Value = "Пропуски (н)";
+                worksheet.Cell(currentRow, statsStartCol + 1).Value = "Ув. причина";
+                worksheet.Cell(currentRow, statsStartCol + 2).Value = "Всего";
+
+                // Применяем стиль заголовков
+                worksheet.Range(currentRow, 1, currentRow, statsStartCol + 2).Style = headerStyle;
+
+                // Данные студентов
+                for (int i = 0; i < data.Students.Count; i++)
+                {
+                    var student = data.Students[i];
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, 1).Value = i + 1;
+                    worksheet.Cell(currentRow, 2).Value = student.FullName;
+                    worksheet.Cell(currentRow, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+                    // Заполняем посещения
+                    for (int j = 0; j < data.Lessons.Count; j++)
+                    {
+                        var lesson = data.Lessons[j];
+                        var visit = lesson.Visits.GetValueOrDefault(student.IdStudent);
+                        var cell = worksheet.Cell(currentRow, 3 + j);
+
+                        cell.Value = visit?.UnvisitedStatuses ?? "✓";
+                        cell.Style = defaultCellStyle;
+
+                        // Прозрачные стили для статусов
+                        switch (visit?.UnvisitedStatuses)
+                        {
+                            case "н":
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(255, 230, 230);
+                                cell.Style.Font.FontColor = XLColor.FromArgb(204, 0, 0);
+                                break;
+                            case "у/п":
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(230, 240, 255);
+                                cell.Style.Font.FontColor = XLColor.FromArgb(0, 92, 204);
+                                break;
+                            case "к":
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(240, 240, 240);
+                                cell.Style.Font.FontColor = XLColor.FromArgb(102, 102, 102);
+                                break;
+                            case "б":
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 230);
+                                cell.Style.Font.FontColor = XLColor.FromArgb(153, 102, 0);
+                                break;
+                            default:
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(230, 255, 230);
+                                cell.Style.Font.FontColor = XLColor.FromArgb(0, 102, 0);
+                                break;
+                        }
+                    }
+
+                    // Добавляем формулы для подсчёта статистики
+                    var firstLessonCell = worksheet.Cell(currentRow, 3);
+                    var lastLessonCell = worksheet.Cell(currentRow, 2 + data.Lessons.Count);
+                    string lessonRange = $"{firstLessonCell.Address}:{lastLessonCell.Address}";
+
+                    worksheet.Cell(currentRow, statsStartCol).FormulaA1 = $"COUNTIF({lessonRange}, \"н\")";
+                    worksheet.Cell(currentRow, statsStartCol + 1).FormulaA1 =
+                        $"COUNTIF({lessonRange}, \"у/п\") + COUNTIF({lessonRange}, \"к\") + COUNTIF({lessonRange}, \"б\")";
+                    worksheet.Cell(currentRow, statsStartCol + 2).FormulaA1 =
+                        $"{worksheet.Cell(currentRow, statsStartCol).Address} + {worksheet.Cell(currentRow, statsStartCol + 1).Address}";
+                }
+
+                // Добавляем итоговую строку
+                currentRow++;
+                worksheet.Cell(currentRow, 1).Value = "Итого:";
+                worksheet.Range(currentRow, 1, currentRow, 2).Merge();
+                worksheet.Range(currentRow, 1, currentRow, 2).Style = totalStyle;
+
+                // Итоговые формулы
+                for (int i = 0; i < 3; i++)
+                {
+                    var col = statsStartCol + i;
+                    var firstCell = worksheet.Cell(6, col);
+                    var lastCell = worksheet.Cell(currentRow - 1, col);
+                    worksheet.Cell(currentRow, col).FormulaA1 = $"SUM({firstCell.Address}:{lastCell.Address})";
+                    worksheet.Cell(currentRow, col).Style = totalStyle;
+                }
+
+                // Автонастройка ширины столбцов
+                worksheet.Columns().AdjustToContents();
+
+                // Устанавливаем минимальную ширину для колонок
+                for (int i = 3; i < 3 + data.Lessons.Count; i++)
+                {
+                    worksheet.Column(i).Width = Math.Max(worksheet.Column(i).Width, 6);
+                }
+                worksheet.Column(2).Width = Math.Max(worksheet.Column(2).Width, 20); // Ширина для ФИО
+
+                // Сохраняем в MemoryStream и возвращаем файл
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Position = 0;
+
+                    return File(
+                        stream.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        $"Журнал_{data.GroupName}_{DateTime.Now:yyyyMMdd}.xlsx"
+                    );
+                }
+            }
         }
     }
 }

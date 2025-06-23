@@ -1,81 +1,153 @@
 ﻿@using ElectronicDiaryWeb.Models.Auth
-@model RegisterParentModel
+@model RegisterParentWithChildrenModel
 
 @{
-    Layout = "_Layout";
     ViewData["Title"] = "Регистрация родителя";
 }
 
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Регистрация родителя</h3>
+<div class="page-container">
+    <!-- Контейнер для уведомлений -->
+    <div id="global-alerts" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
+
+    <div class="page-header">
+        <div class="d-flex align-items-center mb-3">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-person-plus header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Регистрация родителя</h1>
+                <p class="page-subtitle">Заполните форму для регистрации нового родителя</p>
+            </div>
         </div>
+        <hr class="header-divider" />
+    </div>
+
+    <div class="card">
         <div class="card-body">
             <form id="parentForm" asp-action="RegisterParent" method="post" class="needs-validation" novalidate>
-                <div class="row">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-3">
+                    <!-- Левая колонка - данные родителя -->
                     <div class="col-md-6">
-                        <h4 class="text-primary mb-3">Личные данные</h4>
-                        <div class="form-group mb-3">
-                            <label asp-for="Surname" class="form-label">Фамилия*</label>
-                            <input asp-for="Surname" class="form-control" required />
-                            <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="Name" class="form-label">Имя*</label>
-                            <input asp-for="Name" class="form-control" required />
-                            <div class="invalid-feedback">Пожалуйста, укажите имя</div>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="Patronymic" class="form-label">Отчество</label>
-                            <input asp-for="Patronymic" class="form-control" />
-                        </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="BirthDate" class="form-label">Дата рождения*</label>
-                            <input asp-for="BirthDate" type="date" class="form-control" required />
-                            <div class="invalid-feedback">Пожалуйста, укажите дату рождения</div>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="Phone" class="form-label">Телефон*</label>
-                            <input asp-for="Phone" class="form-control" placeholder="+7XXXXXXXXXX" required />
-                            <div class="invalid-feedback">Пожалуйста, укажите телефон</div>
+                        <h4 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-person-vcard me-2"></i>Личные данные
+                        </h4>
+
+                        <!-- ФИО -->
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Surname" class="form-label">Фамилия*</label>
+                                    <input asp-for="Surname" class="form-control" required />
+                                    <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Name" class="form-label">Имя*</label>
+                                    <input asp-for="Name" class="form-control" required />
+                                    <div class="invalid-feedback">Пожалуйста, укажите имя</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Patronymic" class="form-label">Отчество</label>
+                                    <input asp-for="Patronymic" class="form-control" />
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
+                        <!-- Дата рождения -->
+                        <div class="form-group">
+                            <label asp-for="BirthDate" class="form-label">Дата рождения*</label>
+                            <input asp-for="BirthDate" type="date" class="form-control"
+                                   max="@DateTime.Today.AddYears(-6).ToString("yyyy-MM-dd")"
+                                   min="@DateTime.Today.AddYears(-120).ToString("yyyy-MM-dd")"
+                                   required />
+                            <div class="invalid-feedback">Пожалуйста, укажите корректную дату рождения</div>
+                        </div>
+
+                        <!-- Контакты -->
+                        <div class="form-group">
+                            <label asp-for="Phone" class="form-label">Телефон*</label>
+                            <input asp-for="Phone" class="form-control"
+                                   pattern="^\+7\d{10}$"
+                                   title="Формат: +7XXXXXXXXXX"
+                                   required />
+                            <div class="invalid-feedback">Укажите телефон в формате +7XXXXXXXXXX</div>
+                        </div>
+
+                        <!-- Работа -->
+                        <div class="form-group">
                             <label asp-for="Workplace" class="form-label">Место работы</label>
                             <input asp-for="Workplace" class="form-control" />
                         </div>
                     </div>
 
+                    <!-- Правая колонка - учетные данные -->
                     <div class="col-md-6">
-                        <h4 class="text-primary mb-3">Учетные данные</h4>
-                        <div class="form-group mb-3">
-                            <label asp-for="Login" class="form-label">Логин*</label>
-                            <input asp-for="Login" class="form-control" required />
-                            <div class="invalid-feedback">Пожалуйста, укажите логин</div>
-                            <small class="form-text text-muted">Логин должен быть уникальным</small>
+                        <h4 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-shield-lock me-2"></i>Учетные данные
+                        </h4>
+
+                        <!-- Логин -->
+                        <div class="form-group">
+                            <label asp-for="Login" class="form-label">Логин (email)*</label>
+                            <input asp-for="Login" type="email" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите корректный email</div>
+                            <small class="text-muted">Будет использоваться для входа в систему</small>
                         </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="Password" class="form-label">Пароль*</label>
-                            <input asp-for="Password" type="password" class="form-control" required minlength="6" />
-                            <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+
+                        <!-- Пароль -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password" class="form-label">Пароль*</label>
+                                    <input asp-for="Password" type="password" class="form-control" required
+                                           minlength="6" data-password-requirements />
+                                    <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ConfirmPassword" class="form-label">Подтверждение*</label>
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                                    <div class="invalid-feedback">Пароли не совпадают</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="ConfirmPassword" class="form-label">Подтверждение пароля*</label>
-                            <input asp-for="ConfirmPassword" type="password" class="form-control" required />
-                            <div class="invalid-feedback">Пароли не совпадают</div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Требования к паролю:</strong> минимум 6 символов, включая цифры и буквы
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between mt-4">
-                    <div class="mb-4">
-                        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
-                            ← Назад
-                        </a>
+                <!-- Дети -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-primary mb-0">
+                            <i class="bi bi-people me-2"></i>Дети
+                        </h4>
+                        <button type="button" id="addChildBtn" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Добавить ребенка
+                        </button>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Зарегистрировать
+
+                    <div id="childrenContainer" class="row g-3">
+                        <!-- Дети будут добавляться здесь -->
+                    </div>
+                </div>
+
+                <!-- Кнопки формы -->
+                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                    <a asp-action="Index" asp-controller="Users" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Назад
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-person-plus me-2"></i>Зарегистрировать
                     </button>
                 </div>
             </form>
@@ -83,152 +155,313 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
+<!-- Шаблон для добавления ребенка -->
+<template id="childTemplate">
+    <div class="col-md-6 child-card" data-child-index="${index}">
+        <div class="card h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Данные ребёнка</h5>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-child">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Учетные данные ребенка -->
+                <div class="form-group mb-3">
+                    <label class="form-label">Логин (email)*</label>
+                    <input name="Children[${index}].Login" type="email" class="form-control" required />
+                    <div class="invalid-feedback">Пожалуйста, укажите корректный email</div>
+                </div>
 
-        document.getElementById('goBackButton').addEventListener('click', function() {
-            const returnUrl = sessionStorage.getItem('returnUrl') || document.referrer;
-            const savedState = sessionStorage.getItem('journalState') ||
-                              localStorage.getItem('journalBackupState');
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Пароль*</label>
+                            <input name="Children[${index}].Password" type="password" class="form-control" required
+                                   minlength="6" />
+                            <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Подтверждение*</label>
+                            <input name="Children[${index}].ConfirmPassword" type="password" class="form-control" required />
+                            <div class="invalid-feedback">Пароли не совпадают</div>
+                        </div>
+                    </div>
+                </div>
 
-            if (savedState && returnUrl) {
-                const state = JSON.parse(savedState);
+                <!-- Роль родителя -->
+                <div class="form-group">
+                    <label class="form-label">Роль родителя*</label>
+                    <select name="Children[${index}].ParentRole" class="form-select" required>
+                        <option value="папа">Папа</option>
+                        <option value="мама">Мама</option>
+                        <option value="бабушка">Бабушка</option>
+                        <option value="дедушка">Дедушка</option>
+                        <option value="опекун">Опекун</option>
+                        <option value="другое">Другое</option>
+                    </select>
+                    <div class="invalid-feedback">Укажите роль родителя</div>
+                </div>
 
-                // Формируем URL с параметрами
-                const url = new URL(returnUrl, window.location.origin);
-                url.searchParams.set('subjectId', state.subjectId);
-                url.searchParams.set('groupId', state.groupId);
+                <!-- Личные данные ребенка -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Фамилия*</label>
+                            <input name="Children[${index}].Surname" class="form-control" required />
+                            <div class="invalid-feedback">Укажите фамилию</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Имя*</label>
+                            <input name="Children[${index}].Name" class="form-control" required />
+                            <div class="invalid-feedback">Укажите имя</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Отчество</label>
+                            <input name="Children[${index}].Patronymic" class="form-control" />
+                        </div>
+                    </div>
+                </div>
 
-                if (state.journalId) {
-                    url.searchParams.set('journalId', state.journalId);
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Дата рождения*</label>
+                            <input name="Children[${index}].BirthDate" type="date" class="form-control" required
+                                   max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <div class="invalid-feedback">Укажите дату рождения</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Телефон*</label>
+                            <input name="Children[${index}].Phone" class="form-control"
+                                   pattern="^\+7\d{10}$"
+                                   title="Формат: +7XXXXXXXXXX"
+                                   required />
+                            <div class="invalid-feedback">Укажите телефон в формате +7XXXXXXXXXX</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Учебное заведение*</label>
+                    <input name="Children[${index}].EducationName" class="form-control" required />
+                    <div class="invalid-feedback">Укажите учебное заведение</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Константы и элементы формы
+            const form = document.getElementById('parentForm');
+            const childrenContainer = document.getElementById('childrenContainer');
+            const addChildBtn = document.getElementById('addChildBtn');
+            const childTemplate = document.getElementById('childTemplate');
+            const apiBaseUrl = window.apiBaseUrl || '';
+            const authToken = getCookie('_secure_at') || '';
+            let childIndex = 0;
+
+            // Функция для получения куки по имени
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+
+            // Функция для форматирования даты в формат YYYY-MM-DD
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // Функция для отображения уведомлений
+            function showAlert(message, type = 'danger') {
+                const alertsContainer = document.getElementById('global-alerts');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type} alert-dismissible fade show`;
+                alert.innerHTML = `
+                    <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle' : 'bi-check-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                alertsContainer.appendChild(alert);
+                setTimeout(() => alert.remove(), 5000);
+            }
+
+            // Добавление ребенка
+            function addChild() {
+                const html = childTemplate.innerHTML.replace(/\${index}/g, childIndex);
+                childrenContainer.insertAdjacentHTML('beforeend', html);
+                childIndex++;
+            }
+
+            // Удаление ребенка
+            function removeChild(element) {
+                if (confirm('Удалить данные этого ребенка?')) {
+                    element.closest('.child-card').remove();
                 }
-
-                // Добавляем параметр для предотвращения кэширования
-                url.searchParams.set('_t', Date.now());
-
-                window.location.href = url.toString();
-            } else {
-                window.history.back();
             }
-        });
-
-        const form = document.getElementById('parentForm');
-        if (!form) return;
-
-        // Конфигурация API
-        const apiBaseUrl = window.apiBaseUrl;
-
-        // Элементы формы
-        const passwordInput = form.querySelector('input[name="Password"]');
-        const confirmPasswordInput = form.querySelector('input[name="ConfirmPassword"]');
-        const submitBtn = form.querySelector('button[type="submit"]');
-
-        // Валидация паролей
-        function validatePasswords() {
-            if (passwordInput.value !== confirmPasswordInput.value) {
-                confirmPasswordInput.setCustomValidity("Пароли не совпадают");
-                return false;
-            } else {
-                confirmPasswordInput.setCustomValidity("");
-                return true;
-            }
-        }
-
-        passwordInput.addEventListener('input', validatePasswords);
-        confirmPasswordInput.addEventListener('input', validatePasswords);
-
-        // Отправка формы
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
 
             // Валидация формы
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
+            function validateForm() {
+                let isValid = true;
+
+                // Сброс предыдущих ошибок
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                // Валидация родителя
+                const parentInputs = form.querySelectorAll('input[required]');
+                parentInputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+
+                // Проверка совпадения паролей родителя
+                const password = form.querySelector('input[name="Password"]').value;
+                const confirmPassword = form.querySelector('input[name="ConfirmPassword"]').value;
+                if (password !== confirmPassword) {
+                    form.querySelector('input[name="ConfirmPassword"]').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Валидация детей
+                const childCards = childrenContainer.querySelectorAll('.child-card');
+                if (childCards.length === 0) {
+                    showAlert('Добавьте хотя бы одного ребенка', 'warning');
+                    return false;
+                }
+
+                childCards.forEach(card => {
+                    const childInputs = card.querySelectorAll('input[required], select[required]');
+                    childInputs.forEach(input => {
+                        if (!input.value.trim()) {
+                            input.classList.add('is-invalid');
+                            isValid = false;
+                        }
+                    });
+
+                    // Проверка совпадения паролей ребенка
+                    const childPassword = card.querySelector(`input[name^="Children["][name$="].Password"]`).value;
+                    const childConfirmPassword = card.querySelector(`input[name^="Children["][name$="].ConfirmPassword"]`).value;
+                    if (childPassword !== childConfirmPassword) {
+                        card.querySelector(`input[name^="Children["][name$="].ConfirmPassword"]`).classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+
+                if (!isValid) {
+                    showAlert('Заполните все обязательные поля правильно', 'warning');
+                }
+
+                return isValid;
             }
 
-            if (!validatePasswords()) {
-                alert("Пароли не совпадают");
-                return;
-            }
+            // Обработчик добавления ребенка
+            addChildBtn.addEventListener('click', addChild);
 
-            try {
-                // Показать индикатор загрузки
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = `
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Регистрация...
-                `;
+            // Обработчик удаления ребенка
+            childrenContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-child')) {
+                    removeChild(e.target);
+                }
+            });
 
-                // Подготовка данных
+            // Обработка отправки формы
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!validateForm()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Подготовка данных формы
                 const formData = {
                     login: form.querySelector('input[name="Login"]').value,
-                    password: passwordInput.value,
+                    password: form.querySelector('input[name="Password"]').value,
                     name: form.querySelector('input[name="Name"]').value,
                     surname: form.querySelector('input[name="Surname"]').value,
                     patronymic: form.querySelector('input[name="Patronymic"]').value || null,
-                    birthDate: new Date(form.querySelector('input[name="BirthDate"]').value).toISOString().split('T')[0],
+                    birthDate: formatDate(form.querySelector('input[name="BirthDate"]').value),
                     phone: form.querySelector('input[name="Phone"]').value,
-                    workplace: form.querySelector('input[name="Workplace"]').value || null
+                    workplace: form.querySelector('input[name="Workplace"]').value || null,
+                    children: Array.from(childrenContainer.querySelectorAll('.child-card')).map((card, index) => ({
+                        login: card.querySelector(`input[name="Children[${index}].Login"]`).value,
+                        password: card.querySelector(`input[name="Children[${index}].Password"]`).value,
+                        name: card.querySelector(`input[name="Children[${index}].Name"]`).value,
+                        surname: card.querySelector(`input[name="Children[${index}].Surname"]`).value,
+                        patronymic: card.querySelector(`input[name="Children[${index}].Patronymic"]`).value || null,
+                        birthDate: formatDate(card.querySelector(`input[name="Children[${index}].BirthDate"]`).value),
+                        phone: card.querySelector(`input[name="Children[${index}].Phone"]`).value,
+                        educationName: card.querySelector(`input[name="Children[${index}].EducationName"]`).value,
+                        parentRole: card.querySelector(`select[name="Children[${index}].ParentRole"]`).value
+                    }))
                 };
 
-                // Получаем CSRF-токен
-                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                try {
+                    // Показываем индикатор загрузки
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Регистрация...
+                    `;
 
-                // Отправка запроса
-                const response = await fetch(`${apiBaseUrl}/api/users/register-parent`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': csrfToken,
-                        'Authorization': `Bearer ${getCookie('_secure_at')}`
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(formData)
-                });
+                    // Отправка запроса
+                    const response = await fetch(`${apiBaseUrl}/api/users/register-parent-with-children`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`,
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(formData)
+                    });
 
-                // Обработка ответа
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => null);
-                    throw new Error(errorData?.message || `Ошибка сервера: ${response.status}`);
+                    // Обработка ответа
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || errorData.Message || 'Ошибка при регистрации');
+                    }
+
+                    const result = await response.json();
+
+                    // Успешная регистрация
+                    showAlert('Регистрация успешно завершена!', 'success');
+                    setTimeout(() => window.location.href = '/Users/Index', 2000);
+
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    showAlert(error.message || 'Произошла ошибка при регистрации', 'danger');
+                } finally {
+                    // Восстанавливаем кнопку
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i> Зарегистрировать';
+                    }
                 }
+            });
 
-                const result = await response.json();
-                alert('Родитель успешно зарегистрирован!');
-                window.location.href = '/Home/Index';
-
-            } catch (error) {
-                console.error('Ошибка регистрации:', error);
-                showError(error.message || 'Произошла ошибка при регистрации');
-            } finally {
-                // Восстановить кнопку
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрировать';
-            }
+            // Добавляем первого ребенка по умолчанию
+            addChild();
         });
-
-        // Функция отображения ошибок
-        function showError(message) {
-            // Удаляем предыдущие ошибки
-            const existingAlerts = form.querySelectorAll('.alert-danger');
-            existingAlerts.forEach(alert => alert.remove());
-
-            // Создаем новое сообщение об ошибке
-            const errorAlert = document.createElement('div');
-            errorAlert.className = 'alert alert-danger mt-3';
-            errorAlert.textContent = message;
-
-            // Добавляем перед кнопкой отправки
-            const submitContainer = form.querySelector('.d-flex.justify-content-between.mt-4');
-            form.insertBefore(errorAlert, submitContainer);
-        }
-
-        // Функция получения куки
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-    });
-</script>
+    </script>
+}

@@ -1,0 +1,65 @@
+﻿/* Стили для карточек детей */
+.child-card {
+    transition: transform 0.2s;
+}
+
+    .child-card:hover {
+        transform: translateY(-2px);
+    }
+
+.remove-child {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.8rem;
+}
+
+/* Подсветка невалидных полей */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+}
+
+/* Анимация добавления/удаления детей */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.child-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.child-card {
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+    .child-card .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+
+    .child-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+.remove-child {
+    transition: all 0.2s ease;
+}
+
+    .remove-child:hover {
+        color: #fff !important;
+        background-color: #dc3545 !important;
+    }
+

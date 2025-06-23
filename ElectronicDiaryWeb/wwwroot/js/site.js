@@ -1,8 +1,4 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-// Получаем базовый URL API из серверной конфигурации
+﻿// Получаем базовый URL API из серверной конфигурации
 const apiBaseUrl = window.serverConfig?.apiBaseUrl || 'https://localhost:7123';
 
 // Утилиты для работы с куками
@@ -37,6 +33,7 @@ const httpClient = {
             ...options.headers
         };
 
+        // Получаем токен из куков
         const accessToken = getCookie('_secure_at');
         if (accessToken) {
             headers['Authorization'] = `Bearer ${accessToken}`;
@@ -45,6 +42,7 @@ const httpClient = {
         const config = {
             method,
             headers,
+            credentials: 'include', // Это важно для отправки кук
             ...options,
             body: data ? JSON.stringify(data) : null
         };

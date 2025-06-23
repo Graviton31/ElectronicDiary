@@ -8,5 +8,6 @@
         public sbyte? LessonsCount { get; set; }
         public int CompletedLessons { get; set; }
         public int AbsentCount { get; set; }
+        public string Name { get; set; }
     }
 }

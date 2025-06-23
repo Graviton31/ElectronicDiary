@@ -1,5 +1,4 @@
 ﻿using ElectronicDiaryWeb.Models;
-using ElectronicDiaryApi.ModelsDto.Shedule;
 using ElectronicDiaryApi.ModelsDto.Group;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,9 +9,11 @@ using static ElectronicDiaryApi.Controllers.StandardScheduleController;
 using static ElectronicDiaryApi.Controllers.ScheduleChangeController;
 using ElectronicDiaryWeb.Models.Shedule;
 using Microsoft.AspNetCore.Authorization;
+using ElectronicDiaryApi.ModelsDto.Responses;
 
 namespace ElectronicDiaryWeb.Controllers
-{   [Authorize]
+{
+    [Authorize]
     [Route("GroupSchedule")]
     public class GroupScheduleController : Controller
     {
@@ -25,30 +26,6 @@ namespace ElectronicDiaryWeb.Controllers
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://localhost:7123/api/");
             _logger = logger;
-        }
-
-        // Controllers/GroupScheduleController.cs
-        
-        [HttpGet("GetStandardSchedules")]
-        public async Task<IActionResult> GetStandardSchedules(int groupId, DateTime date)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync(
-                    $"StandardScheduleApi/GetStandardSchedules?groupId={groupId}&date={date:yyyy-MM-dd}");
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    return StatusCode((int)response.StatusCode);
-                }
-
-                var schedules = await response.Content.ReadFromJsonAsync<List<StandardScheduleResponse>>();
-                return Ok(schedules);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error communicating with API");
-            }
         }
 
         [HttpGet]

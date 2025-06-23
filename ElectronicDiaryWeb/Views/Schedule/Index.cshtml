@@ -8,12 +8,10 @@
 
 <link rel="stylesheet" href="~/css/schedule.css" asp-append-version="true" />
 
-<div class="e-journal-container">
-    <!-- Заголовок с иконкой -->
     <header class="page-header mb-4">
         <div class="d-flex align-items-center">
             <div class="icon-wrapper me-3">
-                <i class="bi bi-calendar-week header-icon"></i>
+                <i class="bi bi-journal-bookmark-fill header-icon"></i>
             </div>
             <div>
                 <h1 class="page-title">@ViewData["Title"]</h1>
@@ -29,7 +27,7 @@
                 <!-- Навигация по неделям -->
                 <div class="week-navigation-container mb-4">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="week-period-display" style="background-color: #4361ee;">
+                        <div class="week-period-display" style="background-color: var(--primary-color);">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-calendar-week"></i>
                                 <span class="week-period-text fw-medium">
@@ -37,22 +35,44 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="week-nav-buttons">
-                            <a href="@Url.Action("Index", new { date = Model.PreviousWeekStart })"
-                               class="btn btn-outline-primary week-nav-button"
-                               title="Предыдущая неделя">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                            <a href="@Url.Action("Index", new { date = DateTime.Today })"
-                               class="btn btn-primary week-nav-button today-btn"
-                               title="Текущая неделя">
-                                <span class="today-btn-text">Сегодня</span>
-                            </a>
-                            <a href="@Url.Action("Index", new { date = Model.NextWeekStart })"
-                               class="btn btn-outline-primary week-nav-button"
-                               title="Следующая неделя">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
+                        <div class="d-flex gap-2">
+                            @if (Model.ShowPersonalToggle)
+                            {
+                                <div class="btn-group me-2">
+                                    @if (Model.IsPersonalMode)
+                                    {
+                                        <a href="@Url.Action("Index", new { date = Model.CurrentWeekStart, showAll = true })" 
+                                           class="btn btn-outline-primary">
+                                            Показать все занятия
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("Index", new { date = Model.CurrentWeekStart, showAll = false })" 
+                                           class="btn btn-primary">
+                                            Мое расписание
+                                        </a>
+                                    }
+                                </div>
+                            }
+    
+                            <div class="week-nav-buttons">
+                                <a href="@Url.Action("Index", new { date = Model.PreviousWeekStart, showAll = !Model.IsPersonalMode })"
+                                   class="btn btn-outline-primary week-nav-button"
+                                   title="Предыдущая неделя">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                                <a href="@Url.Action("Index", new { date = DateTime.Today, showAll = !Model.IsPersonalMode })"
+                                   class="btn btn-primary week-nav-button today-btn"
+                                   title="Текущая неделя">
+                                    <span class="today-btn-text">Сегодня</span>
+                                </a>
+                                <a href="@Url.Action("Index", new { date = Model.NextWeekStart, showAll = !Model.IsPersonalMode })"
+                                   class="btn btn-outline-primary week-nav-button"
+                                   title="Следующая неделя">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +128,7 @@
                                                          @(lesson.ChangeType == "перенос" ? "moved" : "")">
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <div class="d-flex align-items-center gap-2 text-truncate">
-                                                                <span class="schedule-lesson-time" style="color: #4361ee;">
+                                                                <span class="schedule-lesson-time" style="color: var(--primary-color);">
                                                                     @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
                                                                 </span>
                                                                 <h6 class="schedule-lesson-subject mb-0 text-truncate">@lesson.SubjectName</h6>
@@ -167,6 +187,14 @@
                                                                 @string.Join(", ", lesson.Teachers)
                                                             </span>
                                                         </div>
+
+                                                        @if (Model.UserRole == "родитель" && lesson.ChildrenInfo?.Any() == true)
+                                                        {
+                                                            <div class="schedule-lesson-children mt-2">
+                                                                <i class="bi bi-people-fill"></i>
+                                                                <span>Ваши дети: @string.Join(", ", lesson.ChildrenInfo)</span>
+                                                            </div>
+                                                        }
 
                                                         @if (lesson.ChangeType == "перенос")
                                                         {
@@ -226,7 +254,7 @@
                                                          @(lesson.ChangeType == "перенос" ? "moved" : "")">
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <div class="d-flex align-items-center gap-2 text-truncate">
-                                                                <span class="schedule-lesson-time" style="color: #4361ee;">
+                                                                <span class="schedule-lesson-time" style="color: var(--primary-color);">
                                                                     @lesson.StartTime.ToString("HH\\:mm")-@lesson.EndTime.ToString("HH\\:mm")
                                                                 </span>
                                                                 <h6 class="schedule-lesson-subject mb-0 text-truncate">@lesson.SubjectName</h6>
@@ -285,6 +313,14 @@
                                                                 @string.Join(", ", lesson.Teachers)
                                                             </span>
                                                         </div>
+
+                                                        @if (Model.UserRole == "родитель" && lesson.ChildrenInfo?.Any() == true)
+                                                        {
+                                                            <div class="schedule-lesson-children mt-2">
+                                                                <i class="bi bi-people-fill"></i>
+                                                                <span>Ваши дети: @string.Join(", ", lesson.ChildrenInfo)</span>
+                                                            </div>
+                                                        }
 
                                                         @if (lesson.ChangeType == "перенос")
                                                         {

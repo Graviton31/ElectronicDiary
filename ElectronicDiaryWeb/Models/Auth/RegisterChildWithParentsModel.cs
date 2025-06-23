@@ -4,8 +4,12 @@ namespace ElectronicDiaryWeb.Models.Auth
 {
     public class RegisterChildWithParentsModel : BaseUserModel
     {
-        public string? EducationName { get; set; }
+        [Required(ErrorMessage = "Учебное заведение обязательно")]
+        public string EducationName { get; set; }
+
         public List<int> ParentIds { get; set; } = new();
-        public string ParentRole { get; set; } = "родитель";
+
+        [Required(ErrorMessage = "Роль родителя обязательна")]
+        public string ParentRole { get; set; } = "опекун";
     }
 }

@@ -1,6 +1,7 @@
 using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -35,8 +36,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
             ValidateLifetime = true
+        };
+
+        // Для работы с куками
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies["_secure_at"];
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -49,14 +61,14 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        builder =>
-        {
-            builder.WithOrigins("https://localhost:7012", "http://localhost:5272") // URL клиентского приложения
-                   .AllowAnyMethod()
-                   .AllowCredentials()
-                   .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.WithOrigins("https://localhost:7012", "http://localhost:5272", "https://localhost:7123")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials()
+               .SetIsOriginAllowed(_ => true); 
+    });
 });
 
 var app = builder.Build();
@@ -68,7 +80,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowSpecificOrigin");
+app.Use(async (context, next) =>
+{
+    var endpoint = context.GetEndpoint();
+    if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() == null)
+    {
+        Console.WriteLine($"Auth Header: {context.Request.Headers["Authorization"]}");
+    }
+    await next();
+});
+
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 

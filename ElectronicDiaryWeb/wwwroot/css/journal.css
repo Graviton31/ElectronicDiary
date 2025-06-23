@@ -9,6 +9,18 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Тень */
 }
 
+.btn-excel {
+    background-color: #1d6f42;
+    border-color: #1a633b;
+    color: white;
+}
+
+    .btn-excel:hover {
+        background-color: #1a633b;
+        border-color: #165530;
+        color: white;
+    }
+
 /* ==================== БЛОКИ ВЫБОРА (СЕЛЕКТОРЫ) ==================== */
 
 .clickable-student {

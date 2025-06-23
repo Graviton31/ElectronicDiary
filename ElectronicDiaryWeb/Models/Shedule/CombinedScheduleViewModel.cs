@@ -1,5 +1,5 @@
 ﻿using ElectronicDiaryApi.ModelsDto.Group;
-using ElectronicDiaryApi.ModelsDto.Shedule;
+using ElectronicDiaryApi.ModelsDto.Responses;
 
 namespace ElectronicDiaryWeb.Models
 {

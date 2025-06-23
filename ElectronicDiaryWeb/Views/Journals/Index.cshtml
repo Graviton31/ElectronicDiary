@@ -116,12 +116,12 @@
                 </div>
                 <div class="col-md-8">
                     <div class="d-flex justify-content-end gap-3">
-                        @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
-                        {
-                            <button class="btn btn-outline-primary btn-action" id="showCreateJournalModalBtn" style="display: none;">
-                                <i class="bi bi-journal-plus"></i> <span class="btn-text">Новый журнал</span>
-                            </button>
-                        }
+                        <button class="btn btn-success btn-action" id="exportExcelBtn" style="display: none;">
+                            <i class="bi bi-file-earmark-excel"></i> Экспорт
+                        </button>
+                        <button class="btn btn-outline-primary btn-action" id="showCreateJournalModalBtn" style="display: none;">
+                            <i class="bi bi-journal-plus"></i> <span class="btn-text">Новый журнал</span>
+                        </button>
                         <button class="btn btn-primary btn-action" id="showAddLessonModal" style="display: none;">
                             <i class="bi bi-plus-lg"></i> <span class="btn-text">Добавить урок</span>
                         </button>
@@ -500,9 +500,8 @@
 
             const hasJournal = !data.message && data.lessons;
             showAddLessonModalBtn.style.display = hasJournal ? 'block' : 'none';
-            if (document.getElementById('showCreateJournalModalBtn')) {
-                document.getElementById('showCreateJournalModalBtn').style.display = 'block';
-            }
+            showCreateJournalModalBtn.style.display = 'block';
+            document.getElementById('exportExcelBtn').style.display = hasJournal ? 'block' : 'none';
             journalSelector.style.display = availableJournals.length > 0 ? 'block' : 'none';
 
             if (journalStats) {
@@ -771,6 +770,40 @@
         document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
         document.getElementById('clearCommentBtn').addEventListener('click', function() {
             document.getElementById('commentTextarea').value = '';
+        });
+
+        document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+            if (!currentJournalId) {
+                showError('Не выбран журнал для экспорта');
+                return;
+            }
+
+            try {
+                showLoading('Формирование Excel...');
+
+                const response = await fetch(`${apiBaseUrl}/api/Journals/Journals/${currentJournalId}/ExportExcel`);
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при формировании файла');
+                }
+
+                // Создаем blob и скачиваем файл
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Журнал_${currentGroupId}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (error) {
+                console.error('Ошибка экспорта:', error);
+                showError('Не удалось скачать файл: ' + error.message);
+            } finally {
+                hideLoading();
+            }
         });
 
         document.addEventListener('click', function(e) {

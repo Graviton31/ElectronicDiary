@@ -1,11 +1,14 @@
 ﻿using ElectronicDiaryApi.Data;
 using ElectronicDiaryApi.Models;
+using ElectronicDiaryApi.ModelsDto.Responses;
 using ElectronicDiaryApi.ModelsDto.Shedule;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 
 namespace ElectronicDiaryApi.Controllers
 {
@@ -20,38 +23,126 @@ namespace ElectronicDiaryApi.Controllers
             _context = context;
         }
 
-        [HttpGet("{date}")]
-        public ActionResult<UnifiedScheduleResponseDto> GetAllGroupsSchedule(DateTime date)
+        [HttpGet("{date}/{personal}")]
+        [Authorize]
+        public ActionResult<UnifiedScheduleResponseDto> GetSchedule(DateTime date, bool personal = true)
         {
-            var startOfWeek = date.Date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
-            var endOfWeek = startOfWeek.AddDays(6);
-
-            var startOfWeekDateOnly = DateOnly.FromDateTime(startOfWeek);
-            var endOfWeekDateOnly = DateOnly.FromDateTime(endOfWeek);
-
-            var groups = _context.Groups
-                .Include(g => g.IdLocationNavigation)
-                .Include(g => g.IdSubjectNavigation)
-                .Include(g => g.IdEmployees)
-                    .ThenInclude(e => e.IdEmployeeNavigation)
-                .Include(g => g.StandardSchedules)
-                .Include(g => g.ScheduleChanges)
-                    .ThenInclude(c => c.IdScheduleNavigation)
-                .ToList();
-
-            var unifiedSchedule = InitializeWeekSchedule(startOfWeekDateOnly, endOfWeekDateOnly);
-
-            foreach (var group in groups)
+            try
             {
-                ProcessGroupSchedule(group, unifiedSchedule, startOfWeekDateOnly, endOfWeekDateOnly);
+                if (!User.Identity.IsAuthenticated)
+                {
+                    personal = false;
+                }
+
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+                if (!int.TryParse(userIdStr, out int userId) || string.IsNullOrEmpty(userRole))
+                {
+                    personal = false;
+                }
+
+                var startOfWeek = date.Date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
+                var endOfWeek = startOfWeek.AddDays(6);
+
+                var groups = _context.Groups
+                    .Include(g => g.IdLocationNavigation)
+                    .Include(g => g.IdSubjectNavigation)
+                    .Include(g => g.IdEmployees)
+                        .ThenInclude(e => e.IdEmployeeNavigation)
+                    .Include(g => g.IdStudents)
+                        .ThenInclude(s => s.IdStudentNavigation)
+                    .Include(g => g.StandardSchedules)
+                    .Include(g => g.ScheduleChanges)
+                        .ThenInclude(c => c.IdScheduleNavigation)
+                    .AsQueryable();
+
+                bool hasPersonalSchedule = true;
+
+                if (personal)
+                {
+                    switch (userRole.ToLower())
+                    {
+                        case "учитель":
+                            var teacherGroups = _context.Groups
+                                .Any(g => g.IdEmployees.Any(e => e.IdEmployee == userId));
+
+                            if (teacherGroups)
+                            {
+                                groups = groups.Where(g => g.IdEmployees.Any(e => e.IdEmployee == userId));
+                                hasPersonalSchedule = true;
+                                personal = true;
+                            }
+                            else
+                            {
+                                hasPersonalSchedule = false;
+                                personal = false;
+                            }
+                            break;
+
+                        case "родитель":
+                            // Для родителя всегда показываем личное расписание при personal=true
+                            groups = GetGroupsForParent(userId);
+                            hasPersonalSchedule = groups.Any();
+
+                            // Если нет данных для родителя, переключаем на общее расписание
+                            if (!hasPersonalSchedule)
+                            {
+                                personal = false;
+                                groups = _context.Groups
+                                    .Include(g => g.IdLocationNavigation)
+                                    .Include(g => g.IdSubjectNavigation)
+                                    .Include(g => g.IdEmployees)
+                                        .ThenInclude(e => e.IdEmployeeNavigation)
+                                    .Include(g => g.IdStudents)
+                                        .ThenInclude(s => s.IdStudentNavigation)
+                                    .Include(g => g.StandardSchedules)
+                                    .Include(g => g.ScheduleChanges)
+                                        .ThenInclude(c => c.IdScheduleNavigation);
+                            }
+                            break;
+
+                        case "студент":
+                            groups = groups.Where(g => g.IdStudents.Any(s => s.IdStudent == userId));
+                            hasPersonalSchedule = groups.Any();
+                            break;
+
+                        default:
+                            personal = false;
+                            break;
+                    }
+                }
+
+                var unifiedSchedule = InitializeWeekSchedule(
+                    DateOnly.FromDateTime(startOfWeek),
+                    DateOnly.FromDateTime(endOfWeek));
+
+                foreach (var group in groups.ToList())
+                {
+                    ProcessGroupSchedule(group, unifiedSchedule,
+                        DateOnly.FromDateTime(startOfWeek),
+                        DateOnly.FromDateTime(endOfWeek));
+
+                    // Добавляем информацию о детях для родителя
+                    if (userRole.ToLower() == "родитель" && personal)
+                    {
+                        AddChildrenInfoToLessons(unifiedSchedule, userId, group.IdGroup);
+                    }
+                }
+
+                return Ok(new UnifiedScheduleResponseDto
+                {
+                    WeekStartDate = DateOnly.FromDateTime(startOfWeek),
+                    WeekEndDate = DateOnly.FromDateTime(endOfWeek),
+                    Days = unifiedSchedule.Values.OrderBy(d => d.Date).ToList(),
+                    HasPersonalSchedule = hasPersonalSchedule,
+                    IsPersonalMode = personal
+                });
             }
-
-            return Ok(new UnifiedScheduleResponseDto
+            catch (Exception ex)
             {
-                WeekStartDate = startOfWeekDateOnly,
-                WeekEndDate = endOfWeekDateOnly,
-                Days = unifiedSchedule.Values.OrderBy(d => d.Date).ToList()
-            });
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpGet("group/{groupId}/week/{date}")]
@@ -90,6 +181,57 @@ namespace ElectronicDiaryApi.Controllers
             });
         }
 
+        // Метод для получения групп, где учатся дети родителя
+        private IQueryable<Group> GetGroupsForParent(int parentId)
+        {
+            // Получаем ID всех детей родителя
+            var childrenIds = _context.StudentsHasParents
+                .Where(shp => shp.IdParent == parentId)
+                .Select(shp => shp.IdStudent)
+                .ToList();
+
+            // Возвращаем группы, где есть хотя бы один ребенок родителя
+            return _context.Groups
+                .Include(g => g.IdLocationNavigation)
+                .Include(g => g.IdSubjectNavigation)
+                .Include(g => g.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation)
+                .Include(g => g.IdStudents)
+                    .ThenInclude(s => s.IdStudentNavigation)
+                .Include(g => g.StandardSchedules)
+                .Include(g => g.ScheduleChanges)
+                    .ThenInclude(c => c.IdScheduleNavigation)
+                .Where(g => g.IdStudents.Any(s => childrenIds.Contains(s.IdStudent)));
+        }
+
+        // Метод для добавления информации о детях к урокам
+        private void AddChildrenInfoToLessons(
+            Dictionary<DateOnly, DayScheduleDto> schedule,
+            int parentId,
+            int groupId)
+        {
+            // Получаем имена всех детей родителя, которые ходят в эту группу
+            var childrenInGroup = _context.StudentsHasParents
+                .Include(shp => shp.IdStudentNavigation)
+                    .ThenInclude(s => s.IdStudentNavigation)
+                .Where(shp => shp.IdParent == parentId &&
+                             shp.IdStudentNavigation.IdGroups.Any(g => g.IdGroup == groupId))
+                .Select(shp => $"{shp.IdStudentNavigation.IdStudentNavigation.Surname} " +
+                              $"{shp.IdStudentNavigation.IdStudentNavigation.Name}")
+                .Distinct()
+                .ToList();
+
+            // Добавляем информацию о детях к каждому уроку в этой группе
+            foreach (var day in schedule.Values)
+            {
+                foreach (var lesson in day.Lessons.Where(l => l.GroupId == groupId))
+                {
+                    lesson.ChildrenInfo = childrenInGroup;
+                }
+            }
+        }
+
+        // Инициализация структуры расписания на неделю
         private Dictionary<DateOnly, DayScheduleDto> InitializeWeekSchedule(DateOnly start, DateOnly end)
         {
             var schedule = new Dictionary<DateOnly, DayScheduleDto>();
@@ -105,32 +247,30 @@ namespace ElectronicDiaryApi.Controllers
             return schedule;
         }
 
+        // Обработка расписания для конкретной группы
         private void ProcessGroupSchedule(
             Group group,
             Dictionary<DateOnly, DayScheduleDto> schedule,
             DateOnly weekStart,
             DateOnly weekEnd)
         {
-            var standardSchedules = group.StandardSchedules;
-            var changes = group.ScheduleChanges
-                .Where(c => (c.NewDate >= weekStart && c.NewDate <= weekEnd) ||
-                            (c.OldDate >= weekStart && c.OldDate <= weekEnd))
-                .ToList();
-
-            // Add standard lessons
-            foreach (var s in standardSchedules)
+            // Обработка стандартного расписания
+            foreach (var s in group.StandardSchedules)
             {
                 var originalDate = weekStart.AddDays(s.WeekDay - 1);
                 if (originalDate > weekEnd) continue;
 
-                if (!changes.Any(c => c.IdSchedule == s.IdStandardSchedule && c.ChangeType == "перенос"))
+                if (!group.ScheduleChanges.Any(c => c.IdSchedule == s.IdStandardSchedule && c.ChangeType == "перенос"))
                 {
                     AddStandardLesson(schedule, group, s, originalDate);
                 }
             }
 
-            // Process changes
-            foreach (var change in changes)
+            // Обработка изменений в расписании
+            foreach (var change in group.ScheduleChanges
+                .Where(c => (c.NewDate >= weekStart && c.NewDate <= weekEnd) ||
+                            (c.OldDate >= weekStart && c.OldDate <= weekEnd))
+                .ToList())
             {
                 switch (change.ChangeType)
                 {
@@ -147,6 +287,7 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        // Добавление стандартного урока
         private void AddStandardLesson(
             Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
@@ -155,14 +296,19 @@ namespace ElectronicDiaryApi.Controllers
         {
             var lesson = new UnifiedLessonInfoDto
             {
+                GroupId = group.IdGroup,
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
                 Teachers = group.IdEmployees.Select(e =>
-                    $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
+                    FormatFullName(
+                        e.IdEmployeeNavigation.Surname,
+                        e.IdEmployeeNavigation.Name,
+                        e.IdEmployeeNavigation.Patronymic))
+                    .ToList(),
                 StartTime = standardSchedule.StartTime,
                 EndTime = standardSchedule.EndTime,
                 Classroom = standardSchedule.Classroom,
-                Location = group.IdLocationNavigation?.Name, // Добавляем локацию
+                Location = group.IdLocationNavigation?.Name,
                 StandardScheduleId = standardSchedule.IdStandardSchedule,
                 IsChanged = false
             };
@@ -173,16 +319,17 @@ namespace ElectronicDiaryApi.Controllers
                 .ToList();
         }
 
+        // Обработка переноса урока
         private void ProcessReschedule(
             Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
             ScheduleChange change)
         {
-            // Remove from old date
+            // Удаление с старой даты
             if (change.OldDate.HasValue && schedule.ContainsKey(change.OldDate.Value))
             {
                 var oldLessons = schedule[change.OldDate.Value].Lessons
-                    .Where(l => l.GroupName == group.Name &&
+                    .Where(l => l.GroupId == group.IdGroup &&
                                l.StartTime == change.IdScheduleNavigation?.StartTime)
                     .ToList();
 
@@ -192,19 +339,24 @@ namespace ElectronicDiaryApi.Controllers
                 }
             }
 
-            // Add to new date
+            // Добавление на новую дату
             if (change.NewDate.HasValue && schedule.ContainsKey(change.NewDate.Value))
             {
                 var newLesson = new UnifiedLessonInfoDto
                 {
+                    GroupId = group.IdGroup,
                     GroupName = group.Name,
                     SubjectName = group.IdSubjectNavigation.Name,
                     Teachers = group.IdEmployees.Select(e =>
-                        $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
+                        FormatFullName(
+                            e.IdEmployeeNavigation.Surname,
+                            e.IdEmployeeNavigation.Name,
+                            e.IdEmployeeNavigation.Patronymic))
+                        .ToList(),
                     StartTime = change.NewStartTime ?? change.IdScheduleNavigation?.StartTime ?? TimeOnly.MinValue,
                     EndTime = change.NewEndTime ?? change.IdScheduleNavigation?.EndTime ?? TimeOnly.MinValue,
                     Classroom = change.NewClassroom ?? change.IdScheduleNavigation?.Classroom,
-                    Location = group.IdLocationNavigation?.Name, // Добавляем локацию
+                    Location = group.IdLocationNavigation?.Name,
                     IsChanged = true,
                     ChangeType = "перенос",
                     ScheduleChangeId = change.IdScheduleChange,
@@ -224,6 +376,7 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        // Обработка отмены урока
         private void ProcessCancellation(
             Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
@@ -247,6 +400,7 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        // Обработка дополнительного урока
         private void ProcessAdditionalLesson(
             Dictionary<DateOnly, DayScheduleDto> schedule,
             Group group,
@@ -256,10 +410,15 @@ namespace ElectronicDiaryApi.Controllers
 
             var lesson = new UnifiedLessonInfoDto
             {
+                GroupId = group.IdGroup,
                 GroupName = group.Name,
                 SubjectName = group.IdSubjectNavigation.Name,
                 Teachers = group.IdEmployees.Select(e =>
-                    $"{e.IdEmployeeNavigation.Surname} {e.IdEmployeeNavigation.Name} {e.IdEmployeeNavigation.Patronymic}").ToList(),
+                    FormatFullName(
+                        e.IdEmployeeNavigation.Surname,
+                        e.IdEmployeeNavigation.Name,
+                        e.IdEmployeeNavigation.Patronymic))
+                    .ToList(),
                 StartTime = change.NewStartTime ?? TimeOnly.MinValue,
                 EndTime = change.NewEndTime ?? TimeOnly.MinValue,
                 Classroom = change.NewClassroom ?? string.Empty,
@@ -274,5 +433,15 @@ namespace ElectronicDiaryApi.Controllers
                 .OrderBy(l => l.StartTime)
                 .ToList();
         }
+
+        private string FormatFullName(string surname, string name, string patronymic)
+        {
+            if (string.IsNullOrEmpty(patronymic))
+            {
+                return $"{surname} {name[0]}.";
+            }
+            return $"{surname} {name[0]}. {patronymic[0]}.";
+        }
+
     }
 }
