@@ -170,7 +170,7 @@
             const groupId = document.querySelector('#GroupId').value;
             try {
                 const response = await fetch(
-                    `${apiBaseUrl}StandardSchedules/GetStandardSchedules?groupId=${groupId}&date=${date}`
+                    `${apiBaseUrl}/api/StandardSchedules/GetStandardSchedules?groupId=${groupId}&date=${date}`
                 );
 
                 if (!response.ok) {

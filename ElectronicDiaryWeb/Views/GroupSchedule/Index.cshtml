@@ -393,9 +393,9 @@
             </div>
             <div class="modal-body">
                 <p>Это стандартное расписание имеет связанные изменения. Вы действительно хотите удалить его вместе со всеми изменениями?</p>
-                <div class="alert alert-warning mt-3">
+                <div class="alert alert-danger mt-3">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Это действие нельзя отменить!
+                    Это действие нельзя отменить! Все связанные изменения также будут удалены.
                 </div>
             </div>
             <div class="modal-footer">
@@ -622,8 +622,6 @@
 </style>
 
 <script>
-    const apiBaseUrl = window.apiBaseUrl;
-
     // Load standard schedule form
     function loadStandardScheduleForm() {
         const groupId = @Model.SelectedGroupId;
@@ -689,7 +687,7 @@
         }
 
         try {
-            const response = await fetch(`${apiBaseUrl}ScheduleChanges`, {
+            const response = await fetch(`${apiBaseUrl}/api/ScheduleChanges`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -786,36 +784,41 @@
                         <input class="form-check-input" type="radio" name="deleteOption"
                                id="deleteStandard" value="standard" checked>
                         <label class="form-check-label" for="deleteStandard">
-                            Стандартное расписание (ID: ${currentStandardId})
+                            Стандартное расписание
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="deleteOption"
                                id="deleteChange" value="change">
                         <label class="form-check-label" for="deleteChange">
-                            Изменение расписания (ID: ${currentChangeId})
+                            Изменение расписания
                         </label>
                     </div>
                 </div>
             `;
         } else if (currentStandardId) {
             modalBody.innerHTML = `
-                <p>Вы уверены, что хотите удалить стандартное расписание (ID: ${currentStandardId})?</p>
+                <p>Вы уверены, что хотите удалить это стандартное расписание?</p>
+                <div class="alert alert-warning mt-2">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Это действие нельзя отменить.
+                </div>
             `;
         } else {
             modalBody.innerHTML = `
-                <p>Вы уверены, что хотите удалить изменение расписания (ID: ${currentChangeId})?</p>
+                <p>Вы уверены, что хотите удалить это изменение расписания?</p>
+                <div class="alert alert-warning mt-2">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Это действие нельзя отменить.
+                </div>
             `;
         }
 
-        // Обработчик для кнопки удаления в основном модальном окне
         confirmBtn.onclick = function() {
             if (currentStandardId && !currentChangeId) {
-                // Для стандартного расписания - показываем подтверждение
                 $('#deleteModal').modal('hide');
                 $('#confirmDeleteWithChangesModal').modal('show');
             } else {
-                // Для изменений или при выборе - удаляем сразу
                 performDelete();
             }
         };
@@ -839,7 +842,7 @@
             recordId = currentStandardId || currentChangeId;
         }
 
-        const url = `${apiBaseUrl}${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
+        const url = `${apiBaseUrl}/api/${deleteType === 'standard' ? 'StandardSchedules' : 'ScheduleChanges'}/${recordId}`;
 
         try {
             const response = await fetch(url, {
@@ -862,6 +865,29 @@
     }
 
     function showErrorToast(message) {
-        alert(`Ошибка: ${message}`);
+        // Используем Bootstrap Toast или простой alert
+        const toastHtml = `
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-danger text-white">
+                        <strong class="me-auto">Ошибка</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        `;
+    
+        // Добавляем toast в тело документа
+        const toastContainer = document.createElement('div');
+        toastContainer.innerHTML = toastHtml;
+        document.body.appendChild(toastContainer);
+    
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            toastContainer.remove();
+        }, 5000);
     }
 </script>

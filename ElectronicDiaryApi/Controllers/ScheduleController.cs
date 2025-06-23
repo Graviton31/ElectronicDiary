@@ -145,6 +145,42 @@ namespace ElectronicDiaryApi.Controllers
             }
         }
 
+        [HttpGet("group/{groupId}/week/{date}")]
+        public ActionResult<UnifiedScheduleResponseDto> GetSingleGroupSchedule(int groupId, DateTime date)
+        {
+            var group = _context.Groups
+                .Include(g => g.IdLocationNavigation)
+                .Include(g => g.IdSubjectNavigation)
+                .Include(g => g.IdEmployees)
+                    .ThenInclude(e => e.IdEmployeeNavigation)
+                .Include(g => g.StandardSchedules)
+                .Include(g => g.ScheduleChanges)
+                    .ThenInclude(c => c.IdScheduleNavigation)
+                .FirstOrDefault(g => g.IdGroup == groupId);
+
+            if (group == null)
+            {
+                return NotFound("Group not found");
+            }
+
+            var startOfWeek = date.Date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
+            var endOfWeek = startOfWeek.AddDays(6);
+
+            var startOfWeekDateOnly = DateOnly.FromDateTime(startOfWeek);
+            var endOfWeekDateOnly = DateOnly.FromDateTime(endOfWeek);
+
+            var unifiedSchedule = InitializeWeekSchedule(startOfWeekDateOnly, endOfWeekDateOnly);
+
+            ProcessGroupSchedule(group, unifiedSchedule, startOfWeekDateOnly, endOfWeekDateOnly);
+
+            return Ok(new UnifiedScheduleResponseDto
+            {
+                WeekStartDate = startOfWeekDateOnly,
+                WeekEndDate = endOfWeekDateOnly,
+                Days = unifiedSchedule.Values.OrderBy(d => d.Date).ToList()
+            });
+        }
+
         // Метод для получения групп, где учатся дети родителя
         private IQueryable<Group> GetGroupsForParent(int parentId)
         {
