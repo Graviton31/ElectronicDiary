@@ -53,13 +53,16 @@
                         {
                             <div class="col-md-6">
                                 <div class="d-flex gap-3 justify-content-md-end">
-                                    <button type="button"
-                                            class="btn btn-success px-4 py-2 rounded-pill"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#standardLessonModal"
-                                            onclick="loadStandardScheduleForm()">
-                                        <i class="bi bi-plus-circle me-2"></i>Добавить занятие
-                                    </button>
+                                    @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+                                    {
+                                        <button type="button"
+                                        class="btn btn-success px-4 py-2 rounded-pill"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#standardLessonModal"
+                                        onclick="loadStandardScheduleForm()">
+                                            <i class="bi bi-plus-circle me-2"></i>Добавить занятие
+                                        </button>
+                                    }
                                     <button type="button"
                                             class="btn btn-warning px-4 py-2 rounded-pill"
                                             data-bs-toggle="modal"

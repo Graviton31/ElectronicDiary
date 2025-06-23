@@ -4,7 +4,7 @@
     {
         public string Name { get; set; }
         public string FullName { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public sbyte Duration { get; set; }
         public sbyte LessonLength { get; set; }
         public string? Syllabus { get; set; }

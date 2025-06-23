@@ -23,36 +23,82 @@
 
     <!-- Основной контент -->
     <div class="journal-content">
-        <!-- Блок выбора предмета и группы -->
-        <div class="journal-selectors mb-4">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="selector-card shadow-sm">
-                        <label for="subjectSelector" class="form-label selector-label">
-                            <i class="bi bi-book-half me-2"></i>Предмет
-                        </label>
-                        <select id="subjectSelector" class="form-select selector-input">
-                            <option value="">Выберите предмет</option>
-                            @foreach (var subject in Model)
-                            {
-                                <option value="@subject.IdSubject">@subject.Name</option>
-                            }
-                        </select>
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert alert-danger d-flex align-items-center mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <div>@ViewBag.ErrorMessage</div>
+            </div>
+
+            @if (ViewBag.HideInterface != true)
+            {
+                <!-- Показываем остальной интерфейс только если нет флага HideInterface -->
+                <!-- Блок выбора предмета и группы -->
+                <div class="journal-selectors mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="selector-card shadow-sm">
+                                <label for="subjectSelector" class="form-label selector-label">
+                                    <i class="bi bi-book-half me-2"></i>Предмет
+                                </label>
+                                <select id="subjectSelector" class="form-select selector-input">
+                                    <option value="">Выберите предмет</option>
+                                    @foreach (var subject in Model)
+                                    {
+                                        <option value="@subject.IdSubject">@subject.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="selector-card shadow-sm">
+                                <label for="groupSelector" class="form-label selector-label">
+                                    <i class="bi bi-people-fill me-2"></i>Группа
+                                </label>
+                                <select id="groupSelector" class="form-select selector-input" disabled>
+                                    <option value="">Сначала выберите предмет</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="selector-card shadow-sm">
-                        <label for="groupSelector" class="form-label selector-label">
-                            <i class="bi bi-people-fill me-2"></i>Группа
-                        </label>
-                        <select id="groupSelector" class="form-select selector-input" disabled>
-                            <option value="">Сначала выберите предмет</option>
-                        </select>
+            }
+        }
+        else
+        {
+            <!-- Блок выбора предмета и группы -->
+            <div class="journal-selectors mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="selector-card shadow-sm">
+                            <label for="subjectSelector" class="form-label selector-label">
+                                <i class="bi bi-book-half me-2"></i>Предмет
+                            </label>
+                            <select id="subjectSelector" class="form-select selector-input">
+                                <option value="">Выберите предмет</option>
+                                @foreach (var subject in Model)
+                                {
+                                    <option value="@subject.IdSubject">@subject.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="selector-card shadow-sm">
+                            <label for="groupSelector" class="form-label selector-label">
+                                <i class="bi bi-people-fill me-2"></i>Группа
+                            </label>
+                            <select id="groupSelector" class="form-select selector-input" disabled>
+                                <option value="">Сначала выберите предмет</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
 
+        @if (ViewBag.HideInterface != true)
+        {
         <!-- Блок информации и управления -->
         <div class="journal-info-section mb-4">
             <div class="row align-items-center">
@@ -141,6 +187,7 @@
                 </div>
             </div>
         </div>
+        }
     </div>
 </div>
 
@@ -255,9 +302,12 @@
             <i class="bi bi-exclamation-triangle-fill empty-icon"></i>
         </div>
         <h4 class="empty-title mb-3">{message}</h4>
-        <button class="btn btn-primary btn-lg" id="createJournalBtn">
-            <i class="bi bi-journal-plus me-2"></i> Создать журнал
-        </button>
+        @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+        {
+            <button class="btn btn-primary btn-lg" id="createJournalBtn">
+                <i class="bi bi-journal-plus me-2"></i> Создать журнал
+            </button>
+        }
     </div>
 </div>
 
@@ -1007,10 +1057,19 @@
             const startDateInput = document.getElementById('journalStartDate');
             const endDateInput = document.getElementById('journalEndDate');
             const lessonsCountInput = document.getElementById('lessonsCount');
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'alert alert-danger mt-3';
+            errorContainer.style.display = 'none';
+
+            // Вставляем контейнер для ошибок в модальное окно
+            const modalBody = document.querySelector('#createJournalModal .modal-body');
+            const existingError = modalBody.querySelector('.alert-danger');
+            if (existingError) existingError.remove();
+            modalBody.appendChild(errorContainer);
 
             // Валидация ввода
             if (!startDateInput.value || !endDateInput.value) {
-                showError('Пожалуйста, заполните даты начала и окончания');
+                showModalError('Пожалуйста, заполните даты начала и окончания', errorContainer);
                 return;
             }
 
@@ -1020,18 +1079,18 @@
 
             // Проверка корректности дат
             if (startDate >= endDate) {
-                showError('Дата окончания должна быть позже даты начала');
+                showModalError('Дата окончания должна быть позже даты начала', errorContainer);
                 return;
             }
 
             if (lessonsCount <= 0) {
-                showError('Количество уроков должно быть больше 0');
+                showModalError('Количество уроков должно быть больше 0', errorContainer);
                 return;
             }
 
             try {
-                createJournalModal.hide();
                 showLoading('Создание журнала...');
+                createJournalModal.hide();
 
                 const response = await fetch(`${apiBaseUrl}/api/Journals/Journals`, {
                     method: 'POST',
@@ -1044,41 +1103,26 @@
                     })
                 });
 
-                // Создаем копию ответа для чтения
-                const responseClone = response.clone();
-
-                try {
-                    // Пытаемся прочитать как JSON
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        // Если статус не OK, но ответ в JSON формате
-                        throw new Error(data.message || data.title || 'Не удалось создать журнал');
-                    }
-
-                    // Успешное создание
-                    await loadGroupJournal(currentGroupId);
-                    showSuccessMessage('Журнал успешно создан');
-
-                } catch (jsonError) {
-                    // Если не удалось прочитать как JSON, читаем как текст
-                    if (!responseClone.ok) {
-                        const errorText = await responseClone.text();
-                        if (errorText.includes("Журнал на этот период уже существует")) {
-                            throw new Error('Журнал на этот период уже существует');
-                        } else {
-                            throw new Error(errorText || 'Не удалось создать журнал');
-                        }
-                    }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.title || 'Не удалось создать журнал');
                 }
+
+                // Успешное создание
+                await loadGroupJournal(currentGroupId);
+                showSuccessMessage('Журнал успешно создан');
 
             } catch (error) {
                 console.error('Ошибка создания журнала:', error);
 
+                // Показываем модальное окно снова
+                createJournalModal.show();
+
                 let errorMessage = 'Не удалось создать журнал';
 
-                if (error.message.includes("Журнал на этот период уже существует")) {
-                    errorMessage = error.message;
+                if (error.message.includes("already exists") ||
+                    error.message.includes("Журнал на этот период уже существует")) {
+                    errorMessage = 'Журнал на этот период уже существует';
 
                     // Показываем конфликтующие журналы
                     const existingJournals = availableJournals.filter(j =>
@@ -1087,7 +1131,7 @@
                     );
 
                     if (existingJournals.length > 0) {
-                        errorMessage += '\n\nСуществующие журналы на этот период:';
+                        errorMessage += '\n\nСуществующие журналы:';
                         existingJournals.forEach(j => {
                             errorMessage += `\n${formatDate(j.startDate)} - ${formatDate(j.endDate)}`;
                         });
@@ -1096,9 +1140,7 @@
                     errorMessage += ': ' + (error.message || 'неизвестная ошибка');
                 }
 
-                showError(errorMessage);
-                createJournalModal.show();
-
+                showModalError(errorMessage, errorContainer);
             } finally {
                 hideLoading();
             }

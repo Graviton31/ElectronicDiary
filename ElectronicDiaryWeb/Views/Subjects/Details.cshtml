@@ -20,7 +20,7 @@
             </div>
             <div>
                 <h1 class="page-title">@Model.Subject.FullName</h1>
-                <p class="page-subtitle">Детальная информация о предмете</p>
+                <p class="page-subtitle">Подробная информация о предмете</p>
             </div>
         </div>
         <div class="header-divider"></div>
@@ -28,16 +28,19 @@
 
     <!-- Кнопки действий -->
     <div class="d-flex justify-content-end gap-2 mb-4">
-        <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
-           class="btn btn-primary px-4">
-            <i class="bi bi-pencil-square me-2"></i>Редактировать
-        </a>
+        @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
+            class="btn btn-primary px-4">
+                <i class="bi bi-pencil-square me-2"></i>Редактировать
+            </a>
+        }
         <a asp-controller="GroupSchedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
-           class="btn btn-secondary px-4">
+        class="btn btn-secondary px-4">
             <i class="bi bi-calendar-week me-2"></i>Расписание
         </a>
         <a asp-controller="EnrollmentRequests" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
-           class="btn btn-warning px-4">
+        class="btn btn-warning px-4">
             <i class="bi bi-list-task me-2"></i>Заявки
         </a>
         @* <a asp-action="Delete" asp-route-id="@Model.Subject.IdSubject"

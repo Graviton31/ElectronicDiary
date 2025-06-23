@@ -28,14 +28,14 @@
                     <form method="get" class="d-flex align-items-center gap-3">
                         <div class="input-group" style="width: 300px;">
                             <input type="text" class="form-control" name="search" placeholder="Поиск по названию"
-                                   value="@ViewBag.SearchTerm">
+                            value="@ViewBag.SearchTerm">
                             <button class="btn btn-outline-secondary" type="submit">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
 
                         <select class="form-select" name="status" onchange="this.form.submit()"
-                                style="width: 200px;">
+                        style="width: 200px;">
                             <option value="">Все статусы</option>
                             <option value="active" selected="@(ViewBag.SelectedStatus == "active")">Активные</option>
                             <option value="recruiting" selected="@(ViewBag.SelectedStatus == "recruiting")">Набор</option>
@@ -50,10 +50,13 @@
                         }
                     </form>
 
-                    <a asp-action="Create" class="btn btn-primary" style="background-color: #4361ee; border-color: #4361ee;">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        <span class="btn-text">Добавить предмет</span>
-                    </a>
+                    @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+                    {
+                        <a asp-action="Create" class="btn btn-primary" style="background-color: #4361ee; border-color: #4361ee;">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            <span class="btn-text">Добавить предмет</span>
+                        </a>
+                    }
                 </div>
 
                 @if (ViewBag.ErrorMessage != null)

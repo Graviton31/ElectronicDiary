@@ -25,6 +25,27 @@ namespace ElectronicDiaryApi.Controllers
             _logger = logger;
         }
 
+        [HttpGet("by-user/{userId}")]
+        public async Task<ActionResult<EmployeeDto>> GetEmployeeByUserId(int userId)
+        {
+            var employee = await _context.Employees
+                .Include(e => e.IdEmployeeNavigation)
+                .Include(e => e.IdPostNavigation)
+                .FirstOrDefaultAsync(e => e.IdEmployeeNavigation.IdUser == userId);
+
+            if (employee == null) return NotFound();
+
+            return new EmployeeDto
+            {
+                IdEmployee = employee.IdEmployee,
+                FullName = $"{employee.IdEmployeeNavigation.Surname} {employee.IdEmployeeNavigation.Name} {employee.IdEmployeeNavigation.Patronymic}".Trim(),
+                Phone = employee.IdEmployeeNavigation.Phone,
+                Login = employee.IdEmployeeNavigation.Login,
+                Role = employee.IdEmployeeNavigation.Role,
+                Post = employee.IdPostNavigation?.PostName
+            };
+        }
+
         // GET: api/Employees
         [HttpGet]
         public async Task<ActionResult<PagedResponse<EmployeeDto>>> GetEmployees(

@@ -27,7 +27,7 @@ namespace ElectronicDiaryWeb.Models.Subject
         public string SubjectFullName { get; set; }
 
         [Display(Name = "Описание")]
-        public string SubjectDescription { get; set; }
+        public string? SubjectDescription { get; set; }
 
         [Required(ErrorMessage = "Обязательное поле")]
         [Range(1, 10, ErrorMessage = "Длительность от 1 до 10")]
