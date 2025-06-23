@@ -145,33 +145,6 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        document.getElementById('goBackButton').addEventListener('click', function() {
-            const returnUrl = sessionStorage.getItem('returnUrl') || document.referrer;
-            const savedState = sessionStorage.getItem('journalState') ||
-                              localStorage.getItem('journalBackupState');
-
-            if (savedState && returnUrl) {
-                const state = JSON.parse(savedState);
-
-                // Формируем URL с параметрами
-                const url = new URL(returnUrl, window.location.origin);
-                url.searchParams.set('subjectId', state.subjectId);
-                url.searchParams.set('groupId', state.groupId);
-
-                if (state.journalId) {
-                    url.searchParams.set('journalId', state.journalId);
-                }
-
-                // Добавляем параметр для предотвращения кэширования
-                url.searchParams.set('_t', Date.now());
-
-                window.location.href = url.toString();
-            } else {
-                window.history.back();
-            }
-        });
-
         // Константы и элементы формы
         const form = document.getElementById('employeeForm');
         const passwordInput = form.querySelector('input[name="Password"]');
