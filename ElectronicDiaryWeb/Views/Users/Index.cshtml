@@ -1,0 +1,487 @@
+﻿@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<link rel="stylesheet" href="~/css/users.css" asp-append-version="true" />
+
+<div class="e-journal-container">
+    <!-- Заголовок с иконкой -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-people-fill header-icon"></i>
+            </div>
+            @if (User.IsInRole("администратор"))
+            {
+                <div>
+                        <h1 class="page-title">Управление пользователями</h1>
+                    <p class="page-subtitle">Просмотр и управление учетными записями системы</p>
+                </div>
+            }
+            @if (User.IsInRole("руководитель"))
+            {
+                <div>
+                    <h1 class="page-title">Пользователи</h1>
+                    <p class="page-subtitle">Просмотр информации о пользователях</p>
+                </div>
+            }
+            @if (User.IsInRole("учитель"))
+            {
+                <div>
+                    <h1 class="page-title">Сотрудники</h1>
+                    <p class="page-subtitle">Просмотр информации о сотрудниках</p>
+                </div>
+            }
+        </div>
+        <div class="header-divider"></div>
+    </header>
+
+    <div class="user-management-container">
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-body">
+                <!-- Панель управления (поиск, переключатели, кнопка) -->
+                <div class="user-control-panel mb-4">
+                    <div class="row g-3 align-items-center">
+                        <!-- Поиск -->
+                        <div class="col-md-5 col-lg-4">
+                            <div class="search-wrapper position-relative">
+                                <i class="bi bi-search search-icon position-absolute"></i>
+                                <input type="text" id="searchInput" class="form-control search-input ps-4"
+                                       placeholder="Поиск по ФИО, логину...">
+                                <div class="search-loader position-absolute d-none">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Переключатель типов -->
+                        <div class="col-md-5 col-lg-6">
+                            <div class="btn-group user-type-toggle" role="group">
+                                @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+                                {
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Employees">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span class="btn-text">Сотрудники</span>
+                                    </button>
+                                
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Parents">
+                                        <i class="bi bi-people"></i>
+                                        <span class="btn-text">Родители</span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary user-type-btn" data-user-type="Students">
+                                        <i class="bi bi-mortarboard"></i>
+                                        <span class="btn-text">Ученики</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Кнопка регистрации -->
+                        @if (User.IsInRole("администратор"))
+                        {
+                            <div class="col-md-2 text-md-end">
+                                <a id="registerUserBtn" href="#" class="btn btn-success btn-register">
+                                    <i class="bi bi-person-plus"></i>
+                                    <span class="btn-text">Зарегистрировать</span>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Список пользователей -->
+                <div class="user-list-container">
+                    <div class="user-list-header">
+                        <div class="header-item">ФИО</div>
+                        <div class="header-item">Логин</div>
+                        <div class="header-item">Телефон</div>
+                        <div class="header-item employee-field">Должность</div>
+                        <div class="header-item employee-field">Роль</div>
+                    </div>
+                    <div class="user-list" id="usersList">
+                        <!-- Данные пользователей -->
+                        <div class="empty-state">
+                            <div class="spinner-container">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                            </div>
+                            <p>Загрузка данных...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок ошибок -->
+                <div id="errorContainer" class="alert alert-danger mt-3 animate__animated animate__fadeIn" style="display: none;"></div>
+
+                <!-- Пагинация -->
+                <div class="pagination-container mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" id="prevPage">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <span class="page-link" id="pageInfo">Страница 1 из 1</span>
+                            </li>
+                            <li class="page-item" id="nextPage">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const apiBaseUrl = window.apiBaseUrl;
+
+        // console.log(User.IsIn("руководитель"))
+
+        // Конфигурация
+        const config = {
+            elements: {
+                userList: document.getElementById('usersList'),
+                employeeFields: document.querySelectorAll('.employee-field'),
+                pageInfo: document.getElementById('pageInfo'),
+                prevPage: document.getElementById('prevPage'),
+                nextPage: document.getElementById('nextPage'),
+                errorContainer: document.getElementById('errorContainer'),
+                searchInput: null,
+                searchLoader: null,
+                registerUserBtn: document.getElementById('registerUserBtn'),
+            },
+            state: {
+                page: 1,
+                pageSize: 10,
+                type: 'Employees',
+                totalPages: 1,
+                searchQuery: '',
+                isSearching: false
+            }
+        };
+
+        // Маршруты для кнопки регистрации
+        const registrationRoutes = {
+            'Employees': '/Register/RegisterEmployee',
+            'Parents': '/Register/RegisterParent',
+            'Students': '/Register/RegisterChild'
+        };
+
+        const registerButtonTexts = {
+            'Employees': 'Зарегистрировать сотрудника',
+            'Parents': 'Зарегистрировать родителя',
+            'Students': 'Зарегистрировать ученика'
+        };
+
+        // Инициализация
+        function initialize() {
+            const savedReturnUrl = sessionStorage.getItem('userListReturnUrl');
+            if (savedReturnUrl) {
+                window.history.replaceState({}, '', savedReturnUrl);
+                sessionStorage.removeItem('userListReturnUrl');
+            }
+
+            loadStateFromURL();
+            setupSearchInput();
+            setupEventListeners();
+            loadUsers();
+        }
+
+        // Загрузка состояния из URL
+        function loadStateFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            config.state.type = urlParams.get('type') || 'Employees';
+            config.state.page = parseInt(urlParams.get('page')) || 1;
+            config.state.searchQuery = urlParams.get('search') || '';
+        }
+
+        // Обновление URL
+        function updateURL() {
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('type', config.state.type);
+            newUrl.searchParams.set('page', config.state.page);
+            if (config.state.searchQuery) {
+                newUrl.searchParams.set('search', config.state.searchQuery);
+            } else {
+                newUrl.searchParams.delete('search');
+            }
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        function updateUI() {
+            // Обновление кнопок типа
+            document.querySelectorAll('.user-type-btn').forEach(btn => {
+                if (btn.dataset.userType === config.state.type) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Показываем/скрываем поля для сотрудников
+            const isEmployeeView = config.state.type === 'Employees';
+            document.querySelectorAll('.employee-field').forEach(field => {
+                field.style.display = isEmployeeView ? 'block' : 'none';
+            });
+
+            // Обновляем кнопку регистрации (если она существует)
+            if (config.elements.registerUserBtn) {
+                config.elements.registerUserBtn.href = registrationRoutes[config.state.type];
+                const registerTextElement = document.getElementById('registerBtnText');
+                if (registerTextElement) {
+                    registerTextElement.textContent = registerButtonTexts[config.state.type];
+                }
+            }
+
+            // Пагинация
+            config.elements.pageInfo.textContent = `Страница ${config.state.page} из ${config.state.totalPages}`;
+            config.elements.prevPage.classList.toggle('disabled', config.state.page === 1);
+            config.elements.nextPage.classList.toggle('disabled', config.state.page >= config.state.totalPages);
+        }
+
+        // Настройка поиска
+        function setupSearchInput() {
+            config.elements.searchInput = document.getElementById('searchInput');
+            config.elements.searchLoader = document.querySelector('.search-loader');
+
+            // Устанавливаем начальное значение
+            config.elements.searchInput.value = config.state.searchQuery;
+
+            // Обработчик изменения поискового запроса
+            let searchTimeout;
+            config.elements.searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                config.state.searchQuery = e.target.value.trim();
+                config.state.page = 1;
+
+                // Показываем индикатор загрузки
+                config.state.isSearching = true;
+                config.elements.searchLoader.classList.remove('d-none');
+                document.querySelector('.search-icon').classList.add('d-none');
+
+                searchTimeout = setTimeout(() => {
+                    loadUsers().finally(() => {
+                        // Скрываем индикатор после загрузки
+                        config.state.isSearching = false;
+                        config.elements.searchLoader.classList.add('d-none');
+                        document.querySelector('.search-icon').classList.remove('d-none');
+                    });
+                }, 500);
+            });
+        }
+
+        // Загрузка данных
+        async function loadUsers() {
+            try {
+                if (!config.state.isSearching) {
+                    showLoading();
+                }
+
+                const url = new URL(`${apiBaseUrl}/api/${config.state.type}`);
+                url.searchParams.set('page', config.state.page);
+                url.searchParams.set('pageSize', config.state.pageSize);
+
+                if (config.state.searchQuery) {
+                    url.searchParams.set('search', config.state.searchQuery);
+                }
+
+                const response = await fetch(url, { credentials: 'include' });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const result = await response.json();
+
+                if (!result.data || result.data.length === 0) {
+                    showEmptyState();
+                    return;
+                }
+
+                config.state.totalPages = Math.ceil(result.totalCount / config.state.pageSize);
+                renderUserList(result.data);
+                updateURL();
+                updateUI();
+                hideError();
+
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                showError(`Ошибка загрузки данных: ${error.message}`);
+                showEmptyState();
+            } finally {
+                if (!config.state.isSearching) {
+                    hideLoading();
+                }
+            }
+        }
+
+        // Отрисовка списка пользователей
+        function renderUserList(users) {
+            const isEmployeeView = config.state.type === 'Employees';
+            const isMobile = window.innerWidth < 576;
+
+            const usersHtml = users.map(user => {
+                if (isMobile) {
+                    return `
+                        <div class="user-item" data-user-id="${user.idEmployee || user.idParent || user.idStudent}">
+                            <div>
+                                <div class="user-item-value" data-label="ФИО">${user.fullName || '—'}</div>
+                            </div>
+                            <div>
+                                <div class="user-item-value" data-label="Логин">${user.login || '—'}</div>
+                            </div>
+                            <div>
+                                <div class="user-item-value" data-label="Телефон">${user.phone || '—'}</div>
+                            </div>
+                            ${isEmployeeView ? `
+                            <div>
+                                <div class="user-item-value" data-label="Должность">${user.post || '—'}</div>
+                            </div>
+                            <div>
+                                <div class="user-item-value" data-label="Роль">${user.role || '—'}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="user-item" data-user-id="${user.idEmployee || user.idParent || user.idStudent}">
+                            <div>
+                                <div class="user-item-value">${user.fullName || '—'}</div>
+                            </div>
+                            <div>
+                                <div class="user-item-value">${user.login || '—'}</div>
+                            </div>
+                            <div>
+                                <div class="user-item-value">${user.phone || '—'}</div>
+                            </div>
+                            ${isEmployeeView ? `
+                            <div class="employee-field">
+                                <div class="user-item-value">${user.post || '—'}</div>
+                            </div>
+                            <div class="employee-field">
+                                <div class="user-item-value">${user.role || '—'}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            config.elements.userList.innerHTML = usersHtml;
+        }
+
+        // Пустое состояние
+        function showEmptyState() {
+            config.elements.userList.innerHTML = `
+                <div class="empty-state animate__animated animate__fadeIn">
+                    <i class="bi bi-people"></i>
+                    <p>Нет данных для отображения</p>
+                </div>
+            `;
+        }
+
+        // Показать индикатор загрузки
+        function showLoading() {
+            config.elements.userList.innerHTML = `
+                <div class="empty-state">
+                    <div class="spinner-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                    <p>Загрузка данных...</p>
+                </div>
+            `;
+        }
+
+        // Скрыть индикатор загрузки
+        function hideLoading() {
+            const spinner = config.elements.userList.querySelector('.spinner-container');
+            if (spinner) spinner.remove();
+        }
+
+        // Обработчики событий
+        function setupEventListeners() {
+            // Кнопки типа пользователя
+            document.querySelectorAll('.user-type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newType = btn.dataset.userType;
+                    if (newType !== config.state.type) {
+                        config.state.type = newType;
+                        config.state.page = 1;
+                        config.state.searchQuery = '';
+                        config.elements.searchInput.value = '';
+                        loadUsers();
+                    }
+                });
+            });
+
+            // Пагинация
+            config.elements.prevPage.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (config.state.page > 1) {
+                    config.state.page--;
+                    loadUsers();
+                }
+            });
+
+            config.elements.nextPage.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (config.state.page < config.state.totalPages) {
+                    config.state.page++;
+                    loadUsers();
+                }
+            });
+
+            // Клик по пользователю
+            config.elements.userList.addEventListener('click', (e) => {
+                const userItem = e.target.closest('.user-item');
+                if (!userItem) return;
+
+                const userId = userItem.dataset.userId;
+                sessionStorage.setItem('returnUrl', window.location.href);
+                window.location.href = `/${config.state.type}/Details/${userId}`;
+            });
+
+            // Адаптация при изменении размера окна
+            window.addEventListener('resize', () => {
+                if (config.elements.userList.children.length > 0 &&
+                    !config.elements.userList.querySelector('.empty-state')) {
+                    loadUsers();
+                }
+            });
+        }
+
+        // Обработка ошибок
+        function showError(message) {
+            config.elements.errorContainer.style.display = 'block';
+            config.elements.errorContainer.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+            config.elements.errorContainer.classList.add('animate__fadeIn');
+
+            setTimeout(() => {
+                config.elements.errorContainer.classList.add('fade-out');
+                setTimeout(() => {
+                    config.elements.errorContainer.style.display = 'none';
+                    config.elements.errorContainer.classList.remove('fade-out');
+                }, 300);
+            }, 5000);
+        }
+
+        function hideError() {
+            config.elements.errorContainer.style.display = 'none';
+        }
+
+        // Запуск приложения
+        initialize();
+    });
+</script>

@@ -7,29 +7,31 @@ public partial class User
 {
     public int IdUser { get; set; }
 
-    public string? Surname { get; set; }
+    public string Name { get; set; } = null!;
 
-    public string? Name { get; set; }
+    public string Surname { get; set; } = null!;
 
     public string? Patronymic { get; set; }
 
+    public DateOnly BirthDate { get; set; }
+
+    public string Phone { get; set; } = null!;
+
     public string Login { get; set; } = null!;
 
-    public byte[] Password { get; set; } = null!;
+    public string Password { get; set; } = null!;
 
-    public string? Phone { get; set; }
+    public string? RefreshToken { get; set; }
 
-    public DateOnly? BirthDate { get; set; }
+    public DateTime? RefreshTokenExpiryTime { get; set; }
 
     public string Role { get; set; } = null!;
 
-    public bool IsDelete { get; set; }
+    public bool? IsDelete { get; set; }
 
-    public int? IdPost { get; set; }
+    public virtual Employee? Employee { get; set; }
 
-    public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
+    public virtual Parent? Parent { get; set; }
 
-    public virtual Post? IdPostNavigation { get; set; }
-
-    public virtual ICollection<Subject> IdSubjects { get; set; } = new List<Subject>();
+    public virtual Student? Student { get; set; }
 }

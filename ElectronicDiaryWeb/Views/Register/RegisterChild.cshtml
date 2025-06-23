@@ -1,0 +1,666 @@
+﻿@using ElectronicDiaryWeb.Models.Auth
+@model RegisterChildWithParentsModel
+
+@{
+    ViewData["Title"] = "Регистрация ребенка";
+}
+
+<div class="page-container">
+    <!-- Контейнер для уведомлений -->
+    <div id="global-alerts" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
+
+    <div class="page-header">
+        <div class="d-flex align-items-center mb-3">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-person-plus header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Регистрация ребенка</h1>
+                <p class="page-subtitle">Заполните форму для регистрации нового ученика</p>
+            </div>
+        </div>
+        <hr class="header-divider" />
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="childForm" asp-action="RegisterChild" method="post" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Данные ребенка -->
+                <h4 class="text-primary mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-vcard me-2"></i>Данные ребенка
+                </h4>
+
+                <div class="row g-3">
+                    <!-- ФИО -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Surname" class="form-label">Фамилия*</label>
+                            <input asp-for="Surname" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Имя*</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите имя</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Patronymic" class="form-label">Отчество</label>
+                            <input asp-for="Patronymic" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Дата рождения и контакты -->
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="BirthDate" class="form-label">Дата рождения*</label>
+                            <input asp-for="BirthDate" type="date" class="form-control" required
+                                   max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   min="@DateTime.Today.AddYears(-120).ToString("yyyy-MM-dd")" />
+                            <div class="invalid-feedback">Пожалуйста, укажите корректную дату рождения</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Phone" class="form-label">Телефон*</label>
+                            <input asp-for="Phone" class="form-control"
+                                   pattern="^\+7\d{10}$"
+                                   title="Формат: +7XXXXXXXXXX"
+                                   required />
+                            <div class="invalid-feedback">Укажите телефон в формате +7XXXXXXXXXX</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Учебное заведение -->
+                <div class="row g-3 mt-2">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label asp-for="EducationName" class="form-label">Учебное заведение*</label>
+                            <input asp-for="EducationName" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите учебное заведение</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Учетные данные -->
+                <h4 class="text-primary mb-3 border-bottom pb-2 mt-4">
+                    <i class="bi bi-shield-lock me-2"></i>Учетные данные ребенка
+                </h4>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Login" class="form-label">Логин (email)*</label>
+                            <input asp-for="Login" type="email" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите корректный email</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Password" class="form-label">Пароль*</label>
+                            <input asp-for="Password" type="password" class="form-control" required
+                                   minlength="6" data-password-requirements />
+                            <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="ConfirmPassword" class="form-label">Подтверждение*</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                            <div class="invalid-feedback">Пароли не совпадают</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Требования к паролю:</strong> минимум 6 символов, включая цифры и буквы
+                </div>
+
+                <!-- Родители -->
+                <div class="parents-section mt-4">
+                    <h4 class="text-primary mb-3 border-bottom pb-2 d-flex align-items-center">
+                        <i class="bi bi-people me-2"></i>Родители
+                    </h4>
+
+                    <!-- Поиск родителей -->
+                    <div class="search-parent mb-4 position-relative">
+                        <!-- Добавлен position-relative -->
+                        <label class="form-label fw-semibold">Поиск родителей*</label>
+                        <div class="input-group has-validation">
+                            <input type="text" id="parentSearch" class="form-control rounded-end-0"
+                                   placeholder="Введите ФИО или телефон" autocomplete="off" required>
+                            <button class="btn btn-primary rounded-start-0" type="button" id="searchParentBtn">
+                                <i class="bi bi-search me-1"></i> Найти
+                            </button>
+                            <div class="invalid-feedback">Необходимо найти и добавить хотя бы одного родителя</div>
+                        </div>
+                        <small class="text-muted d-block mt-1">Минимум 2 символа для поиска</small>
+                        <div id="parentSearchResults" class="dropdown-menu w-100 mt-1 shadow" style="display: none; max-height: 300px; overflow-y: auto; width: auto; min-width: 100%;">
+                            <!-- Изменены стили -->
+                            <div class="list-group list-group-flush"></div>
+                        </div>
+                    </div>
+
+                    <!-- Выбранные родители -->
+                    <div class="selected-parents mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-primary mb-0 d-flex align-items-center">
+                                <i class="bi bi-person-check me-2"></i>Выбранные родители
+                            </h5>
+                            <span class="badge bg-primary rounded-pill" id="selectedParentsCount">0</span>
+                        </div>
+
+                        <div id="selectedParentsList" class="row g-3">
+                            <div class="col-12">
+                                <div class="empty-parents-card text-center p-4 bg-light rounded">
+                                    <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                                    <h5 class="mt-2 text-muted">Родители не выбраны</h5>
+                                    <p class="text-muted small mb-0">Добавьте родителей с помощью поиска выше</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="ParentIds" id="parentIds" />
+                        <input type="hidden" asp-for="ParentRole" id="parentRoles" />
+                    </div>
+                </div>
+
+                <!-- Кнопки формы -->
+                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                    <a asp-action="Index" asp-controller="Users" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Назад
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-person-plus me-2"></i>Зарегистрировать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили для блока родителей */
+    .parents-section {
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    /* Стили для карточки родителя */
+    .parent-card {
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+    }
+
+        .parent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .parent-card .card-title {
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .parent-card .card-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .parent-card .remove-parent-btn {
+            transition: var(--transition);
+        }
+
+            .parent-card .remove-parent-btn:hover {
+                transform: scale(1.1);
+            }
+
+    /* Стили для пустого состояния */
+    .empty-parents-card {
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+        .empty-parents-card:hover {
+            background-color: rgba(67, 97, 238, 0.05) !important;
+        }
+
+    /* Стили для результатов поиска */
+    #parentSearchResults .list-group-item {
+        padding: 0.75rem 1.25rem;
+        border-left: none;
+        border-right: none;
+        transition: var(--transition);
+    }
+
+        #parentSearchResults .list-group-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        #parentSearchResults .list-group-item h6 {
+            font-size: 0.95rem;
+        }
+
+        #parentSearchResults .list-group-item small {
+            font-size: 0.85rem;
+        }
+
+    #parentSearchResults {
+        position: absolute;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        width: 100% !important; /* Фиксированная ширина */
+        max-width: 100%; /* Не шире родительского элемента */
+    }
+
+        #parentSearchResults .list-group-item {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+</style>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Конфигурация
+            const apiBaseUrl = window.apiBaseUrl || '';
+            const authToken = getCookie('_secure_at') || '';
+            const selectedParents = new Map();
+
+            // Элементы DOM
+            const form = document.getElementById('childForm');
+            const parentSearchInput = document.getElementById('parentSearch');
+            const parentSearchBtn = document.getElementById('searchParentBtn');
+            const parentSearchResults = document.getElementById('parentSearchResults');
+            const selectedParentsList = document.getElementById('selectedParentsList');
+            const parentIdsInput = document.getElementById('parentIds');
+            const parentRolesInput = document.getElementById('parentRoles');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Функция для получения куки
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+
+            // Функция для показа уведомлений
+            function showAlert(message, type = 'danger') {
+                const alertsContainer = document.getElementById('global-alerts');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type} alert-dismissible fade show`;
+                alert.innerHTML = `
+                    <i class="bi ${type === 'danger' ? 'bi-exclamation-triangle' : 'bi-check-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                alertsContainer.appendChild(alert);
+                setTimeout(() => alert.remove(), 5000);
+            }
+
+            // Поиск родителей
+            async function searchParents() {
+                const query = parentSearchInput.value.trim();
+
+                if (query.length < 2) {
+                    showAlert('Введите минимум 2 символа для поиска', 'warning');
+                    return;
+                }
+
+                try {
+                    parentSearchBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    const response = await fetch(`${apiBaseUrl}/api/users/search-parents?query=${encodeURIComponent(query)}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText || 'Ошибка поиска');
+                    }
+
+                    const parents = await response.json();
+                    renderParentResults(parents);
+                } catch (error) {
+                    console.error('Ошибка поиска родителей:', error);
+                    showAlert('Не удалось выполнить поиск родителей. Пожалуйста, попробуйте позже.', 'danger');
+                } finally {
+                    parentSearchBtn.innerHTML = '<i class="bi bi-search me-1"></i> Найти';
+                }
+            }
+
+            // Отображение результатов поиска
+            function renderParentResults(parents) {
+                const resultsContainer = parentSearchResults.querySelector('.list-group');
+                resultsContainer.innerHTML = '';
+
+                if (!parents || parents.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="list-group-item text-muted">
+                            Родители не найдены
+                        </div>
+                    `;
+                    parentSearchResults.style.display = 'block';
+                    return;
+                }
+
+                parents.forEach(parent => {
+                    const parentItem = document.createElement('a');
+                    parentItem.className = 'list-group-item list-group-item-action';
+                    parentItem.href = '#';
+                    parentItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${parent.fullName}</h6>
+                            <small>${parent.phone || 'Телефон не указан'}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">Логин: ${parent.login || 'Не указан'}</p>
+                    `;
+
+                    parentItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        selectParent(parent.id, parent.fullName, parent.phone, parent.login);
+                        parentSearchResults.style.display = 'none';
+                    });
+
+                    resultsContainer.appendChild(parentItem);
+                });
+
+                parentSearchResults.style.display = 'block';
+            }
+
+            // Создание карточки выбранного родителя
+            function selectParent(id, name, phone, login) {
+                if (selectedParents.has(id)) {
+                    showAlert('Этот родитель уже выбран', 'warning');
+                    return;
+                }
+
+                // Создаём карточку родителя
+                const parentCard = document.createElement('div');
+                parentCard.className = 'col-md-6';
+                parentCard.innerHTML = `
+                    <div class="card parent-card h-100" data-parent-id="${id}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title">${name}</h5>
+                                    <p class="card-text mb-1">
+                                        <i class="bi bi-telephone me-1"></i> ${phone || 'Телефон не указан'}
+                                    </p>
+                                    <p class="card-text">
+                                        <i class="bi bi-person-circle me-1"></i> ${login || 'Логин не указан'}
+                                    </p>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-parent-btn">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <label class="form-label small fw-semibold">Роль родителя*</label>
+                                <select class="form-select form-select-sm parent-role-select" required>
+                                    <option value="">Выберите роль</option>
+                                    <option value="мать">Мать</option>
+                                    <option value="отец">Отец</option>
+                                    <option value="опекун">Опекун</option>
+                                    <option value="бабушка">Бабушка</option>
+                                    <option value="дедушка">Дедушка</option>
+                                    <option value="другое">Другое</option>
+                                </select>
+                                <div class="invalid-feedback">Пожалуйста, выберите роль родителя</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Обработчик удаления родителя
+                parentCard.querySelector('.remove-parent-btn').addEventListener('click', () => {
+                    selectedParents.delete(id);
+                    parentCard.remove();
+                    updateHiddenFields();
+                    checkSelectedParents();
+                });
+
+                // Обработчик изменения роли
+                const roleSelect = parentCard.querySelector('.parent-role-select');
+                roleSelect.addEventListener('change', () => {
+                    if (roleSelect.value) {
+                        selectedParents.set(id, {
+                            name: name,
+                            phone: phone,
+                            login: login,
+                            role: roleSelect.value
+                        });
+                        updateHiddenFields();
+                    }
+                });
+
+                // Добавляем родителя в коллекцию
+                selectedParents.set(id, {
+                    name: name,
+                    phone: phone,
+                    login: login,
+                    role: ''
+                });
+
+                // Удаляем сообщение о пустом списке, если оно есть
+                const emptyMessage = selectedParentsList.querySelector('.empty-parents-card');
+                if (emptyMessage) {
+                    emptyMessage.remove();
+                }
+
+                // Добавляем карточку в DOM
+                selectedParentsList.appendChild(parentCard);
+                updateSelectedParentsCount();
+                checkSelectedParents();
+            }
+
+            // Обновление скрытых полей формы
+            function updateHiddenFields() {
+                const parentIds = [];
+                const parentRoles = [];
+
+                document.querySelectorAll('.parent-card').forEach(card => {
+                    const parentId = card.dataset.parentId;
+                    const role = card.querySelector('.parent-role-select').value;
+                    if (parentId && role) {
+                        parentIds.push(parentId);
+                        parentRoles.push(role);
+                    }
+                });
+
+                parentIdsInput.value = parentIds.join(',');
+                parentRolesInput.value = parentRoles.join(',');
+            }
+
+            // Функция для обновления счетчика родителей
+            function updateSelectedParentsCount() {
+                const countElement = document.getElementById('selectedParentsCount');
+                countElement.textContent = selectedParents.size;
+            }
+
+            // Проверка наличия выбранных родителей
+            function checkSelectedParents() {
+                updateSelectedParentsCount();
+
+                if (selectedParents.size === 0) {
+                    const emptyMessage = selectedParentsList.querySelector('.empty-parents-card');
+                    if (!emptyMessage) {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'col-12';
+                        emptyDiv.innerHTML = `
+                            <div class="empty-parents-card text-center p-4 bg-light rounded">
+                                <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                                <h5 class="mt-2 text-muted">Родители не выбраны</h5>
+                                <p class="text-muted small mb-0">Добавьте родителей с помощью поиска выше</p>
+                            </div>
+                        `;
+                        selectedParentsList.appendChild(emptyDiv);
+                    }
+                }
+            }
+
+            // Валидация формы
+            function validateForm() {
+                let isValid = true;
+
+                // Сброс предыдущих ошибок
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                // Валидация основных полей
+                const requiredInputs = form.querySelectorAll('input[required], select[required]');
+                requiredInputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+
+                // Проверка паролей
+                const password = form.querySelector('input[name="Password"]').value;
+                const confirmPassword = form.querySelector('input[name="ConfirmPassword"]').value;
+                if (password !== confirmPassword) {
+                    form.querySelector('input[name="ConfirmPassword"]').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Проверка выбранных родителей
+                if (selectedParents.size === 0) {
+                    showAlert('Необходимо выбрать хотя бы одного родителя', 'warning');
+                    isValid = false;
+                }
+
+                // Проверка ролей родителей
+                let allRolesSelected = true;
+                document.querySelectorAll('.parent-role-select').forEach(select => {
+                    if (!select.value) {
+                        select.classList.add('is-invalid');
+                        allRolesSelected = false;
+                    }
+                });
+
+                if (!allRolesSelected) {
+                    showAlert('Укажите роль для каждого родителя', 'warning');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // Обработчик отправки формы
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!validateForm()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                try {
+                    // Показываем индикатор загрузки
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Регистрация...
+                    `;
+
+                    // Формируем массив объектов родителей с ролями
+                    const parentsData = [];
+                    document.querySelectorAll('.parent-card').forEach(card => {
+                        const parentId = card.dataset.parentId;
+                        const role = card.querySelector('.parent-role-select').value;
+                        parentsData.push({
+                            id: parentId,
+                            role: role
+                        });
+                    });
+
+                    // Подготовка данных формы
+                    const formData = {
+                        Login: form.querySelector('input[name="Login"]').value,
+                        Password: form.querySelector('input[name="Password"]').value,
+                        Name: form.querySelector('input[name="Name"]').value,
+                        Surname: form.querySelector('input[name="Surname"]').value,
+                        Patronymic: form.querySelector('input[name="Patronymic"]').value || null,
+                        BirthDate: form.querySelector('input[name="BirthDate"]').value,
+                        Phone: form.querySelector('input[name="Phone"]').value,
+                        EducationName: form.querySelector('input[name="EducationName"]').value,
+                        ParentIds: Array.from(selectedParents.keys()).map(Number),
+                        ParentRole: "бабушка"
+                    };
+
+                    console.log('Отправляемые данные:', JSON.stringify(formData, null, 2));
+
+                    // Отправка запроса
+                    const response = await fetch(`${apiBaseUrl}/api/users/register-child`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`,
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    // Обработка ответа
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => null);
+                        const errorMessage = errorData?.message || errorData?.Message || await response.text() || 'Ошибка при регистрации';
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+                    console.log('Результат регистрации:', result);
+
+                    // Успешная регистрация
+                    showAlert('Регистрация успешно завершена!', 'success');
+                    setTimeout(() => window.location.href = '/Users/Index', 2000);
+
+                } catch (error) {
+                    console.error('Ошибка регистрации:', error);
+                    showAlert(error.message || 'Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.', 'danger');
+                } finally {
+                    // Восстанавливаем кнопку
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i> Зарегистрировать';
+                }
+            });
+
+            // Инициализация обработчиков событий
+            parentSearchBtn.addEventListener('click', searchParents);
+            parentSearchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') searchParents();
+            });
+
+            // Закрытие результатов поиска при клике вне их
+            document.addEventListener('click', (e) => {
+                if (!parentSearchResults.contains(e.target) && e.target !== parentSearchInput) {
+                    parentSearchResults.style.display = 'none';
+                }
+            });
+
+            // Инициализация при загрузке
+            checkSelectedParents();
+        });
+    </script>
+}

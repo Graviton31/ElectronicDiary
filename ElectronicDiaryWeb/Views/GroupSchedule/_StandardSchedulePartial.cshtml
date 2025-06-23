@@ -1,0 +1,51 @@
+﻿@using ElectronicDiaryWeb.Models.Shedule
+<!-- Views/GroupSchedule/_StandardSchedulePartial.cshtml -->
+@model EditStandardScheduleViewModel
+
+<form asp-action="CreateStandard" method="post" onsubmit="submitStandardForm(event)">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="GroupId" />
+
+    <div class="mb-3">
+        <label class="form-label">День недели</label>
+        <select asp-for="WeekDay" class="form-select" required>
+            <option value="">Выберите день</option>
+            <option value="1">Понедельник</option>
+            <option value="2">Вторник</option>
+            <option value="3">Среда</option>
+            <option value="4">Четверг</option>
+            <option value="5">Пятница</option>
+            <option value="6">Суббота</option>
+            <option value="7">Воскресенье</option>
+        </select>
+        <span asp-validation-for="WeekDay" class="text-danger"></span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Время начала</label>
+            <div class="input-group">
+                <input asp-for="StartTime" type="time" class="form-control" required>
+            </div>
+            <span asp-validation-for="StartTime" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Время окончания</label>
+            <div class="input-group">
+                <input asp-for="EndTime" type="time" class="form-control" required>
+            </div>
+            <span asp-validation-for="EndTime" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Кабинет</label>
+        <input asp-for="Classroom" class="form-control" required>
+        <span asp-validation-for="Classroom" class="text-danger"></span>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+</form>

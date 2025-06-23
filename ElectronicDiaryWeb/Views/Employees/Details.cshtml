@@ -1,0 +1,137 @@
+﻿@model ElectronicDiaryApi.ModelsDto.UsersView.EmployeeDto
+@{
+    ViewData["Title"] = "Профиль сотрудника";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">@Model.FullName</h1>
+
+    <!-- Основная информация -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Основная информация</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Дата рождения:</dt>
+                <dd class="col-sm-9">@Model.BirthDate?.ToString("dd.MM.yyyy")</dd>
+
+                <dt class="col-sm-3">Должность:</dt>
+                <dd class="col-sm-9">@Model.Post</dd>
+
+                <dt class="col-sm-3">Логин:</dt>
+                <dd class="col-sm-9">@Model.Login</dd>
+
+                <dt class="col-sm-3">Роль:</dt>
+                <dd class="col-sm-9">@Model.Role</dd>
+
+                <dt class="col-sm-3">Телефон:</dt>
+                <dd class="col-sm-9">@(Model.Phone ?? "не указан")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Предмет и группы -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                @(Model.Subjects.Count == 1 ? "Преподаваемый предмет" : "Преподаваемые предметы")
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Subjects.Any())
+            {
+                <div class="row">
+                    @foreach (var subject in Model.Subjects)
+                    {
+                        <div class="col-12 mb-3">
+                            <div class="card clickable-card"
+                                 onclick="window.location.href='@Url.Action("Details", "Subjects", new { id = subject.IdSubject })'"
+                                 style="cursor: pointer;">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">@subject.Name</h5>
+                                    <span class="badge bg-primary">
+                                        Групп: @subject.Groups.Count
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    @if (subject.Groups.Any())
+                                    {
+                                        <div class="list-group">
+                                            @foreach (var group in subject.Groups)
+                                            {
+                                                <div class="list-group-item">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <span class="fw-bold">@group.Name</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info mb-0">
+                                            Нет назначенных групп
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    Сотрудник не ведет ни одного предмета
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
+            ← Назад
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                // 1. Попробуем использовать сохранённый URL из sessionStorage
+                const returnUrl = sessionStorage.getItem('returnUrl');
+
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                } else {
+                    // 2. Если нет сохранённого URL, используем history.back()
+                    window.history.back();
+                }
+            });
+
+            // Добавляем эффекты при наведении на карточки предметов
+            const cards = document.querySelectorAll('.clickable-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .clickable-card:hover {
+        background-color: #f8f9fa;
+    }
+</style>

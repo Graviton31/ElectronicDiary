@@ -1,0 +1,319 @@
+﻿@using ElectronicDiaryWeb.Models.Subject
+@model SubjectDetailsViewModel
+
+@{
+    ViewData["Title"] = Model != null ? $"Предмет {Model.Subject.FullName}" : "Детали предмета";
+}
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">Предмет не найден</div>
+    return;
+}
+
+<div class="e-journal-container mt-4">
+    <!-- Заголовок страницы -->
+    <header class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-journal-bookmark-fill header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">@Model.Subject.FullName</h1>
+                <p class="page-subtitle">Подробная информация о предмете</p>
+            </div>
+        </div>
+        <div class="header-divider"></div>
+    </header>
+
+    <!-- Кнопки действий -->
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        @if (User.IsInRole("администратор") || User.IsInRole("руководитель"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Subject.IdSubject"
+            class="btn btn-primary px-4">
+                <i class="bi bi-pencil-square me-2"></i>Редактировать
+            </a>
+        }
+        <a asp-controller="GroupSchedule" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+        class="btn btn-secondary px-4">
+            <i class="bi bi-calendar-week me-2"></i>Расписание
+        </a>
+        <a asp-controller="EnrollmentRequests" asp-action="Index" asp-route-subjectId="@Model.Subject.IdSubject"
+        class="btn btn-warning px-4">
+            <i class="bi bi-list-task me-2"></i>Заявки
+        </a>
+        @* <a asp-action="Delete" asp-route-id="@Model.Subject.IdSubject"
+           class="btn btn-danger px-4">
+            <i class="bi bi-trash me-2"></i>Удалить
+        </a> *@
+    </div>
+
+    <!-- Основная информация о предмете -->
+    <div class="card animate__animated animate__fadeIn mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h2 class="h4 mb-0">
+                <i class="bi bi-info-circle me-2"></i>Основные характеристики
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 text-muted">
+                            <i class="bi bi-journal me-1"></i>Краткое название:
+                        </dt>
+                        <dd class="col-sm-7">@Model.Subject.Name</dd>
+
+                        <dt class="col-sm-5 text-muted">
+                            <i class="bi bi-clock-history me-1"></i>Длительность курса:
+                        </dt>
+                        <dd class="col-sm-7">
+                            @(Model.Subject.Duration != 0 ? $"{Model.Subject.Duration} год(а)" : "-")
+                        </dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 text-muted">
+                            <i class="bi bi-stopwatch me-1"></i>Длительность урока:
+                        </dt>
+                        <dd class="col-sm-7">
+                            @(Model.Subject.LessonLength != 0 ? $"{Model.Subject.LessonLength} час(а)" : "-")
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h3 class="h5 text-muted mb-3">
+                <i class="bi bi-file-text me-2"></i>Описание
+            </h3>
+            <div class="alert alert-light mb-0">
+                <i class="bi bi-card-text me-2 text-muted"></i>
+                @(string.IsNullOrEmpty(Model.Subject.Description) ? "Описание отсутствует" : Model.Subject.Description)
+            </div>
+
+            <hr class="my-4">
+
+            <h3 class="h5 text-muted mb-3">
+                <i class="bi bi-journal-code me-2"></i>Программа предмета
+            </h3>
+            <div class="alert alert-light mb-0">
+                <i class="bi bi-file-earmark-medical me-2 text-muted"></i>
+                @(string.IsNullOrEmpty(Model.Subject.Syllabus) ? "Программа отсутствует" : Model.Subject.Syllabus)
+            </div>
+        </div>
+    </div>
+
+    <!-- Секция с группами -->
+    <div class="card animate__animated animate__fadeIn mb-4">
+        <div class="card-header bg-success text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-people-fill me-2"></i>Учебные группы
+                </h2>
+                <span class="badge bg-light text-dark fs-6">
+                    <i class="bi bi-diagram-3 me-1"></i>@Model.Groups.Count групп(а)
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Groups.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var group in Model.Groups)
+                    {
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="card h-100 border-start-4 border-primary">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h3 class="h5 mb-0">
+                                        <i class="bi bi-collection me-2"></i>@group.Name
+                                    </h3>
+                                    <div class="d-flex flex-column align-items-end">
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-people me-1"></i>@group.CurrentStudents/@group.MaxStudentCount
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h4 class="h6 text-muted mb-2">
+                                            <i class="bi bi-calendar3 me-2"></i>Возраст: @group.MinAge - @group.MaxAge
+                                        </h4>
+                                    </div>
+
+                                    @if (group.Location != null)
+                                    {
+                                        <div class="mb-3">
+                                            <h4 class="h6 text-muted mb-2">
+                                                <i class="bi bi-geo-alt me-2"></i>Локация
+                                            </h4>
+                                            <div class="ps-3">
+                                                <div class="fw-bold">@group.Location.Name</div>
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-geo me-1"></i>@(group.Location.Address ?? "Адрес не указан")
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (group.Teachers?.Any() == true)
+                                    {
+                                        <div class="mb-3">
+                                            <h4 class="h6 text-muted mb-2">
+                                                <i class="bi bi-person-badge me-2"></i>Преподаватели
+                                            </h4>
+                                            <div class="d-flex flex-wrap gap-2 ps-3">
+                                                @foreach (var teacher in group.Teachers)
+                                                {
+                                                    <span class="badge bg-light text-dark p-2 d-flex align-items-center">
+                                                        <i class="bi bi-person-circle me-2"></i>
+                                                        @teacher.FullName
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle empty-icon"></i>
+                    <h4 class="empty-title">Нет активных групп</h4>
+                    <p class="empty-text">Добавьте группы для этого предмета</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Секция с преподавателями -->
+    <div class="card animate__animated animate__fadeIn">
+        <div class="card-header bg-info text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-mortarboard me-2"></i>Преподаватели предмета
+                </h2>
+                <span class="badge bg-light text-dark fs-6">
+                    <i class="bi bi-person-vcard me-1"></i>@Model.Teachers.Count человек
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Teachers.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var teacher in Model.Teachers)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 border-start-4 border-info clickable-card"
+                                 onclick="window.location.href='@Url.Action("Details", "Employees", new { id = teacher.IdEmployee })'"
+                                 style="cursor: pointer;">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="flex-shrink-0">
+                                            <i class="bi bi-person-circle fs-1 text-info"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h3 class="h5 mb-1">@teacher.FullName</h3>
+                                            <div class="text-muted small">
+                                                <i class="bi bi-briefcase me-1"></i>@teacher.Post
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item d-flex align-items-center">
+                                            <i class="bi bi-telephone me-2 text-muted"></i>
+                                            @if (!string.IsNullOrEmpty(teacher.Phone))
+                                            {
+                                                <a href="tel:@teacher.Phone" class="stretched-link-exception">@teacher.Phone</a>
+                                            }
+                                            else
+                                            {
+                                                <span>Не указан</span>
+                                            }
+                                        </div>
+                                        <div class="list-group-item d-flex align-items-center">
+                                            <i class="bi bi-envelope me-2 text-muted"></i>
+                                            @teacher.Login
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle empty-icon"></i>
+                    <h4 class="empty-title">Нет прикрепленных преподавателей</h4>
+                    <p class="empty-text">Назначьте преподаватели для этого предмета</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
+            ← Назад
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                // 1. Попробуем использовать сохранённый URL из sessionStorage
+                const returnUrl = sessionStorage.getItem('returnUrl');
+
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                } else {
+                    // 2. Если нет сохранённого URL, используем history.back()
+                    window.history.back();
+                }
+            });
+
+            // Добавляем эффект при наведении на карточки преподавателей
+            const teacherCards = document.querySelectorAll('.clickable-card');
+            teacherCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .clickable-card {
+        transition: all 0.2s ease;
+    }
+
+        .clickable-card:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+    .stretched-link-exception {
+        position: static;
+    }
+</style>

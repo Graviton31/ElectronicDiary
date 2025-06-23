@@ -1,0 +1,361 @@
+﻿@using ElectronicDiaryWeb.Models.Auth
+@model RegisterEmployeeModel
+
+@{
+    ViewData["Title"] = "Регистрация сотрудника";
+}
+
+<div class="page-container">
+    <!-- Контейнер для уведомлений -->
+    <div id="global-alerts" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
+
+    <div class="page-header">
+        <div class="d-flex align-items-center mb-3">
+            <div class="icon-wrapper me-3">
+                <i class="bi bi-person-plus header-icon"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Регистрация сотрудника</h1>
+                <p class="page-subtitle">Заполните форму для регистрации нового сотрудника</p>
+            </div>
+        </div>
+        <hr class="header-divider" />
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="employeeForm" class="needs-validation" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h4 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-person-vcard me-2"></i>Личные данные
+                        </h4>
+                        <div class="form-group">
+                            <label asp-for="Surname" class="form-label">Фамилия*</label>
+                            <input asp-for="Surname" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Имя*</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите имя</div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Patronymic" class="form-label">Отчество</label>
+                            <input asp-for="Patronymic" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="BirthDate" class="form-label">Дата рождения*</label>
+                            <input asp-for="BirthDate" type="date" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите дату рождения</div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Phone" class="form-label">Телефон*</label>
+                            <input asp-for="Phone" class="form-control" placeholder="+7XXXXXXXXXX" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите телефон</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h4 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-shield-lock me-2"></i>Учетные данные
+                        </h4>
+                        <div class="form-group">
+                            <label asp-for="Login" class="form-label">Логин*</label>
+                            <input asp-for="Login" class="form-control" required />
+                            <div class="invalid-feedback">Пожалуйста, укажите логин</div>
+                            <small class="form-text text-muted">Логин должен быть уникальным</small>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Password" class="form-label">Пароль*</label>
+                            <input asp-for="Password" type="password" class="form-control" required minlength="6" />
+                            <div class="invalid-feedback">Пароль должен содержать минимум 6 символов</div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ConfirmPassword" class="form-label">Подтверждение пароля*</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                            <div class="invalid-feedback">Пароли не совпадают</div>
+                        </div>
+
+                        <h4 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-briefcase me-2"></i>Должность
+                        </h4>
+                        <div class="form-group">
+                            <label asp-for="PostId" class="form-label">Должность*</label>
+                            <select asp-for="PostId" class="form-select" required>
+                                <option value="">Выберите должность</option>
+                                @foreach (var post in ViewBag.Posts)
+                                {
+                                    <option value="@post.Value">@post.Text</option>
+                                }
+                            </select>
+                            <div class="invalid-feedback">Пожалуйста, выберите должность</div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Role" class="form-label">Роль в системе*</label>
+                            <select asp-for="Role" class="form-select" required>
+                                <option value="">Выберите роль</option>
+                                <option value="администратор">Администратор</option>
+                                <option value="руководитель">Руководитель</option>
+                                <option value="учитель">Учитель</option>
+                            </select>
+                            <div class="invalid-feedback">Пожалуйста, выберите роль</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                    <a asp-action="Index" asp-controller="Users" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Назад
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i> Зарегистрировать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+    }
+
+    .was-validated .form-control:invalid ~ .invalid-feedback,
+    .was-validated .form-select:invalid ~ .invalid-feedback {
+        display: block;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        document.getElementById('goBackButton').addEventListener('click', function() {
+            const returnUrl = sessionStorage.getItem('returnUrl') || document.referrer;
+            const savedState = sessionStorage.getItem('journalState') ||
+                              localStorage.getItem('journalBackupState');
+
+            if (savedState && returnUrl) {
+                const state = JSON.parse(savedState);
+
+                // Формируем URL с параметрами
+                const url = new URL(returnUrl, window.location.origin);
+                url.searchParams.set('subjectId', state.subjectId);
+                url.searchParams.set('groupId', state.groupId);
+
+                if (state.journalId) {
+                    url.searchParams.set('journalId', state.journalId);
+                }
+
+                // Добавляем параметр для предотвращения кэширования
+                url.searchParams.set('_t', Date.now());
+
+                window.location.href = url.toString();
+            } else {
+                window.history.back();
+            }
+        });
+
+        // Константы и элементы формы
+        const form = document.getElementById('employeeForm');
+        const passwordInput = form.querySelector('input[name="Password"]');
+        const confirmPasswordInput = form.querySelector('input[name="ConfirmPassword"]');
+        const authToken = getCookie('_secure_at'); // Получаем токен из куков
+        const globalAlerts = document.getElementById('global-alerts');
+
+        // Функция для форматирования даты в формат YYYY-MM-DD
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Функция для получения куки по имени
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Функция загрузки списка должностей
+        async function loadPosts() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/users/posts`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+
+                const posts = await response.json();
+                const select = document.querySelector('select[name="PostId"]');
+
+                // Очищаем существующие options, кроме первого
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+
+                // Добавляем новые options
+                posts.forEach(post => {
+                    const option = document.createElement('option');
+                    option.value = post.idPost;
+                    option.textContent = post.postName;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Ошибка загрузки должностей:', error);
+                showGlobalAlert('Не удалось загрузить список должностей', 'danger');
+            }
+        }
+
+        // Функция для отображения глобальных уведомлений
+        function showGlobalAlert(message, type = 'danger') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            globalAlerts.appendChild(alert);
+
+            // Автоматическое закрытие через 5 секунд
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 150);
+            }, 5000);
+        }
+
+        // Функция для отображения ошибок в форме
+        function showFormError(message) {
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger mt-3';
+            errorAlert.textContent = message;
+
+            const cardBody = form.closest('.card-body');
+            const existingAlert = cardBody.querySelector('.alert-danger');
+
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            cardBody.appendChild(errorAlert);
+        }
+
+        // Валидация паролей
+        [passwordInput, confirmPasswordInput].forEach(input => {
+            input.addEventListener('input', function() {
+                if (passwordInput.value !== confirmPasswordInput.value) {
+                    confirmPasswordInput.setCustomValidity("Пароли не совпадают");
+                } else {
+                    confirmPasswordInput.setCustomValidity("");
+                }
+            });
+        });
+
+        // Обработка отправки формы
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Валидация формы
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            // Проверка совпадения паролей
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                showFormError("Пароли не совпадают");
+                return;
+            }
+
+            // Подготовка данных формы
+            const formData = {
+                login: form.querySelector('input[name="Login"]').value,
+                password: passwordInput.value,
+                name: form.querySelector('input[name="Name"]').value,
+                surname: form.querySelector('input[name="Surname"]').value,
+                patronymic: form.querySelector('input[name="Patronymic"]').value || null,
+                birthDate: formatDate(form.querySelector('input[name="BirthDate"]').value),
+                phone: form.querySelector('input[name="Phone"]').value,
+                role: form.querySelector('select[name="Role"]').value,
+                postId: parseInt(form.querySelector('select[name="PostId"]').value)
+            };
+
+            try {
+                // Показываем индикатор загрузки
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Регистрация...
+                `;
+
+                // Отправка запроса
+                const response = await fetch(`${apiBaseUrl}/api/users/register-employee`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                // Обработка ответа
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Ошибка при регистрации');
+                }
+
+                const result = await response.json();
+
+                // Успешная регистрация - показываем уведомление и переходим на страницу пользователей
+                showGlobalAlert('Сотрудник успешно зарегистрирован!', 'success');
+
+                // Задержка перед переходом, чтобы пользователь увидел сообщение
+                setTimeout(() => {
+                    window.location.href = '/Users/Index';
+                }, 1500);
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showGlobalAlert(error.message || 'Произошла ошибка при регистрации', 'danger');
+            } finally {
+                // Восстанавливаем кнопку
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i> Зарегистрировать';
+            }
+        });
+
+        // Загружаем список должностей при загрузке страницы
+        loadPosts();
+    });
+</script>

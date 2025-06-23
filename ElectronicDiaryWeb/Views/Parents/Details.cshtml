@@ -1,0 +1,153 @@
+﻿@using ElectronicDiaryApi.ModelsDto.UsersView
+@model ParentDto
+@{
+    ViewData["Title"] = "Профиль родителя";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">@Model.FullName</h1>
+
+    <!-- Основная информация -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Основная информация</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Телефон:</dt>
+                <dd class="col-sm-9">@(Model.Phone ?? "не указан")</dd>
+
+                <dt class="col-sm-3">Дата рождения:</dt>
+                <dd class="col-sm-9">@(Model.BirthDate)</dd>
+
+                <dt class="col-sm-3">Логин:</dt>
+                <dd class="col-sm-9">@Model.Login</dd>
+
+                <dt class="col-sm-3">Место работы:</dt>
+                <dd class="col-sm-9">@Model.Workplace</dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Дети -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Дети</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Students.Any())
+            {
+                <div class="row">
+                    @foreach (var student in Model.Students)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card clickable-card" onclick="window.location.href='@Url.Action("Details", "Students", new { id = student.IdStudent })'" style="cursor: pointer;">
+                                <div class="card-body">
+                                    <h5 class="card-title">@student.FullName</h5>
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">Телефон:</dt>
+                                        <dd class="col-sm-7">@(student.Phone ?? "не указан")</dd>
+                                    </dl>
+                                    <dt class="col-sm-3">Кем приходится ребёнку:</dt>
+                                    <dd class="col-sm-9">@(student.ParentRole)</dd>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    Не указаны
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Заявки на зачисление -->
+    @if (Model.EnrollmentRequests.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Заявки на зачисление</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Дата подачи</th>
+                                <th>Статус</th>
+                                <th>Студент</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var req in Model.EnrollmentRequests)
+                            {
+                                <tr>
+                                    <td>@req.IdRequest</td>
+                                    <td>@req.RequestDate?.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <span class="badge
+                                            @(req.Status == "Approved" ? "bg-success" :
+                                             req.Status == "Pending" ? "bg-warning" :
+                                             "bg-danger")">
+                                            @req.Status
+                                        </span>
+                                    </td>
+                                    <td>@req.StudentFullName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mb-4">
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" id="goBackButton">
+            ← Назад
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('goBackButton').addEventListener('click', function() {
+                // 1. Попробуем использовать сохранённый URL из sessionStorage
+                const returnUrl = sessionStorage.getItem('returnUrl');
+
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                } else {
+                    // 2. Если нет сохранённого URL, используем history.back()
+                    window.history.back();
+                }
+            });
+
+            // Добавляем эффект при наведении на карточки студентов
+            const cards = document.querySelectorAll('.clickable-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .clickable-card:hover {
+        background-color: #f8f9fa;
+    }
+</style>

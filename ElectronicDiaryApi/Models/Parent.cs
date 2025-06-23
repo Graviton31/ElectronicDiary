@@ -7,19 +7,11 @@ public partial class Parent
 {
     public int IdParent { get; set; }
 
-    public string Surname { get; set; } = null!;
-
-    public string Name { get; set; } = null!;
-
-    public string? Patronumic { get; set; }
-
-    public string? Phone { get; set; }
-
-    public string Login { get; set; } = null!;
-
-    public byte[] Password { get; set; } = null!;
+    public string? Workplace { get; set; }
 
     public virtual ICollection<EnrollmentRequest> EnrollmentRequests { get; set; } = new List<EnrollmentRequest>();
 
-    public virtual ICollection<Student> IdStudents { get; set; } = new List<Student>();
+    public virtual User IdParentNavigation { get; set; } = null!;
+
+    public virtual ICollection<StudentsHasParent> StudentsHasParents { get; set; } = new List<StudentsHasParent>();
 }
