@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace ElectronicDiaryApi.Controllers;
 
@@ -47,36 +48,58 @@ public class UsersController : ControllerBase
     [HttpPost("register-employee")]
     public async Task<IActionResult> RegisterEmployee([FromBody] RegisterEmployeeDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
-            return BadRequest("Пользователь с таким логином уже существует");
-
-        var user = new User
+        try
         {
-            Login = dto.Login,
-            Name = dto.Name,
-            Surname = dto.Surname,
-            Patronymic = dto.Patronymic,
-            BirthDate = dto.BirthDate,
-            Phone = dto.Phone,
-            Role = dto.Role,
-            IsDelete = false
-        };
+            if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
+            {
+                return Conflict(new
+                {
+                    Message = "Пользователь с таким логином уже существует",
+                    Suggestion = "Используйте другой логин или email-адрес"
+                });
+            }
 
-        user.Password = _passwordHasher.HashPassword(user, dto.Password);
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    Message = "Неверные данные",
+                    Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                });
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+            var user = new User
+            {
+                Login = dto.Login,
+                Name = dto.Name,
+                Surname = dto.Surname,
+                Patronymic = dto.Patronymic,
+                BirthDate = dto.BirthDate,
+                Phone = dto.Phone,
+                Role = dto.Role,
+                IsDelete = false
+            };
 
-        var employee = new Employee
+            user.Password = _passwordHasher.HashPassword(user, dto.Password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var employee = new Employee
+            {
+                IdEmployee = user.IdUser,
+                IdPost = dto.PostId
+            };
+
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { UserId = user.IdUser });
+            }
+        catch (Exception ex)
         {
-            IdEmployee = user.IdUser,
-            IdPost = dto.PostId
-        };
-
-        _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { UserId = user.IdUser });
+            return HandleException(ex);
+        }
     }
 
     #endregion
@@ -86,25 +109,33 @@ public class UsersController : ControllerBase
     [HttpGet("search-parents")]
     public async Task<IActionResult> SearchParents([FromQuery] string query)
     {
-        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
-            return BadRequest("Минимум 2 символа для поиска");
+        try
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+                return BadRequest(new { Message = "Минимум 2 символа для поиска" });
 
-        var parents = await _context.Users
-            .Where(u => u.Role == "родитель" && u.IsDelete != true &&
-                       (u.Name.Contains(query) ||
-                        u.Surname.Contains(query) ||
-                        u.Patronymic.Contains(query) ||
-                        u.Phone.Contains(query)))
-            .Select(u => new ParentSearchResultDto
-            {
-                Id = u.IdUser,
-                FullName = $"{u.Surname} {u.Name} {u.Patronymic}",
-                Phone = u.Phone
-            })
-            .Take(10)
-            .ToListAsync();
+            var parents = await _context.Users
+                .Where(u => u.Role == "родитель" && u.IsDelete != true &&
+                  (EF.Functions.Like(u.Name, $"%{query}%") ||
+                   EF.Functions.Like(u.Surname, $"%{query}%") ||
+                   EF.Functions.Like(u.Patronymic, $"%{query}%") ||
+                   EF.Functions.Like(u.Phone, $"%{query}%")))
+                .Select(u => new
+                {
+                    id = u.IdUser,
+                    fullName = $"{u.Surname} {u.Name} {u.Patronymic}".Trim(),
+                    phone = u.Phone,
+                    login = u.Login
+                })
+                .Take(10)
+                .ToListAsync();
 
-        return Ok(parents);
+            return Ok(parents);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = "Ошибка при поиске родителей" });
+        }
     }
 
     [HttpPost("register-parent")]
@@ -112,11 +143,23 @@ public class UsersController : ControllerBase
     {
         try
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
-            return BadRequest("Пользователь с таким логином уже существует");
+            {
+                return Conflict(new
+                {
+                    Message = "Пользователь с таким логином уже существует",
+                    Suggestion = "Используйте другой логин или email-адрес"
+                });
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    Message = "Неверные данные",
+                    Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                });
 
             var user = new User
             {
@@ -155,53 +198,207 @@ public class UsersController : ControllerBase
     [HttpPost("register-child")]
     public async Task<IActionResult> RegisterChild([FromBody] RegisterChildWithParentsDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
-            return BadRequest("Пользователь с таким логином уже существует");
-
-        // Создаем пользователя-ребенка
-        var user = new User
+        try
         {
-            Login = dto.Login,
-            Name = dto.Name,
-            Surname = dto.Surname,
-            Patronymic = dto.Patronymic,
-            BirthDate = dto.BirthDate,
-            Phone = dto.Phone,
-            Role = "студент",
-            IsDelete = false
-        };
-
-        user.Password = _passwordHasher.HashPassword(user, dto.Password);
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        // Создаем запись студента
-        var student = new Student
-        {
-            IdStudent = user.IdUser,
-            EducationName = dto.EducationName
-        };
-
-        _context.Students.Add(student);
-        await _context.SaveChangesAsync();
-
-        // Добавляем связи с родителями
-        foreach (var parentId in dto.ParentIds)
-        {
-            var relation = new StudentsHasParent
+            if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
             {
-                IdParent = parentId,
-                IdStudent = student.IdStudent,
-                ParentRole = dto.ParentRole
+                return Conflict(new
+                {
+                    Message = "Пользователь с таким логином уже существует",
+                    Suggestion = "Используйте другой логин или email-адрес"
+                });
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    Message = "Неверные данные",
+                    Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                });
+
+            // Создаем пользователя-ребенка
+            var user = new User
+            {
+                Login = dto.Login,
+                Name = dto.Name,
+                Surname = dto.Surname,
+                Patronymic = dto.Patronymic,
+                BirthDate = dto.BirthDate,
+                Phone = dto.Phone,
+                Role = "студент",
+                IsDelete = false
             };
-            _context.StudentsHasParents.Add(relation);
+
+            user.Password = _passwordHasher.HashPassword(user, dto.Password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            // Создаем запись студента
+            var student = new Student
+            {
+                IdStudent = user.IdUser,
+                EducationName = dto.EducationName
+            };
+
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+
+            // Добавляем связи с родителями
+            foreach (var parentId in dto.ParentIds)
+            {
+                var relation = new StudentsHasParent
+                {
+                    IdParent = parentId,
+                    IdStudent = student.IdStudent,
+                    ParentRole = dto.ParentRole
+                };
+                _context.StudentsHasParents.Add(relation);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { UserId = user.IdUser });
+            }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
         }
+    }
 
-        await _context.SaveChangesAsync();
+    [HttpPost("register-parent-with-children")]
+    public async Task<IActionResult> RegisterParentWithChildren([FromBody] RegisterParentWithChildrenDto dto)
+    {
+        try
+        {
+            // Проверка уникальности логина родителя (без учета регистра)
+            if (await _context.Users.AnyAsync(u => u.Login == dto.Login))
+            {
+                return Conflict(new
+                {
+                    Message = "Пользователь с таким логином уже существует",
+                    Suggestion = "Используйте другой логин или email-адрес"
+                });
+            }
 
-        return Ok(new { UserId = user.IdUser });
+            // Проверка уникальности логинов детей
+            foreach (var childDto in dto.Children)
+            {
+                if (await _context.Users.AnyAsync(u => u.Login == childDto.Login))
+                {
+                    return Conflict(new
+                    {
+                        Message = $"Логин '{childDto.Login}' для ребенка уже занят",
+                        Suggestion = "Используйте другой логин"
+                    });
+                }
+            }
+
+            // Создаем родителя
+            var parentUser = new User
+            {
+                Login = dto.Login,
+                Name = dto.Name,
+                Surname = dto.Surname,
+                Patronymic = dto.Patronymic,
+                BirthDate = dto.BirthDate,
+                Phone = dto.Phone,
+                Role = "родитель",
+                IsDelete = false
+            };
+            parentUser.Password = _passwordHasher.HashPassword(parentUser, dto.Password);
+            _context.Users.Add(parentUser);
+            await _context.SaveChangesAsync();
+
+            // Создаем запись родителя
+            var parent = new Parent
+            {
+                IdParent = parentUser.IdUser,
+                Workplace = dto.Workplace
+            };
+            _context.Parents.Add(parent);
+
+            // Создаем детей
+            var childUserIds = new List<int>();
+            foreach (var childDto in dto.Children)
+            {
+                var childUser = new User
+                {
+                    Login = childDto.Login,
+                    Name = childDto.Name,
+                    Surname = childDto.Surname,
+                    Patronymic = childDto.Patronymic,
+                    BirthDate = childDto.BirthDate,
+                    Phone = childDto.Phone,
+                    Role = "студент",
+                    IsDelete = false
+                };
+                childUser.Password = _passwordHasher.HashPassword(childUser, childDto.Password);
+                _context.Users.Add(childUser);
+                await _context.SaveChangesAsync();
+
+                var student = new Student
+                {
+                    IdStudent = childUser.IdUser,
+                    EducationName = childDto.EducationName
+                };
+                _context.Students.Add(student);
+
+                // Добавляем связь с родителем с правильной ролью
+                _context.StudentsHasParents.Add(new StudentsHasParent
+                {
+                    IdParent = parentUser.IdUser,
+                    IdStudent = childUser.IdUser,
+                    ParentRole = childDto.ParentRole // Используем выбранную роль
+                });
+
+                childUserIds.Add(childUser.IdUser);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                ParentId = parentUser.IdUser,
+                ChildrenIds = childUserIds,
+                Message = "Регистрация успешно завершена"
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}\n{ex.StackTrace}");
+            return StatusCode(500, new
+            {
+                Message = "Ошибка при регистрации",
+                Detailed = ex.Message
+            });
+        }
     }
 
     #endregion
+
+    private IActionResult HandleException(Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        if (ex.InnerException != null)
+        {
+            Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+        }
+
+        string errorMessage = ex switch
+        {
+            DbUpdateException => "Ошибка сохранения данных в базу",
+            ArgumentException => ex.Message,
+            _ => "Произошла непредвиденная ошибка"
+        };
+
+        return BadRequest(new
+        {
+            Message = errorMessage,
+            Detailed = ex.InnerException?.Message
+        });
+    }
 }

@@ -1,8 +1,4 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-// Получаем базовый URL API из серверной конфигурации
+﻿// Получаем базовый URL API из серверной конфигурации
 const apiBaseUrl = window.serverConfig?.apiBaseUrl || 'https://localhost:7123';
 
 // Утилиты для работы с куками

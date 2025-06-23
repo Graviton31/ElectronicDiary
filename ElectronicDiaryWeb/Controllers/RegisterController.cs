@@ -1,4 +1,5 @@
-﻿using ElectronicDiaryWeb.Models.Auth;
+﻿using ElectronicDiaryWeb.Controllers;
+using ElectronicDiaryWeb.Models.Auth;
 using ElectronicDiaryWeb.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +11,13 @@ public class RegisterController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _config;
+    private readonly ILogger<HomeController> _logger;
 
-    public RegisterController(IHttpClientFactory httpClientFactory, IConfiguration config)
+    public RegisterController(IHttpClientFactory httpClientFactory, IConfiguration config, ILogger<HomeController> logger)
     {
         _httpClientFactory = httpClientFactory;
         _config = config;
+        _logger = logger;
     }
 
     //[Authorize(Roles = "администратор")]
@@ -140,34 +143,60 @@ public class RegisterController : Controller
 
     [HttpPost("RegisterParent")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RegisterParent(RegisterParentModel model)
+    public async Task<IActionResult> RegisterParent(RegisterParentWithChildrenModel model)
     {
         if (!ModelState.IsValid)
         {
-            return View("RegisterParent");
+            return View("RegisterParent", model);
         }
 
-        var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["_secure_at"]);
-
-        var response = await client.PostAsJsonAsync($"{_config["ApiBaseUrl"]}/api/users/register-parent", new
+        try
         {
-            model.Login,
-            model.Password,
-            model.Name,
-            model.Surname,
-            model.Patronymic,
-            BirthDate = DateOnly.FromDateTime(model.BirthDate),
-            model.Phone,
-            model.Workplace
-        });
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", Request.Cookies["_secure_at"]);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            ModelState.AddModelError("", "Ошибка при регистрации родителя");
-            return View(model);
+            var requestData = new
+            {
+                model.Login,
+                model.Password,
+                model.Name,
+                model.Surname,
+                model.Patronymic,
+                BirthDate = DateOnly.FromDateTime(model.BirthDate),
+                model.Phone,
+                model.Workplace,
+                Children = model.Children.Select(c => new
+                {
+                    c.Login,
+                    c.Password,
+                    c.Name,
+                    c.Surname,
+                    c.Patronymic,
+                    BirthDate = DateOnly.FromDateTime(c.BirthDate),
+                    c.Phone,
+                    c.EducationName,
+                    c.ParentRole // Добавляем роль родителя
+                }).ToList()
+            };
+
+            var response = await client.PostAsJsonAsync(
+                $"{_config["ApiBaseUrl"]}/api/users/register-parent-with-children",
+                requestData);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError("", "Ошибка при регистрации: " + errorContent);
+                return View("RegisterParent", model);
+            }
+
+            return RedirectToAction("Index", "Users");
         }
-
-        return RedirectToAction("Index", "Users");
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", "Ошибка: " + ex.Message);
+            return View("RegisterParent", model);
+        }
     }
 }
